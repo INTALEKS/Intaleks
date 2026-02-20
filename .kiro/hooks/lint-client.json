@@ -1,0 +1,12 @@
+{
+  "name": "Lint Client Code",
+  "description": "Runs ESLint on client files when saved",
+  "trigger": {
+    "type": "onFileSave",
+    "pattern": "client/**/*.{ts,tsx}"
+  },
+  "action": {
+    "type": "command",
+    "command": "cd client && pnpm lint --max-warnings 0"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Type Check",
+  "description": "Manual hook to run TypeScript type checking on both client and server",
+  "trigger": {
+    "type": "manual"
+  },
+  "action": {
+    "type": "sendMessage",
+    "message": "Run TypeScript type checking on both the client and server. For client: `cd client && pnpm tsc --noEmit`. For server: `cd server && pnpm tsc --noEmit`. Report any type errors found."
+  }
+}

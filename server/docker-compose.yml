@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-thevaluer}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-thevaluer_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-thevaluer_dev}
+    ports:
+      - "5433:5432" # Using 5433 on host to avoid conflict with existing PostgreSQL
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-thevaluer}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - thevaluer-network
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - thevaluer-network
+
+volumes:
+  pgdata:
+
+networks:
+  thevaluer-network:
+    driver: bridge

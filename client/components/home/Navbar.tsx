@@ -1,0 +1,176 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { ChevronDown, LogOut, User, Settings } from "lucide-react";
+import { useAuthState } from "@/app/hooks/useAuthState";
+import { useAuth } from "@/app/hooks/useAuth";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
+interface NavLink {
+  href: string;
+  label: string;
+  isAnchor?: boolean;
+}
+
+interface NavDropdown {
+  label: string;
+  dropdown: { href: string; label: string }[];
+}
+
+type NavItem = NavLink | NavDropdown;
+
+const navLinks: NavItem[] = [
+  { href: "/", label: "Home" },
+  { href: "/calculator", label: "Calculator" },
+  {
+    label: "Learning",
+    dropdown: [
+      { href: "/videos", label: "Videos" },
+      // { href: "/articles", label: "Articles" },
+    ],
+  },
+  { href: "/?scrollTo=pricing", label: "Pricing", isAnchor: true },
+  { href: "/?scrollTo=about", label: "About", isAnchor: true },
+  { href: "/forum", label: "Forum" },
+];
+
+export function Navbar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [learningOpen, setLearningOpen] = useState(false);
+
+  // Auth state - Requirements: 9.1, 9.2, 9.3, 9.4
+  const { isAuthentiating, isAuthenticated, user } = useAuthState();
+  const { logout, isLoggingOut } = useAuth();
+
+  // Handle logout - Requirement 9.3
+  const handleLogout = () => {
+    logout();
+  };
+
+  // Handle anchor link click - navigate to home and scroll to section
+  const handleAnchorClick = (e: React.MouseEvent, sectionId: string) => {
+    e.preventDefault();
+    if (pathname === "/") {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth" });
+      }
+    } else {
+      router.push(`/?scrollTo=${sectionId}`);
+    }
+  };
+
+  // Get display name (name or email) - Requirement 9.2
+  const displayName = user?.name || user?.email || "User";
+
+  return (
+    <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+        <Link href="/" className="font-bold text-xl">
+          <Image src="/intaleks.png" alt="Intaleks logo" width={150} height={32} />
+        </Link>
+        <nav className="hidden md:flex items-center gap-8">
+          {navLinks.map((link) =>
+            "dropdown" in link ? (
+              <div key={link.label} className="relative" onMouseEnter={() => setLearningOpen(true)} onMouseLeave={() => setLearningOpen(false)}>
+                <button className={cn("flex items-center gap-1 text-sm transition-colors py-2", pathname.startsWith("/videos") || pathname.startsWith("/articles") ? "text-blue-500 font-medium" : "text-gray-600 hover:text-gray-900")}>
+                  {link.label}
+                  <ChevronDown className={cn("w-4 h-4 transition-transform", learningOpen && "rotate-180")} />
+                </button>
+                {learningOpen && (
+                  <div className="absolute top-full left-0 pt-1">
+                    <div className="bg-white rounded-lg shadow-lg border py-2 min-w-[140px]">
+                      {link.dropdown?.map((item) => (
+                        <Link key={item.href} href={item.href} className={cn("block px-4 py-2 text-sm transition-colors", pathname === item.href ? "text-blue-500 font-medium" : "text-gray-600 hover:text-gray-900 hover:bg-gray-50")}>
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : "isAnchor" in link && link.isAnchor ? (
+              <button key={link.href} onClick={(e) => handleAnchorClick(e, new URL(link.href, "http://x").searchParams.get("scrollTo") || "")} className={cn("text-sm transition-colors text-gray-600 hover:text-gray-900")}>
+                {link.label}
+              </button>
+            ) : (
+              <Link key={link.href} href={link.href} className={cn("text-sm transition-colors", pathname === link.href ? "text-blue-500 font-medium" : "text-gray-600 hover:text-gray-900")}>
+                {link.label}
+              </Link>
+            ),
+          )}
+        </nav>
+
+        {/* Auth-aware UI */}
+        <div className="flex items-center gap-3">
+          {isAuthentiating ? (
+            // Loading state - Requirement 9.4
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-20" />
+            </div>
+          ) : isAuthenticated && user ? (
+            // Logged in state - Requirement 9.2
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="border-blue-500 text-blue-500 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  <span className="max-w-[120px] truncate">{displayName}</span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    {user.name && <p className="text-sm font-medium leading-none">{user.name}</p>}
+                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {user.role === "ADMIN" && (
+                  <DropdownMenuItem asChild className="cursor-pointer">
+                    <Link href="/admin">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Admin Dashboard</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem asChild className="cursor-pointer">
+                  <Link href="/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+                  <LogOut className="mr-2 h-4 w-4 text-red-500" />
+                  <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            // Not logged in state
+            <>
+              <Link href="/login">
+                <Button variant="outline" size="sm" className="border-blue-500 text-blue-500 hover:bg-blue-50 hover:text-blue-600">
+                  Sign in
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button size="sm" className="bg-blue-500 hover:bg-blue-600 text-white">
+                  Sign up
+                </Button>
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}

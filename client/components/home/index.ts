@@ -1,0 +1,14 @@
+export { Navbar } from "./Navbar";
+export { HeroSection } from "./HeroSection";
+export { TrustedCompanies } from "./TrustedCompanies";
+export { HowItWorks } from "./HowItWorks";
+export { WhyValuation } from "./WhyValuation";
+export { StatsSection } from "./StatsSection";
+export { FoundersSay } from "./FoundersSay";
+export { WhySmallBusinessesLoveUs } from "./WhySmallBusinessesLoveUs";
+export { UnderstandBusinessValue } from "./UnderstandBusinessValue";
+export { PricingSection } from "./PricingSection";
+export { FAQSection } from "./FAQSection";
+export { AboutFounder } from "./AboutFounder";
+export { Newsletter } from "./Newsletter";
+export { Footer } from "./Footer";

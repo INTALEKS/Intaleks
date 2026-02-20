@@ -1,0 +1,11 @@
+{
+  "name": "Document API Endpoint",
+  "description": "Manual hook to generate documentation for API routes",
+  "trigger": {
+    "type": "manual"
+  },
+  "action": {
+    "type": "sendMessage",
+    "message": "Analyze the current file and generate API documentation. Include: endpoint path, HTTP method, request body schema, query parameters, response format, authentication requirements, and example usage."
+  }
+}

@@ -1,0 +1,174 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_1 = require("../services/auth");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const authValidation_1 = require("../validation/authValidation");
+const cookieUtils_1 = require("../utils/cookieUtils");
+const db_1 = require("../config/db");
+const router = (0, express_1.Router)();
+/**
+ * POST /api/auth/register - User registration
+ * Requirements: 1.1, 1.3, 1.4, 1.5, 1.6, 1.7
+ */
+router.post("/register", (0, authValidation_1.validateRequest)(authValidation_1.registerSchema), async (req, res) => {
+    try {
+        const { email, password, name } = req.body;
+        const result = await auth_1.AuthService.registerUser({ email, password, name });
+        if (!result.success) {
+            // Check if it's a duplicate email error (Requirement 1.2)
+            if (result.message === "A user with this email already exists") {
+                return res.status(409).json({
+                    success: false,
+                    error: "Conflict",
+                    message: result.message,
+                });
+            }
+            return res.status(400).json({
+                success: false,
+                error: "Registration failed",
+                message: result.message,
+            });
+        }
+        // Set HTTP-only cookie with JWT token (Requirement 1.7)
+        if (result.token) {
+            cookieUtils_1.CookieUtils.setAuthToken(res, result.token);
+        }
+        return res.status(201).json({
+            success: true,
+            message: "Registration successful",
+            user: result.user,
+        });
+    }
+    catch (error) {
+        console.error("Registration error:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Internal server error",
+            message: "An error occurred during registration",
+        });
+    }
+});
+/**
+ * POST /api/auth/login - User login
+ * Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6
+ */
+router.post("/login", (0, authValidation_1.validateRequest)(authValidation_1.loginSchema), async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const result = await auth_1.AuthService.loginUser({ email, password });
+        if (!result.success) {
+            // Check for suspended account (Requirement 2.4)
+            if (result.message === "Your account has been suspended") {
+                return res.status(403).json({
+                    success: false,
+                    error: "Forbidden",
+                    message: result.message,
+                });
+            }
+            // Return consistent error for invalid credentials (Requirements 2.2, 2.3)
+            return res.status(401).json({
+                success: false,
+                error: "Unauthorized",
+                message: "Invalid email or password",
+            });
+        }
+        // Set HTTP-only cookie with JWT token (Requirement 2.5)
+        if (result.token) {
+            cookieUtils_1.CookieUtils.setAuthToken(res, result.token);
+        }
+        // Return user profile with subscription status (Requirement 2.6)
+        return res.status(200).json({
+            success: true,
+            message: "Login successful",
+            user: result.user,
+        });
+    }
+    catch (error) {
+        console.error("Login error:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Internal server error",
+            message: "An error occurred during login",
+        });
+    }
+});
+/**
+ * POST /api/auth/logout - User logout
+ * Requirements: 4.1, 4.2
+ */
+router.post("/logout", (req, res) => {
+    try {
+        // Clear the authentication cookie (Requirement 4.1)
+        cookieUtils_1.CookieUtils.clearAuthToken(res);
+        const result = auth_1.AuthService.logout();
+        // Return success response (Requirement 4.2)
+        return res.status(200).json(result);
+    }
+    catch (error) {
+        console.error("Logout error:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Internal server error",
+            message: "An error occurred during logout",
+        });
+    }
+});
+/**
+ * GET /api/auth/me - Get current user profile (protected)
+ * Requirements: 3.4
+ */
+router.get("/me", authMiddleware_1.authenticateToken, async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                error: "Unauthorized",
+                message: "User not authenticated",
+            });
+        }
+        // Fetch full user profile with subscription info
+        const user = await db_1.prisma.user.findUnique({
+            where: { id: req.user.id },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                avatar: true,
+                role: true,
+                subscriptionStatus: true,
+                currentPeriodEnd: true,
+                subscription: {
+                    select: {
+                        id: true,
+                        name: true,
+                        price: true,
+                        billingPeriod: true,
+                        features: true,
+                    },
+                },
+            },
+        });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                error: "Not found",
+                message: "User not found",
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Profile retrieved successfully",
+            user,
+        });
+    }
+    catch (error) {
+        console.error("Get profile error:", error);
+        return res.status(500).json({
+            success: false,
+            error: "Failed to retrieve profile",
+            message: "An error occurred while retrieving profile",
+        });
+    }
+});
+exports.default = router;

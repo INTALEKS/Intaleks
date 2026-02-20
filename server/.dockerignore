@@ -1,0 +1,21 @@
+node_modules/
+npm-debug.log
+# Keep package-lock.json for npm ci
+.env
+.env.local
+.env.production.example
+.git
+.gitignore
+README.md
+.DS_Store
+*.log
+coverage
+.nyc_output
+.vscode
+.idea
+docker-compose.yml
+Dockerfile
+fly.toml
+
+
+dist

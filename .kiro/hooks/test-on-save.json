@@ -1,0 +1,12 @@
+{
+  "name": "Run Tests on Save",
+  "description": "Automatically runs related tests when server files are saved",
+  "trigger": {
+    "type": "onFileSave",
+    "pattern": "server/**/*.ts"
+  },
+  "action": {
+    "type": "sendMessage",
+    "message": "A server file was saved: {{filePath}}. Check if there are related tests in server/__tests__/ and run them with `pnpm test` to verify the changes work correctly. Report any failures."
+  }
+}

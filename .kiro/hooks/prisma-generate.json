@@ -1,0 +1,12 @@
+{
+  "name": "Prisma Generate",
+  "description": "Regenerates Prisma client when schema changes",
+  "trigger": {
+    "type": "onFileSave",
+    "pattern": "server/prisma/schema.prisma"
+  },
+  "action": {
+    "type": "command",
+    "command": "cd server && pnpm db:generate"
+  }
+}

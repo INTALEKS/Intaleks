@@ -1,0 +1,189 @@
+import { Router, Request, Response } from "express";
+import { AuthService } from "../services/auth";
+import { authenticateToken } from "../middleware/authMiddleware";
+import { registerSchema, loginSchema, validateRequest } from "../validation/authValidation";
+import { CookieUtils } from "../utils/cookieUtils";
+import { prisma } from "../config/db";
+
+const router = Router();
+
+/**
+ * POST /api/auth/register - User registration
+ * Requirements: 1.1, 1.3, 1.4, 1.5, 1.6, 1.7
+ */
+router.post("/register", validateRequest(registerSchema), async (req: Request, res: Response) => {
+  try {
+    const { email, password, name } = req.body;
+
+    const result = await AuthService.registerUser({ email, password, name });
+
+    if (!result.success) {
+      // Check if it's a duplicate email error (Requirement 1.2)
+      if (result.message === "A user with this email already exists") {
+        return res.status(409).json({
+          success: false,
+          error: "Conflict",
+          message: result.message,
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        error: "Registration failed",
+        message: result.message,
+      });
+    }
+
+    // Set HTTP-only cookie with JWT token (Requirement 1.7)
+    if (result.token) {
+      CookieUtils.setAuthToken(res, result.token);
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Registration successful",
+      user: result.user,
+    });
+  } catch (error: any) {
+    console.error("Registration error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Internal server error",
+      message: "An error occurred during registration",
+    });
+  }
+});
+
+/**
+ * POST /api/auth/login - User login
+ * Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6
+ */
+router.post("/login", validateRequest(loginSchema), async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+
+    const result = await AuthService.loginUser({ email, password });
+
+    if (!result.success) {
+      // Check for suspended account (Requirement 2.4)
+      if (result.message === "Your account has been suspended") {
+        return res.status(403).json({
+          success: false,
+          error: "Forbidden",
+          message: result.message,
+        });
+      }
+
+      // Return consistent error for invalid credentials (Requirements 2.2, 2.3)
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized",
+        message: "Invalid email or password",
+      });
+    }
+
+    // Set HTTP-only cookie with JWT token (Requirement 2.5)
+    if (result.token) {
+      CookieUtils.setAuthToken(res, result.token);
+    }
+
+    // Return user profile with subscription status (Requirement 2.6)
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      user: result.user,
+    });
+  } catch (error: any) {
+    console.error("Login error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Internal server error",
+      message: "An error occurred during login",
+    });
+  }
+});
+
+/**
+ * POST /api/auth/logout - User logout
+ * Requirements: 4.1, 4.2
+ */
+router.post("/logout", (req: Request, res: Response) => {
+  try {
+    // Clear the authentication cookie (Requirement 4.1)
+    CookieUtils.clearAuthToken(res);
+
+    const result = AuthService.logout();
+
+    // Return success response (Requirement 4.2)
+    return res.status(200).json(result);
+  } catch (error: any) {
+    console.error("Logout error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Internal server error",
+      message: "An error occurred during logout",
+    });
+  }
+});
+
+/**
+ * GET /api/auth/me - Get current user profile (protected)
+ * Requirements: 3.4
+ */
+router.get("/me", authenticateToken, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: "Unauthorized",
+        message: "User not authenticated",
+      });
+    }
+
+    // Fetch full user profile with subscription info
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatar: true,
+        role: true,
+        subscriptionStatus: true,
+        currentPeriodEnd: true,
+        subscription: {
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            billingPeriod: true,
+            features: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "Not found",
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile retrieved successfully",
+      user,
+    });
+  } catch (error: any) {
+    console.error("Get profile error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to retrieve profile",
+      message: "An error occurred while retrieving profile",
+    });
+  }
+});
+
+export default router;
