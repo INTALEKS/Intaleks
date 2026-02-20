@@ -434,15 +434,15 @@ export default function CalculatorPage() {
     return !!(companyName && startedYear && employees && stage && country && industry);
   }, [companyName, startedYear, employees, stage, country, industry]);
 
-  // Step 2 (Multiple Assessment) is optional - always considered complete
+  // Step 2 (Multiple Assessment) is optional - always considered complete if step 1 is done
   const isStep2Complete = useMemo(() => {
-    return isStep1Complete; // Step 2 is optional, so it's complete if step 1 is done
+    return isStep1Complete;
   }, [isStep1Complete]);
 
-  // Step 3 is complete when valuation method is selected
+  // Step 3 is complete when valuation method is selected (independent of step 2)
   const isStep3Complete = useMemo(() => {
-    return isStep2Complete && !!selectedMethod;
-  }, [isStep2Complete, selectedMethod]);
+    return isStep1Complete && !!selectedMethod;
+  }, [isStep1Complete, selectedMethod]);
 
   // Step 4 is complete when financial data is entered based on selected method
   const isStep4Complete = useMemo(() => {

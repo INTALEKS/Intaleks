@@ -114,7 +114,7 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
               <tr key={addback.id} className="border-t">
                 <td className="p-3">
                   <Select value={addback.reason} onValueChange={(value) => onAddbackChange(addback.id, "reason", value)}>
-                    <SelectTrigger className="bg-gray-50 border-gray-200">
+                    <SelectTrigger className="bg-gray-50 border-gray-200 w-full">
                       <SelectValue placeholder="Select addback reason" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px]">
