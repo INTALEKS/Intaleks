@@ -1,5 +1,6 @@
 import { prisma } from "../config/db";
 import { getStripe } from "../config/stripe";
+import type { SubscriptionPlan } from "@prisma/client";
 
 /**
  * This script helps you link existing Stripe products/prices to your database subscription plans
@@ -39,11 +40,11 @@ async function linkExistingStripeProducts() {
 
     // Get all subscription plans from database
     console.log("\n📋 Database Subscription Plans:\n");
-    const plans = await prisma.subscriptionPlan.findMany({
+    const plans: SubscriptionPlan[] = await prisma.subscriptionPlan.findMany({
       orderBy: { createdAt: "asc" },
     });
 
-    plans.forEach((plan, index) => {
+    plans.forEach((plan: SubscriptionPlan, index: number) => {
       console.log(`${index + 1}. ${plan.name}`);
       console.log(`   Price: $${plan.price}`);
       console.log(`   Billing: ${plan.billingPeriod}`);
