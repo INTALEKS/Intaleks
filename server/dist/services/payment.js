@@ -126,7 +126,7 @@ class PaymentService {
         }
         // Ensure plan has Stripe price ID
         if (!plan.stripePriceId) {
-            throw new errors_1.StripeError(`This subscription plan is not yet available for purchase. Please contact support.`, errors_1.STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED, 400);
+            throw new errors_1.StripeError(`This subscription plan (${plan.name}) is not yet configured with Stripe. Please contact support or link the plan to a Stripe product.`, errors_1.STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED, 400);
         }
         // Get or create Stripe customer for the user
         const customerId = await this.getOrCreateStripeCustomer(userId);

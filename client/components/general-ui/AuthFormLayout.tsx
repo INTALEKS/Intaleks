@@ -6,7 +6,7 @@ export default function AuthFormLayout({ children, title }: { children: ReactNod
     <div className="min-h-screen flex justify-center items-center relative overflow-hidden bg-linear-to-b from-sky-200 via-blue-50 to-cyan-100">
       <section className="max-w-[80vw] md:max-w-[45vw] w-full p-3">
         <header className="flex flex-col gap-y-1 mb-10">
-          <Image src="/intaleks.jpg" alt="Intaleks Logo" width={500} height={50} className="self-center" />
+          <Image src="/intaleks.png" alt="Intaleks Logo" width={500} height={50} className="self-center" />
           <p className="text-center text-black font-normal text-xl">{title}</p>
         </header>
 
