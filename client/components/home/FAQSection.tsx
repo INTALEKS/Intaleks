@@ -10,8 +10,8 @@ interface FAQItem {
 
 const faqs: FAQItem[] = [
   {
-    question: "What does TheBizEvaluer do?",
-    answer: "TheBizEvaluer provides professional business valuation services to help founders, investors, and companies understand the true worth of their businesses for fundraising, strategic decisions, and planning.",
+    question: "What does Intaleks do?",
+    answer: "Intaleks provides professional business valuation services to help founders, investors, and companies understand the true worth of their businesses for fundraising, strategic decisions, and planning.",
   },
   {
     question: "How do you determine a company's value?",

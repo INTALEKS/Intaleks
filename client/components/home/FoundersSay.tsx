@@ -17,7 +17,7 @@ const testimonials: Testimonial[] = [
   {
     id: 1,
     image: "https://plus.unsplash.com/premium_photo-1671000049833-9c15fbddf393?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OXx8Zm91bmRlcnN8ZW58MHx8MHx8fDA%3D",
-    quote: "TheBizEvaluer helped us clearly understand our company's true value ahead of investor discussions. Their valuation was detailed, easy to follow, and aligned with how investors actually think. It gave us confidence going into fundraising and helped us justify our numbers with clarity.",
+    quote: "Intaleks helped us clearly understand our company's true value ahead of investor discussions. Their valuation was detailed, easy to follow, and aligned with how investors actually think. It gave us confidence going into fundraising and helped us justify our numbers with clarity.",
     name: "John Nelson",
     title: "Founder Akira",
     rating: 4,
@@ -33,7 +33,7 @@ const testimonials: Testimonial[] = [
   {
     id: 3,
     image: "https://plus.unsplash.com/premium_photo-1741291649401-f8a9e88528ba?w=900&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8Zm91bmRlcnN8ZW58MHx8MHx8fDA%3D",
-    quote: "We used TheBizEvaluer before our acquisition talks. The detailed analysis gave us leverage in negotiations and helped us achieve a fair valuation. Highly recommended for any founder.",
+    quote: "We used Intaleks before our acquisition talks. The detailed analysis gave us leverage in negotiations and helped us achieve a fair valuation. Highly recommended for any founder.",
     name: "Michael Roberts",
     title: "Founder Nexus Labs",
     rating: 5,
