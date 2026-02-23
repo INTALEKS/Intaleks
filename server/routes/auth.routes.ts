@@ -127,6 +127,74 @@ router.post("/logout", (req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/auth/forgot-password - Request password reset
+ */
+router.post("/forgot-password", async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: "Validation error",
+        message: "Email is required",
+      });
+    }
+
+    const result = await AuthService.requestPasswordReset(email);
+
+    return res.status(200).json(result);
+  } catch (error: any) {
+    console.error("Forgot password error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Internal server error",
+      message: "An error occurred while processing your request",
+    });
+  }
+});
+
+/**
+ * POST /api/auth/reset-password - Reset password with token
+ */
+router.post("/reset-password", async (req: Request, res: Response) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({
+        success: false,
+        error: "Validation error",
+        message: "Token and password are required",
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: "Validation error",
+        message: "Password must be at least 8 characters long",
+      });
+    }
+
+    const result = await AuthService.resetPasswordWithToken(token, password);
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    return res.status(200).json(result);
+  } catch (error: any) {
+    console.error("Reset password error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Internal server error",
+      message: "An error occurred while resetting your password",
+    });
+  }
+});
+
+/**
  * GET /api/auth/me - Get current user profile (protected)
  * Requirements: 3.4
  */

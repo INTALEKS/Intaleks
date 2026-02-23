@@ -153,6 +153,117 @@ class AuthService {
             message: "Logged out successfully",
         };
     }
+    /**
+     * Request password reset - generates token and returns it
+     * In production, this would send an email instead
+     */
+    static async requestPasswordReset(email) {
+        const normalizedEmail = email.toLowerCase().trim();
+        try {
+            // Check if user exists
+            const user = await db_1.prisma.user.findUnique({
+                where: { email: normalizedEmail },
+            });
+            // For security, always return success even if user doesn't exist
+            if (!user) {
+                return {
+                    success: true,
+                    message: "If an account exists with this email, a password reset link has been sent.",
+                };
+            }
+            // Generate random token
+            const token = this.generateResetToken();
+            const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+            // Store token in database
+            await db_1.prisma.passwordResetToken.create({
+                data: {
+                    email: normalizedEmail,
+                    token,
+                    expiresAt,
+                },
+            });
+            // In production, send email here
+            // For now, return the token directly for testing
+            return {
+                success: true,
+                message: "Password reset token generated successfully.",
+                token, // Remove this in production
+            };
+        }
+        catch (error) {
+            console.error("Password reset request error:", error);
+            return {
+                success: false,
+                message: "An error occurred while processing your request.",
+            };
+        }
+    }
+    /**
+     * Reset password using token
+     */
+    static async resetPasswordWithToken(token, newPassword) {
+        try {
+            // Find valid token
+            const resetToken = await db_1.prisma.passwordResetToken.findUnique({
+                where: { token },
+            });
+            if (!resetToken) {
+                return {
+                    success: false,
+                    message: "Invalid or expired reset token.",
+                };
+            }
+            // Check if token is expired
+            if (resetToken.expiresAt < new Date()) {
+                return {
+                    success: false,
+                    message: "Reset token has expired. Please request a new one.",
+                };
+            }
+            // Check if token was already used
+            if (resetToken.used) {
+                return {
+                    success: false,
+                    message: "This reset token has already been used.",
+                };
+            }
+            // Hash new password
+            const hashedPassword = await bcrypt_1.default.hash(newPassword, this.SALT_ROUNDS);
+            // Update user password and mark token as used
+            await db_1.prisma.$transaction([
+                db_1.prisma.user.update({
+                    where: { email: resetToken.email },
+                    data: { password: hashedPassword },
+                }),
+                db_1.prisma.passwordResetToken.update({
+                    where: { token },
+                    data: { used: true },
+                }),
+            ]);
+            return {
+                success: true,
+                message: "Password has been reset successfully.",
+            };
+        }
+        catch (error) {
+            console.error("Password reset error:", error);
+            return {
+                success: false,
+                message: "An error occurred while resetting your password.",
+            };
+        }
+    }
+    /**
+     * Generate a random reset token
+     */
+    static generateResetToken() {
+        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        let token = "";
+        for (let i = 0; i < 32; i++) {
+            token += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return token;
+    }
     static async loginAdmin(credentials) {
         const { email, password } = credentials;
         // Validate input

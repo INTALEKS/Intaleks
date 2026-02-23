@@ -8,10 +8,12 @@ interface InputFieldInterface {
   hasIcon?: true;
   Icon?: ComponentType<{ className?: string }>;
   error?: boolean;
+  value?: string;
+  disabled?: boolean;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
-export default function InputField({ label, type = "text", hasIcon, Icon, placeholder = "Placeholder", error, onChange }: InputFieldInterface) {
+export default function InputField({ label, type = "text", hasIcon, Icon, placeholder = "Placeholder", error, value, disabled, onChange }: InputFieldInterface) {
   const [showPassword, setShowPassword] = useState(false);
   const labelLowercase = label?.toLowerCase();
 
@@ -30,7 +32,7 @@ export default function InputField({ label, type = "text", hasIcon, Icon, placeh
       )}
 
       <div className={`flex items-center gap-x-2 bg-(--light-bg) border rounded-md py-1.5 px-2 transition-colors duration-300 focus-within:border-(--primary-border-typing) ${Icon ? "border-(--primary-border-typing)" : error ? "border-(--primary-border-error)" : "border-(--primary-border)"}`}>
-        <input type={showPassword ? "text" : type} id={labelLowercase} name={labelLowercase} placeholder={placeholder} className="px-2 py-1.5 flex-1 bg-transparent outline-none text-(--text-primary-dark) placeholder:text-(--placeholder-text) text-[14px]" onChange={onChange} />
+        <input type={showPassword ? "text" : type} id={labelLowercase} name={labelLowercase} placeholder={placeholder} value={value} disabled={disabled} className="px-2 py-1.5 flex-1 bg-transparent outline-none text-(--text-primary-dark) placeholder:text-(--placeholder-text) text-[14px] disabled:opacity-50 disabled:cursor-not-allowed" onChange={onChange} />
         {hasIcon && type === "password" && (
           <button type="button" className="cursor-pointer text-(--text-primary-dark)" onClick={handleButtonIcon}>
             {showPassword ? <Eye /> : <EyeOff />}
