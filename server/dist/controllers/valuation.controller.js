@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generatePDF = exports.deleteValuationDocument = exports.getValuationDocumentById = exports.getUserValuationDocuments = exports.createValuationDocument = void 0;
 const valuation_1 = require("../services/valuation");
 const valuationValidation_1 = require("../validation/valuationValidation");
-const pdfGenerator_1 = require("../services/pdfGenerator");
 const pdf_service_1 = require("../services/pdf.service");
 const storage_1 = require("../services/storage");
 /**
@@ -102,59 +101,8 @@ const generatePDF = async (req, res, next) => {
         if (!data.companyName || !data.finalValuation) {
             return res.status(400).json({ error: "Missing required fields" });
         }
-        // Check if extended data is provided (company questionnaire fields)
-        const hasExtendedData = data.startedYear || data.employees || data.stage || data.logoBase64;
-        let pdfBuffer;
-        if (hasExtendedData) {
-            // Use the new multi-page PDF service with cover page
-            const extendedData = (0, pdf_service_1.applyDefaultValues)({
-                companyName: data.companyName || "Company Name Not Provided",
-                country: data.country || "Australia",
-                industry: data.industry || "General",
-                generatedDate: data.generatedDate ||
-                    new Date().toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                    }),
-                financialYears: data.financialYears || [],
-                financialData: data.financialData || {},
-                addbacks: data.addbacks || [],
-                totalAddbacks: data.totalAddbacks || 0,
-                averageEbit: data.averageEbit || 0,
-                adjustedEbit: data.adjustedEbit || 0,
-                valuationMethod: data.valuationMethod,
-                assets: data.assets,
-                liabilities: data.liabilities,
-                totalAssets: data.totalAssets,
-                totalLiabilities: data.totalLiabilities,
-                assetValuation: data.assetValuation,
-                capitalizationRate: data.capitalizationRate,
-                profitValuation: data.profitValuation,
-                finalValuation: data.finalValuation,
-                // Extended fields from company questionnaire
-                startedYear: data.startedYear,
-                employees: data.employees,
-                stage: data.stage,
-                logoBase64: data.logoBase64,
-                logoMimeType: data.logoMimeType,
-            });
-            // Generate multi-page PDF with cover page
-            const pdfService = new pdf_service_1.PDFService();
-            const doc = pdfService.generateMultiPageValuationReport(extendedData);
-            // Convert PDFKit document to buffer
-            pdfBuffer = await new Promise((resolve, reject) => {
-                const chunks = [];
-                doc.on("data", (chunk) => chunks.push(chunk));
-                doc.on("end", () => resolve(Buffer.concat(chunks)));
-                doc.on("error", reject);
-                doc.end();
-            });
-        }
-        else {
-            // Use the legacy single-page PDF generator
-            pdfBuffer = await (0, pdfGenerator_1.generateValuationPDF)(data);
-        }
+        // Generate RAVDA Scorecard PDF
+        const pdfBuffer = await (0, pdf_service_1.generateValuationPDF)(data);
         // Upload PDF to R2 storage
         let fileUrl;
         try {
@@ -167,7 +115,7 @@ const generatePDF = async (req, res, next) => {
                 companyName: data.companyName,
                 country: data.country,
                 industry: data.industry,
-                method: data.valuationMethod,
+                method: "ravda",
                 valuation: data.finalValuation,
                 fileUrl: uploadResult.url,
                 fileSize: uploadResult.size,
@@ -178,7 +126,7 @@ const generatePDF = async (req, res, next) => {
             console.error("Failed to upload PDF to R2:", storageError);
         }
         res.setHeader("Content-Type", "application/pdf");
-        res.setHeader("Content-Disposition", `attachment; filename="valuation-report-${Date.now()}.pdf"`);
+        res.setHeader("Content-Disposition", `attachment; filename="ravda-scorecard-${Date.now()}.pdf"`);
         res.setHeader("Content-Length", pdfBuffer.length);
         res.send(pdfBuffer);
     }

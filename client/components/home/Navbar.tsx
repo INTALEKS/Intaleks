@@ -6,11 +6,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { ChevronDown, LogOut, User, Settings } from "lucide-react";
+import { ChevronDown, LogOut, User, Settings, Menu } from "lucide-react";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useAuth } from "@/app/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 interface NavLink {
   href: string;
@@ -44,6 +45,7 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [learningOpen, setLearningOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Auth state - Requirements: 9.1, 9.2, 9.3, 9.4
   const { isAuthentiating, isAuthenticated, user } = useAuthState();
@@ -76,6 +78,102 @@ export function Navbar() {
         <Link href="/" className="font-bold text-xl">
           <Image src="/intaleks.png" alt="Intaleks logo" width={150} height={32} />
         </Link>
+
+        {/* Mobile Menu */}
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild className="md:hidden">
+            <Button variant="ghost" size="icon">
+              <Menu className="h-6 w-6" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[300px]">
+            <div className="flex flex-col gap-4 mt-8">
+              {navLinks.map((link) =>
+                "dropdown" in link ? (
+                  <div key={link.label} className="flex flex-col gap-2">
+                    <span className="text-sm font-medium text-gray-900">{link.label}</span>
+                    <div className="flex flex-col gap-1 pl-4">
+                      {link.dropdown?.map((item) => (
+                        <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} className={cn("text-sm py-2 transition-colors", pathname === item.href ? "text-blue-500 font-medium" : "text-gray-600")}>
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ) : "isAnchor" in link && link.isAnchor ? (
+                  <button
+                    key={link.href}
+                    onClick={(e) => {
+                      handleAnchorClick(e, new URL(link.href, "http://x").searchParams.get("scrollTo") || "");
+                      setMobileMenuOpen(false);
+                    }}
+                    className="text-sm py-2 text-left text-gray-600"
+                  >
+                    {link.label}
+                  </button>
+                ) : (
+                  <Link key={link.href} href={link.href} onClick={() => setMobileMenuOpen(false)} className={cn("text-sm py-2 transition-colors", pathname === link.href ? "text-blue-500 font-medium" : "text-gray-600")}>
+                    {link.label}
+                  </Link>
+                ),
+              )}
+
+              {/* Mobile Auth Buttons */}
+              <div className="flex flex-col gap-2 mt-4 pt-4 border-t">
+                {isAuthenticated && user ? (
+                  <>
+                    <div className="text-sm text-gray-600 mb-2">
+                      <p className="font-medium">{displayName}</p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
+                    </div>
+                    {user.role === "ADMIN" && (
+                      <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
+                        <Button variant="outline" size="sm" className="w-full justify-start">
+                          <User className="mr-2 h-4 w-4" />
+                          Admin Dashboard
+                        </Button>
+                      </Link>
+                    )}
+                    <Link href="/settings" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" size="sm" className="w-full justify-start">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Settings
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        handleLogout();
+                        setMobileMenuOpen(false);
+                      }}
+                      disabled={isLoggingOut}
+                      className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      {isLoggingOut ? "Logging out..." : "Log out"}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" size="sm" className="w-full border-blue-500 text-blue-500">
+                        Sign in
+                      </Button>
+                    </Link>
+                    <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
+                      <Button size="sm" className="w-full bg-blue-500 hover:bg-blue-600 text-white">
+                        Sign up
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((link) =>
             "dropdown" in link ? (
@@ -108,8 +206,8 @@ export function Navbar() {
           )}
         </nav>
 
-        {/* Auth-aware UI */}
-        <div className="flex items-center gap-3">
+        {/* Desktop Auth UI */}
+        <div className="hidden md:flex items-center gap-3">
           {isAuthentiating ? (
             // Loading state - Requirement 9.4
             <div className="flex items-center gap-3">
