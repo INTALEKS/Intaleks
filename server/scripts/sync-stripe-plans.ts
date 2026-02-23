@@ -88,7 +88,7 @@ async function syncStripePlans() {
     const updatedPlans = await prisma.subscriptionPlan.findMany({
       where: { isActive: true },
     });
-    updatedPlans.forEach((p) => {
+    updatedPlans.forEach((p: { name: string; stripePriceId: string | null }) => {
       console.log(`   ${p.name}: ${p.stripePriceId ? "✅ Synced" : "❌ Not synced"}`);
     });
   } catch (error) {
