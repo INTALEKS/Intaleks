@@ -40,11 +40,10 @@ export function PricingSection() {
     fetchPlans();
   }, []);
 
-  const formatPrice = (price: number): { dollars: string; cents: string } => {
-    if (price === 0) return { dollars: "$0", cents: "" };
+  const formatPrice = (price: number): string => {
+    if (price === 0) return "$0";
     const amount = price / 100;
-    const [dollars, cents] = amount.toFixed(2).split(".");
-    return { dollars: `$${dollars}`, cents: `.${cents}` };
+    return `$${Math.floor(amount)}`;
   };
 
   const handleSubscribe = (planId: string) => {
@@ -180,8 +179,7 @@ export function PricingSection() {
 
                   {/* Price */}
                   <div className="flex items-baseline">
-                    <span className={`font-bold text-gray-900 ${isFree ? "text-4xl" : "text-5xl"}`}>{price.dollars}</span>
-                    {price.cents && <span className="text-2xl font-bold text-gray-900">{price.cents}</span>}
+                    <span className={`font-bold text-gray-900 ${isFree ? "text-4xl" : "text-5xl"}`}>{price}</span>
                     {isFree ? <span className="text-gray-500 ml-1">/lifetime</span> : plan.billingPeriod === "ONE_TIME" ? <span className="text-gray-500 ml-1">/one-time</span> : plan.billingPeriod === "YEARLY" ? <span className="text-gray-500 ml-1">/year</span> : <span className="text-gray-500 ml-1">/month</span>}
                   </div>
                 </div>
