@@ -5,7 +5,7 @@ import { Download, Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/home";
 import { AccordionSection, MethodToggle, ValuationMethod, CountryIndustrySelector, FinancialDataTable, AddbacksTable, StepProgress, CompanyQuestionnaire, ValuationDocumentList, YearSelector, EarningCapacitySection, AddbacksExamplesSection, ValuationSummaryCard } from "@/components/calculator";
-import { AssetMethod, ProfitMethod } from "@/components/calculator/methods";
+import { AssetMethod } from "@/components/calculator/methods";
 import { calculateAverageEBIT, formatCurrency, FinancialYearData } from "@/lib/calculator-utils";
 import { downloadValuationPDF, ValuationReportData } from "@/lib/valuation-api";
 import { useAuthState } from "@/app/hooks/useAuthState";
@@ -16,6 +16,9 @@ import { ValuationQuestionnaire } from "@/components/calculator/ValuationQuestio
 import { useCalculatePreview } from "@/app/hooks/useQuestionnaire";
 import { useValuationMultiples } from "@/app/hooks/useValuationMultiples";
 import type { QuestionnaireScores } from "@/lib/questionnaire-api";
+
+// LocalStorage key for calculator data persistence
+const CALCULATOR_STORAGE_KEY = "intaleks_calculator_data";
 
 // Financial metrics following standard P&L structure with sample placeholders
 // Only input fields - calculated fields are handled separately
@@ -31,11 +34,36 @@ const financialMetrics = [
 
 const currentYear = new Date().getFullYear();
 
+// Type for persisted calculator state
+interface CalculatorState {
+  companyName: string;
+  startedYear: string;
+  employees: string;
+  stage: string;
+  country: string;
+  industry: string;
+  customMultiple: string;
+  questionnaireScores: QuestionnaireScores;
+  calculatedMultiple?: number;
+  multipleCategory?: string;
+  totalScore?: number;
+  useQuestionnaireMultiple: boolean;
+  selectedYears: number[];
+  financialData: Record<string, Record<string, string>>;
+  addbacks: Array<{ id: string; reason: string; values: Record<string, string> }>;
+  selectedMethod: ValuationMethod;
+  assets: Record<string, string>;
+  liabilities: Record<string, string>;
+}
+
 export default function CalculatorPage() {
   const router = useRouter();
-  const { isAuthenticated, hasActiveSubscription, subscriptionStatus } = useAuthState();
+  const { isAuthenticated, hasActiveSubscription, subscriptionStatus, isAuthentiating } = useAuthState();
   const queryClient = useQueryClient();
   const { getMultiple } = useValuationMultiples();
+
+  // Track if we've restored data from localStorage
+  const [hasRestoredData, setHasRestoredData] = useState(false);
 
   // ============================================
   // STEP 1: Company Information State
@@ -97,9 +125,6 @@ export default function CalculatorPage() {
   // Asset Method
   const [assets, setAssets] = useState<Record<string, string>>({});
   const [liabilities, setLiabilities] = useState<Record<string, string>>({});
-
-  // Profit Method
-  const [capitalizationRate, setCapitalizationRate] = useState("25");
 
   // ============================================
   // UI State
@@ -177,19 +202,6 @@ export default function CalculatorPage() {
     return values;
   }, [calculatedMetrics, financialYears]);
 
-  const averageEbit = useMemo(() => {
-    const ebitArray = financialYears.map((year) => calculatedMetrics[year]?.ebit || 0);
-    return calculateAverageEBIT(ebitArray);
-  }, [calculatedMetrics, financialYears]);
-
-  const totalAddbacks = useMemo(() => {
-    // Sum all addback values across all years
-    return addbacks.reduce((sum, addback) => {
-      const addbackTotal = Object.values(addback.values).reduce((yearSum, val) => yearSum + (parseFloat(val) || 0), 0);
-      return sum + addbackTotal;
-    }, 0);
-  }, [addbacks]);
-
   const totalAddbacksByYear = useMemo(() => {
     const totals: Record<string, number> = {};
     financialYears.forEach((year) => {
@@ -198,7 +210,22 @@ export default function CalculatorPage() {
     return totals;
   }, [addbacks, financialYears]);
 
-  const adjustedEbit = averageEbit + totalAddbacks;
+  // Calculate Adjusted EBIT for each year (EBIT + Addbacks for that year)
+  const adjustedEbitByYear = useMemo(() => {
+    const adjusted: Record<string, number> = {};
+    financialYears.forEach((year) => {
+      const ebit = calculatedMetrics[year]?.ebit || 0;
+      const addbacksForYear = totalAddbacksByYear[year] || 0;
+      adjusted[year] = ebit + addbacksForYear;
+    });
+    return adjusted;
+  }, [calculatedMetrics, financialYears, totalAddbacksByYear]);
+
+  // Calculate average Adjusted EBIT across all years
+  const averageAdjustedEbit = useMemo(() => {
+    const adjustedEbitArray = financialYears.map((year) => adjustedEbitByYear[year] || 0);
+    return calculateAverageEBIT(adjustedEbitArray);
+  }, [adjustedEbitByYear, financialYears]);
 
   // This is now just for display purposes - not used in calculation
   const displayMultiple = useMemo(() => {
@@ -217,18 +244,13 @@ export default function CalculatorPage() {
       const totalLiabilities = Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
       return totalAssets - totalLiabilities;
     } else if (selectedMethod === "profit") {
-      // Use questionnaire multiple if available, otherwise use cap rate
-      if (useQuestionnaireMultiple && calculatedMultiple) {
-        // Direct multiple approach: Valuation = Adjusted EBIT × Multiple
-        return adjustedEbit * calculatedMultiple;
-      } else {
-        // Capitalization rate approach: Valuation = (Adjusted EBIT / Cap Rate) × 100
-        const rate = parseFloat(capitalizationRate) || 25;
-        return (adjustedEbit / rate) * 100;
-      }
+      // Use questionnaire multiple if available, otherwise use default multiple
+      const multiple = useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0;
+      // Valuation = Average Adjusted EBIT × Multiple
+      return averageAdjustedEbit * multiple;
     }
     return 0;
-  }, [selectedMethod, assets, liabilities, adjustedEbit, capitalizationRate, useQuestionnaireMultiple, calculatedMultiple]);
+  }, [selectedMethod, assets, liabilities, averageAdjustedEbit, useQuestionnaireMultiple, calculatedMultiple, country, industry, getMultiple]);
 
   // ============================================
   // EVENT HANDLERS
@@ -239,6 +261,13 @@ export default function CalculatorPage() {
   };
 
   const handleCalculateMultiple = async () => {
+    // Check if user has active subscription
+    if (!hasActiveSubscription) {
+      toast.error("An active subscription is required to calculate your custom multiple");
+      router.push("/#pricing");
+      return;
+    }
+
     try {
       const result = await calculatePreviewMutation.mutateAsync({
         country,
@@ -364,9 +393,9 @@ export default function CalculatorPage() {
           reason: a.reason,
           values: Object.fromEntries(Object.entries(a.values).map(([year, value]) => [year, parseFloat(value) || 0])),
         })),
-        totalAddbacks,
-        averageEbit,
-        adjustedEbit,
+        totalAddbacks: financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0),
+        averageEbit: financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length,
+        adjustedEbit: averageAdjustedEbit,
         valuationMethod: selectedMethod,
         finalValuation,
         // Extended fields for multi-page PDF with cover page
@@ -383,7 +412,7 @@ export default function CalculatorPage() {
         // Questionnaire data for RAVDA Scorecard
         questionnaireScore: totalScore,
         questionnaireCategory: multipleCategory,
-        calculatedMultiple: calculatedMultiple,
+        calculatedMultiple: useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0,
         questionnaireScores: useQuestionnaireMultiple ? questionnaireScores : undefined,
       };
 
@@ -406,7 +435,6 @@ export default function CalculatorPage() {
         reportData.totalLiabilities = Object.values(reportData.liabilities).reduce((a, b) => a + b, 0);
         reportData.assetValuation = finalValuation;
       } else if (selectedMethod === "profit") {
-        reportData.capitalizationRate = parseFloat(capitalizationRate) || 25;
         reportData.profitValuation = finalValuation;
       }
 
@@ -415,6 +443,9 @@ export default function CalculatorPage() {
 
       // Invalidate documents query to refresh the list
       queryClient.invalidateQueries({ queryKey: ["valuations"] });
+
+      // Clear saved data after successful download
+      clearSavedData();
 
       toast.success("Valuation report downloaded successfully!");
     } catch (error) {
@@ -495,6 +526,125 @@ export default function CalculatorPage() {
     { number: 4, label: "Financials" },
     { number: 5, label: "Download" },
   ];
+
+  // ============================================
+  // LOCALSTORAGE PERSISTENCE
+  // ============================================
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    if (!hasRestoredData) return; // Don't save until we've restored initial data
+
+    const stateToSave: CalculatorState = {
+      companyName,
+      startedYear,
+      employees,
+      stage,
+      country,
+      industry,
+      customMultiple,
+      questionnaireScores,
+      calculatedMultiple,
+      multipleCategory,
+      totalScore,
+      useQuestionnaireMultiple,
+      selectedYears,
+      financialData,
+      addbacks,
+      selectedMethod,
+      assets,
+      liabilities,
+    };
+
+    try {
+      localStorage.setItem(CALCULATOR_STORAGE_KEY, JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error("Failed to save calculator state:", error);
+    }
+  }, [hasRestoredData, companyName, startedYear, employees, stage, country, industry, customMultiple, questionnaireScores, calculatedMultiple, multipleCategory, totalScore, useQuestionnaireMultiple, selectedYears, financialData, addbacks, selectedMethod, assets, liabilities]);
+
+  // Restore state from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedState = localStorage.getItem(CALCULATOR_STORAGE_KEY);
+      if (savedState) {
+        const parsed: CalculatorState = JSON.parse(savedState);
+
+        // Restore all state
+        setCompanyName(parsed.companyName || "");
+        setStartedYear(parsed.startedYear || "");
+        setEmployees(parsed.employees || "");
+        setStage(parsed.stage || "startup");
+        setCountry(parsed.country || "australia");
+        setIndustry(parsed.industry || "retail");
+        setCustomMultiple(parsed.customMultiple || "3");
+        setQuestionnaireScores(
+          parsed.questionnaireScores || {
+            ownerDependence: 0,
+            recurringRevenue: 0,
+            customerConcentration: 0,
+            managementDepth: 0,
+            growthRate: 0,
+            competitiveAdvantage: 0,
+            revenueDiversification: 0,
+            systemsScalability: 0,
+            marginStability: 0,
+            externalRisk: 0,
+          },
+        );
+        setCalculatedMultiple(parsed.calculatedMultiple);
+        setMultipleCategory(parsed.multipleCategory);
+        setTotalScore(parsed.totalScore);
+        setUseQuestionnaireMultiple(parsed.useQuestionnaireMultiple || false);
+        setSelectedYears(parsed.selectedYears || [currentYear - 3, currentYear - 2, currentYear - 1]);
+        setFinancialData(parsed.financialData || {});
+        setAddbacks(
+          parsed.addbacks || [
+            { id: "1", reason: "", values: {} },
+            { id: "2", reason: "", values: {} },
+            { id: "3", reason: "", values: {} },
+          ],
+        );
+        setSelectedMethod(parsed.selectedMethod || "profit");
+        setAssets(parsed.assets || {});
+        setLiabilities(parsed.liabilities || {});
+
+        toast.success("Your previous data has been restored");
+      }
+    } catch (error) {
+      console.error("Failed to restore calculator state:", error);
+    } finally {
+      setHasRestoredData(true);
+    }
+  }, []);
+
+  // Clear localStorage after successful download
+  const clearSavedData = () => {
+    try {
+      localStorage.removeItem(CALCULATOR_STORAGE_KEY);
+    } catch (error) {
+      console.error("Failed to clear calculator state:", error);
+    }
+  };
+
+  // ============================================
+  // LOADING STATE
+  // ============================================
+
+  // Show loading state while restoring data
+  if (!hasRestoredData) {
+    return (
+      <div className="min-h-screen bg-linear-to-b from-blue-50 via-white to-white">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
+            <p className="text-gray-600">Loading calculator...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 via-white to-white">
@@ -622,7 +772,7 @@ export default function CalculatorPage() {
         <AccordionSection title="Download Valuation Document (PDF)" stepNumber={5} isOpen={openSections[5]} onToggle={() => toggleSection(5)}>
           <div className="py-6 space-y-6">
             {/* Comprehensive Valuation Summary Card */}
-            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={averageEbit} totalAddbacks={totalAddbacks} adjustedEbit={adjustedEbit} valuationMethod={selectedMethod} valuationMultiple={useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : undefined} capitalizationRate={selectedMethod === "profit" ? parseFloat(capitalizationRate) : undefined} finalValuation={finalValuation} totalAssets={selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} />
+            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} totalAddbacks={financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0)} adjustedEbit={averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0} finalValuation={finalValuation} totalAssets={selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} />
 
             <div className="text-center">
               {!isStep4Complete ? (

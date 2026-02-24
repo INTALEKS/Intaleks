@@ -8,6 +8,8 @@ export interface ValuationPDFData {
   questionnaireScore?: number;
   questionnaireCategory?: string;
   calculatedMultiple?: number;
+  logoBase64?: string;
+  logoMimeType?: string;
   questionnaireScores?: {
     ownerDependence: number;
     recurringRevenue: number;
@@ -102,6 +104,8 @@ export async function generateValuationPDF(data: ValuationPDFData): Promise<Buff
       day: "numeric",
       year: "numeric",
     }),
+    logoBase64: data.logoBase64,
+    logoMimeType: data.logoMimeType,
     drivers,
     currentValue,
     industryStandardValue,

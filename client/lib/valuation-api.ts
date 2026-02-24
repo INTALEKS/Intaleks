@@ -47,7 +47,6 @@ export interface ValuationReportData {
   assetValuation?: number;
 
   // Profit Method
-  capitalizationRate?: number;
   profitValuation?: number;
 
   // Final Valuation

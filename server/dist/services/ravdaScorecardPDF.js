@@ -5,6 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateRAVDAScorecardPDF = generateRAVDAScorecardPDF;
 const pdfkit_1 = __importDefault(require("pdfkit"));
+const path_1 = __importDefault(require("path"));
+const fs_1 = __importDefault(require("fs"));
 const COLORS = {
     primary: "#3B82F6", // Blue
     secondary: "#60A5FA", // Light Blue
@@ -32,10 +34,34 @@ function getRatingColor(rating) {
     }
 }
 function drawHeader(doc, data, yPos) {
-    // Title
-    doc.fontSize(20).font("Helvetica-Bold").fillColor("#374151").text("Risk & Value Driver Assessment", 50, yPos);
-    yPos += 30;
-    doc.fontSize(32).font("Helvetica-Bold").fillColor(COLORS.primary).text("RAVDA Scorecard", 50, yPos);
+    // Add Intaleks logo on the left
+    try {
+        const logoPath = path_1.default.join(__dirname, "../assets/intaleks.png");
+        if (fs_1.default.existsSync(logoPath)) {
+            doc.image(logoPath, 50, yPos, { width: 100 });
+        }
+    }
+    catch (error) {
+        console.error("Failed to load Intaleks logo:", error);
+    }
+    // Add company logo on the right (if provided)
+    if (data.logoBase64 && data.logoMimeType) {
+        try {
+            const logoBuffer = Buffer.from(data.logoBase64, "base64");
+            doc.image(logoBuffer, 450, yPos, { width: 100, height: 60, fit: [100, 60] });
+        }
+        catch (error) {
+            console.error("Failed to load company logo:", error);
+        }
+    }
+    // Title (centered)
+    doc
+        .fontSize(20)
+        .font("Helvetica-Bold")
+        .fillColor("#374151")
+        .text("Risk & Value Driver Assessment", 50, yPos + 70, { width: 500, align: "center" });
+    yPos += 100;
+    doc.fontSize(32).font("Helvetica-Bold").fillColor(COLORS.primary).text("RAVDA Scorecard", 50, yPos, { width: 500, align: "center" });
     yPos += 50;
     return yPos;
 }
@@ -303,8 +329,9 @@ async function generateRAVDAScorecardPDF(data) {
         drawNextSteps(doc, data, 320, bottomStartY);
         // Footer disclaimer
         drawFooterDisclaimer(doc, 720);
-        // Footer text
-        doc.fontSize(8).font("Helvetica").fillColor(COLORS.gray).text(`test answers`, 520, 780, { align: "right" });
+        // Footer text with Intaleks branding
+        doc.fontSize(8).font("Helvetica-Bold").fillColor(COLORS.primary).text("Intaleks", 50, 780);
+        doc.fontSize(8).font("Helvetica").fillColor(COLORS.gray).text("Business Valuation & Advisory", 50, 790);
         doc.end();
     });
 }

@@ -82,6 +82,8 @@ async function generateValuationPDF(data) {
             day: "numeric",
             year: "numeric",
         }),
+        logoBase64: data.logoBase64,
+        logoMimeType: data.logoMimeType,
         drivers,
         currentValue,
         industryStandardValue,

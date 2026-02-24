@@ -126,7 +126,7 @@ function LoginForm() {
         {/* Link to signup page */}
         <p className="text-center text-gray-600 text-sm mt-2">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-blue-500 hover:text-blue-600 font-medium">
+          <Link href={returnUrl ? `/signup?returnUrl=${encodeURIComponent(returnUrl)}` : "/signup"} className="text-blue-500 hover:text-blue-600 font-medium">
             Sign up
           </Link>
         </p>

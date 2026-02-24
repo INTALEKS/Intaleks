@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import InputField from "@/components/general-ui/InputField";
@@ -16,12 +17,13 @@ interface FormErrors {
 }
 
 /**
- * Signup page at /signup
- * Form with email, password, confirm password, name fields
- * Client-side validation with inline errors
- * Requirements: 7.1, 7.3, 7.6
+ * Signup form component that uses useSearchParams
+ * Wrapped in Suspense boundary in the parent component
  */
-export default function SignupPage() {
+function SignupForm() {
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl");
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -35,7 +37,7 @@ export default function SignupPage() {
     name: "",
   });
 
-  const { register, isRegistering, registerError } = useAuth();
+  const { register, isRegistering, registerError } = useAuth(returnUrl || "/");
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {
@@ -95,6 +97,9 @@ export default function SignupPage() {
   return (
     <AuthFormLayout title="Create your account">
       <form onSubmit={handleSubmit} className="flex flex-col gap-y-4">
+        {/* Return URL info */}
+        {returnUrl && <div className="bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded-lg text-sm">Create an account to continue</div>}
+
         {/* Server error display */}
         {registerError && <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">{registerError.message}</div>}
 
@@ -177,11 +182,33 @@ export default function SignupPage() {
         {/* Link to login page */}
         <p className="text-center text-gray-600 text-sm mt-2">
           Already have an account?{" "}
-          <Link href="/login" className="text-blue-500 hover:text-blue-600 font-medium">
+          <Link href={returnUrl ? `/login?returnUrl=${encodeURIComponent(returnUrl)}` : "/login"} className="text-blue-500 hover:text-blue-600 font-medium">
             Log in
           </Link>
         </p>
       </form>
     </AuthFormLayout>
+  );
+}
+
+/**
+ * Signup page at /signup
+ * Form with email, password, confirm password, name fields
+ * Client-side validation with inline errors
+ * Requirements: 7.1, 7.3, 7.6
+ */
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <AuthFormLayout title="Create your account">
+          <div className="flex justify-center items-center py-8">
+            <Loader2 className="animate-spin text-blue-500" />
+          </div>
+        </AuthFormLayout>
+      }
+    >
+      <SignupForm />
+    </Suspense>
   );
 }

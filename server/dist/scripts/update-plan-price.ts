@@ -6,7 +6,7 @@ async function updatePrice() {
   console.log("💰 Updating plan price...\n");
 
   const PLAN_ID = "cmlzb221k000013zmq6imdeg4";
-  const NEW_PRICE = 399;
+  const NEW_PRICE = 39900; // $399.00 in cents
 
   try {
     const updatedPlan = await prisma.subscriptionPlan.update({

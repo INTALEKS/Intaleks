@@ -21,9 +21,10 @@ export function AccordionSection({ title, stepNumber, isOpen, onToggle, children
   return (
     <div className="bg-gray-100 rounded-lg overflow-hidden">
       <button onClick={onToggle} className="w-full flex items-center justify-between p-4 text-left bg-gray-200 hover:bg-gray-300 transition-colors">
-        <span className="font-medium text-gray-800">
-          {stepNumber}. {title}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="font-bold text-2xl text-gray-700">{stepNumber < 10 ? `0${stepNumber}` : stepNumber}</span>
+          <span className="font-medium text-gray-800">{title}</span>
+        </div>
         <ChevronDown className={cn("w-5 h-5 text-gray-500 transition-transform duration-200", isOpen && "rotate-180")} />
       </button>
       {isOpen && <div className={`px-4 pb-6 mt-3 ${isHomepage ? "h-96 overflow-y-auto" : ""}`}>{children}</div>}
