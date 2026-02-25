@@ -7,6 +7,7 @@ interface RAVDAData {
   score: number; // 0-10 scale
   rating: string; // Weak, Average, Good, Strong, Excellent
   industry: string;
+  country: string;
   industryStandard: number; // Industry average score
   industryBenchmark: number; // Industry top performer score
   generatedDate: string;
@@ -32,6 +33,55 @@ interface RAVDAData {
 
   // Next Steps
   nextSteps: string[];
+
+  // Financial data
+  financialYears: string[];
+  financialData: Record<
+    string,
+    {
+      sales: number;
+      cogs: number;
+      grossProfit: number;
+      operatingExpenses: number;
+      netProfitAndLoss: number;
+      interestExpense: number;
+      interestIncome: number;
+      ebit: number;
+    }
+  >;
+  addbacks: Array<{
+    id: string;
+    reason: string;
+    values: Record<string, number>;
+  }>;
+  totalAddbacks: number;
+  averageEbit: number;
+  adjustedEbit: number;
+  valuationMethod: "profit" | "asset" | "dcf";
+  finalValuation: number;
+  calculatedMultiple?: number;
+
+  // Company info
+  startedYear?: string;
+  employees?: string;
+  stage?: string;
+
+  // Asset method data
+  assets?: {
+    plantEquipment: number;
+    inventory: number;
+    vehicles: number;
+    goodwill: number;
+    otherIntangible: number;
+  };
+  liabilities?: {
+    loans: number;
+    annualLeave: number;
+    longServiceLeave: number;
+    otherLiabilities: number;
+  };
+  totalAssets?: number;
+  totalLiabilities?: number;
 }
 
 const COLORS = {
@@ -382,23 +432,352 @@ Based on your responses and our data analytics, we believe these services will i
   });
 }
 
+function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
+  doc.addPage();
+  let yPos = 50;
+
+  // Page title
+  doc.fontSize(18).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Financial Analysis", 50, yPos);
+  yPos += 40;
+
+  // Company info summary
+  doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.darkGray).text(`Company: ${data.companyName}`, 50, yPos);
+  yPos += 15;
+  doc.fontSize(10).font("Helvetica").fillColor(COLORS.gray).text(`Industry: ${data.industry} | Country: ${data.country}`, 50, yPos);
+  yPos += 30;
+
+  // Financial data table
+  doc.fontSize(14).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Profit & Loss Statement", 50, yPos);
+  yPos += 20;
+
+  // Table headers
+  const colWidth = 100;
+  const startX = 50;
+
+  doc.fontSize(9).font("Helvetica-Bold").fillColor("white");
+  doc.rect(startX, yPos, 150, 25).fillAndStroke(COLORS.darkGray, COLORS.darkGray);
+  doc.text("Metric", startX + 5, yPos + 8);
+
+  data.financialYears.forEach((year, index) => {
+    const x = startX + 150 + index * colWidth;
+    doc.rect(x, yPos, colWidth, 25).fillAndStroke(COLORS.primary, COLORS.primary);
+    doc.text(year, x + 5, yPos + 8, { width: colWidth - 10, align: "right" });
+  });
+  yPos += 25;
+
+  // Table rows
+  const metrics = [
+    { key: "sales", label: "Sales" },
+    { key: "cogs", label: "COGS" },
+    { key: "grossProfit", label: "Gross Profit", bold: true },
+    { key: "operatingExpenses", label: "Operating Expenses" },
+    { key: "netProfitAndLoss", label: "Net Profit/Loss", bold: true },
+    { key: "interestExpense", label: "Interest Expense" },
+    { key: "interestIncome", label: "Interest Income" },
+    { key: "ebit", label: "EBIT", bold: true, highlight: true },
+  ];
+
+  metrics.forEach((metric) => {
+    const bgColor = metric.highlight ? "#EFF6FF" : yPos % 50 < 25 ? "#F9FAFB" : "white";
+    doc.rect(startX, yPos, 150, 20).fillAndStroke(bgColor, "#E5E7EB");
+
+    doc
+      .fontSize(9)
+      .font(metric.bold ? "Helvetica-Bold" : "Helvetica")
+      .fillColor(COLORS.darkGray);
+    doc.text(metric.label, startX + 5, yPos + 6);
+
+    data.financialYears.forEach((year, index) => {
+      const x = startX + 150 + index * colWidth;
+      doc.rect(x, yPos, colWidth, 20).fillAndStroke(bgColor, "#E5E7EB");
+
+      const value = data.financialData[year]?.[metric.key as keyof (typeof data.financialData)[string]] || 0;
+      const formattedValue = `$${(value / 1000).toFixed(0)}k`;
+      doc.text(formattedValue, x + 5, yPos + 6, { width: colWidth - 10, align: "right" });
+    });
+
+    yPos += 20;
+  });
+
+  yPos += 30;
+
+  // Addbacks section
+  if (data.addbacks && data.addbacks.length > 0 && data.addbacks.some((a) => a.reason)) {
+    doc.fontSize(14).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Addbacks", 50, yPos);
+    yPos += 20;
+
+    // Addbacks table
+    doc.fontSize(9).font("Helvetica-Bold").fillColor("white");
+    doc.rect(startX, yPos, 150, 25).fillAndStroke(COLORS.darkGray, COLORS.darkGray);
+    doc.text("Reason", startX + 5, yPos + 8);
+
+    data.financialYears.forEach((year, index) => {
+      const x = startX + 150 + index * colWidth;
+      doc.rect(x, yPos, colWidth, 25).fillAndStroke(COLORS.warning, COLORS.warning);
+      doc.text(year, x + 5, yPos + 8, { width: colWidth - 10, align: "right" });
+    });
+    yPos += 25;
+
+    data.addbacks
+      .filter((a) => a.reason)
+      .forEach((addback) => {
+        const bgColor = yPos % 50 < 25 ? "#FFFBEB" : "#FEF3C7";
+        doc.rect(startX, yPos, 150, 20).fillAndStroke(bgColor, "#F59E0B");
+
+        doc.fontSize(8).font("Helvetica").fillColor(COLORS.darkGray);
+        doc.text(addback.reason || "Other", startX + 5, yPos + 6, { width: 140 });
+
+        data.financialYears.forEach((year, index) => {
+          const x = startX + 150 + index * colWidth;
+          doc.rect(x, yPos, colWidth, 20).fillAndStroke(bgColor, "#F59E0B");
+
+          const value = addback.values[year] || 0;
+          const formattedValue = `$${(value / 1000).toFixed(0)}k`;
+          doc.text(formattedValue, x + 5, yPos + 6, { width: colWidth - 10, align: "right" });
+        });
+
+        yPos += 20;
+      });
+
+    // Total addbacks row
+    doc.rect(startX, yPos, 150, 20).fillAndStroke("#FEF3C7", "#F59E0B");
+    doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.darkGray);
+    doc.text("Total Addbacks", startX + 5, yPos + 6);
+
+    data.financialYears.forEach((year, index) => {
+      const x = startX + 150 + index * colWidth;
+      doc.rect(x, yPos, colWidth, 20).fillAndStroke("#FEF3C7", "#F59E0B");
+
+      const totalForYear = data.addbacks.reduce((sum, a) => sum + (a.values[year] || 0), 0);
+      const formattedValue = `$${(totalForYear / 1000).toFixed(0)}k`;
+      doc.text(formattedValue, x + 5, yPos + 6, { width: colWidth - 10, align: "right" });
+    });
+  }
+}
+
+function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
+  doc.addPage();
+  let yPos = 50;
+
+  // Page title
+  doc.fontSize(18).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Valuation Summary", 50, yPos);
+  yPos += 40;
+
+  // Valuation method
+  const methodName = data.valuationMethod === "profit" ? "Profit Multiple Method" : data.valuationMethod === "asset" ? "Asset-Based Method" : "DCF Method";
+  doc.fontSize(12).font("Helvetica-Bold").fillColor(COLORS.primary).text(`Method: ${methodName}`, 50, yPos);
+  yPos += 30;
+
+  if (data.valuationMethod === "profit") {
+    // Profit method calculation
+    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Calculation:", 50, yPos);
+    yPos += 25;
+
+    const calcSteps = [
+      { label: "Average EBIT", value: data.averageEbit },
+      { label: "Total Addbacks", value: data.totalAddbacks },
+      { label: "Adjusted EBIT (Earning Capacity)", value: data.adjustedEbit, highlight: true },
+      { label: "Valuation Multiple", value: data.calculatedMultiple || 4.0, isMultiple: true },
+      { label: "Estimated Business Value", value: data.finalValuation, highlight: true, large: true },
+    ];
+
+    calcSteps.forEach((step) => {
+      const bgColor = step.highlight ? "#EFF6FF" : "white";
+      const height = step.large ? 40 : 30;
+
+      doc.rect(50, yPos, 500, height).fillAndStroke(bgColor, "#E5E7EB");
+
+      const fontSize = step.large ? 14 : 10;
+      const font = step.highlight ? "Helvetica-Bold" : "Helvetica";
+      doc.fontSize(fontSize).font(font).fillColor(COLORS.darkGray);
+      doc.text(step.label, 60, yPos + height / 2 - 6);
+
+      let valueText: string;
+      if (step.isMultiple) {
+        valueText = `${step.value.toFixed(2)}x`;
+      } else {
+        valueText = `$${(step.value / 1000).toFixed(0)}k`;
+      }
+
+      doc.text(valueText, 300, yPos + height / 2 - 6, { width: 240, align: "right" });
+
+      yPos += height + 5;
+    });
+
+    yPos += 20;
+
+    // Formula explanation
+    doc.fontSize(10).font("Helvetica-Oblique").fillColor(COLORS.gray);
+    doc.text("Formula: Business Value = Adjusted EBIT × Valuation Multiple", 50, yPos, { width: 500, align: "center" });
+  } else if (data.valuationMethod === "asset" && data.assets && data.liabilities) {
+    // Asset method calculation
+    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Assets:", 50, yPos);
+    yPos += 25;
+
+    const assetItems = [
+      { label: "Plant & Equipment", value: data.assets.plantEquipment },
+      { label: "Inventory", value: data.assets.inventory },
+      { label: "Vehicles", value: data.assets.vehicles },
+      { label: "Goodwill", value: data.assets.goodwill },
+      { label: "Other Intangibles", value: data.assets.otherIntangible },
+    ];
+
+    assetItems.forEach((item) => {
+      doc.rect(50, yPos, 500, 25).fillAndStroke("white", "#E5E7EB");
+      doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray);
+      doc.text(item.label, 60, yPos + 8);
+      doc.text(`$${(item.value / 1000).toFixed(0)}k`, 300, yPos + 8, { width: 240, align: "right" });
+      yPos += 25;
+    });
+
+    doc.rect(50, yPos, 500, 30).fillAndStroke("#EFF6FF", "#3B82F6");
+    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray);
+    doc.text("Total Assets", 60, yPos + 10);
+    doc.text(`$${((data.totalAssets || 0) / 1000).toFixed(0)}k`, 300, yPos + 10, { width: 240, align: "right" });
+    yPos += 40;
+
+    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Liabilities:", 50, yPos);
+    yPos += 25;
+
+    const liabilityItems = [
+      { label: "Loans", value: data.liabilities.loans },
+      { label: "Annual Leave", value: data.liabilities.annualLeave },
+      { label: "Long Service Leave", value: data.liabilities.longServiceLeave },
+      { label: "Other Liabilities", value: data.liabilities.otherLiabilities },
+    ];
+
+    liabilityItems.forEach((item) => {
+      doc.rect(50, yPos, 500, 25).fillAndStroke("white", "#E5E7EB");
+      doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray);
+      doc.text(item.label, 60, yPos + 8);
+      doc.text(`$${(item.value / 1000).toFixed(0)}k`, 300, yPos + 8, { width: 240, align: "right" });
+      yPos += 25;
+    });
+
+    doc.rect(50, yPos, 500, 30).fillAndStroke("#FEF2F2", "#EF4444");
+    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray);
+    doc.text("Total Liabilities", 60, yPos + 10);
+    doc.text(`$${((data.totalLiabilities || 0) / 1000).toFixed(0)}k`, 300, yPos + 10, { width: 240, align: "right" });
+    yPos += 40;
+
+    doc.rect(50, yPos, 500, 40).fillAndStroke("#EFF6FF", "#3B82F6");
+    doc.fontSize(14).font("Helvetica-Bold").fillColor(COLORS.darkGray);
+    doc.text("Net Asset Value", 60, yPos + 12);
+    doc.text(`$${(data.finalValuation / 1000).toFixed(0)}k`, 300, yPos + 12, { width: 240, align: "right" });
+    yPos += 50;
+
+    doc.fontSize(10).font("Helvetica-Oblique").fillColor(COLORS.gray);
+    doc.text("Formula: Net Asset Value = Total Assets - Total Liabilities", 50, yPos, { width: 500, align: "center" });
+  }
+}
+
 function drawFooterDisclaimer(doc: PDFKit.PDFDocument, yPos: number): void {
-  const disclaimerText = `The RAVDA is a proprietary tool developed by Intaleks to help business owners understand the key risk and value drivers that an investor is prepared to wait to receive the total return of funds invested in their business. A high RAVDA score usually indicates lower risks and potentially, a more valuable business.
+  // Add new page for full disclaimer
+  doc.addPage();
 
-The RAVDA score is calculated using a combination of your responses and industry data. The score is intended to be used as an introduction to assess key risk and value drivers. There may be omissions or inaccuracies, and the reader needs to make their own enquiries and assessment before making any decision or taking any action. The issuer shall not be held liable for any loss or damage arising from relying on this document and by the reader using this document.`;
+  yPos = 50;
 
-  doc.fontSize(7).font("Helvetica").fillColor(COLORS.gray).text(disclaimerText, 50, yPos, { width: 500, align: "left", lineGap: 2 });
+  // Title
+  doc.fontSize(16).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("BUSINESS VALUATION DISCLAIMER", 50, yPos, { width: 500, align: "center" });
+  yPos += 40;
+
+  // Main disclaimer heading
+  doc.fontSize(12).font("Helvetica-Bold").fillColor(COLORS.danger).text("Disclaimer – Guidance Only (Not Legal, Financial, or Professional Advice)", 50, yPos, { width: 500 });
+  yPos += 25;
+
+  // Main disclaimer text
+  const mainDisclaimer = `The valuation estimate generated by Perth Business Evaluators Pty Ltd (ABN: 51 622 231 832), trading as Intaleks ("Intaleks") is a general informational guide only. It is based on automated modelling, user-provided inputs, and available data sources.`;
+  doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray).text(mainDisclaimer, 50, yPos, { width: 500, align: "justify" });
+  yPos += 50;
+
+  // "This valuation is not:" section
+  doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("This valuation is not:", 50, yPos);
+  yPos += 20;
+
+  const notItems = ["A certified business valuation", "A legal valuation for court, taxation, or regulatory purposes", "Financial, accounting, investment, or legal advice", "A substitute for professional valuation services"];
+
+  notItems.forEach((item) => {
+    doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray).text(`• ${item}`, 70, yPos, { width: 480 });
+    yPos += 18;
+  });
+  yPos += 10;
+
+  // Estimates only section
+  doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("The results are estimates only", 50, yPos);
+  yPos += 20;
+
+  const estimatesText = `and may not reflect actual market value or current economic conditions. No action or decision should be made based solely on this valuation output.`;
+  doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray).text(estimatesText, 50, yPos, { width: 500, align: "justify" });
+  yPos += 40;
+
+  // Legal proceedings section
+  doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.danger).text("For legal proceedings, taxation matters, lending requirements, compliance purposes, or formal business transactions,", 50, yPos, { width: 500 });
+  yPos += 25;
+
+  const legalText = `you must obtain a qualified, independent, and certified professional valuation.`;
+  doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.danger).text(legalText, 50, yPos, { width: 500 });
+  yPos += 40;
+
+  // Liability section
+  doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Limitation of Liability", 50, yPos);
+  yPos += 20;
+
+  const liabilityText = `Intaleks accepts no liability for any loss, decision, or action taken in reliance on the valuation estimate.`;
+  doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray).text(liabilityText, 50, yPos, { width: 500, align: "justify" });
+  yPos += 40;
+
+  // Important notice box
+  doc.rect(50, yPos, 500, 80).fillAndStroke("#FEF3C7", "#F59E0B");
+  doc
+    .fontSize(11)
+    .font("Helvetica-Bold")
+    .fillColor("#92400E")
+    .text("⚠️ IMPORTANT LEGAL NOTICE", 60, yPos + 15, { width: 480 });
+  doc
+    .fontSize(9)
+    .font("Helvetica")
+    .fillColor("#92400E")
+    .text("The Platform provides automated valuation estimates only and is NOT a certified valuation and CANNOT be used for legal, tax, court, or regulatory purposes.", 60, yPos + 35, { width: 480, align: "justify" });
+  yPos += 100;
+
+  // Company information
+  doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Perth Business Evaluators Pty Ltd", 50, yPos);
+  yPos += 15;
+  doc.fontSize(8).font("Helvetica").fillColor(COLORS.gray).text("ABN: 51 622 231 832", 50, yPos);
+  yPos += 12;
+  doc.fontSize(8).font("Helvetica").fillColor(COLORS.gray).text("Trading as: Intaleks", 50, yPos);
+  yPos += 12;
+  doc.fontSize(8).font("Helvetica").fillColor(COLORS.gray).text("Email: aleks@executivebusinessevaluers.com.au", 50, yPos);
+  yPos += 25;
+
+  // Generated date
+  doc
+    .fontSize(8)
+    .font("Helvetica-Oblique")
+    .fillColor(COLORS.gray)
+    .text(`Generated: ${new Date().toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" })}`, 50, yPos);
+
+  // RAVDA disclaimer on the new disclaimer page
+  const ravdaDisclaimer = `The RAVDA is a proprietary tool developed by Intaleks to help business owners understand the key risk and value drivers. A high RAVDA score usually indicates lower risks and potentially a more valuable business. The score is calculated using a combination of your responses and industry data. The score is intended as an introduction to assess key risk and value drivers. There may be omissions or inaccuracies, and the reader needs to make their own enquiries before making any decision. The issuer shall not be held liable for any loss or damage arising from relying on this document.`;
+
+  // Add disclaimer at bottom of the new page
+  doc.fontSize(7).font("Helvetica").fillColor(COLORS.gray).text(ravdaDisclaimer, 50, 720, { width: 500, align: "left", lineGap: 2 });
 }
 
 export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 50, size: "A4" });
+    const doc = new PDFDocument({ margin: 50, size: "A4", bufferPages: true });
     const chunks: Buffer[] = [];
 
     doc.on("data", (chunk) => chunks.push(chunk));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("end", () => {
+      console.log(`PDF generated with ${doc.bufferedPageRange().count} pages`);
+      resolve(Buffer.concat(chunks));
+    });
     doc.on("error", reject);
 
+    // ===== PAGE 1: RAVDA SCORECARD =====
+    console.log("Generating Page 1: RAVDA Scorecard");
     let yPos = 50;
 
     // Header
@@ -423,12 +802,23 @@ export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer
     yPos = drawTrackProgress(doc, data, bottomStartY);
     drawNextSteps(doc, data, 320, bottomStartY);
 
-    // Footer disclaimer
-    drawFooterDisclaimer(doc, 720);
-
-    // Footer text with Intaleks branding
+    // Footer on page 1
     doc.fontSize(8).font("Helvetica-Bold").fillColor(COLORS.primary).text("Intaleks", 50, 780);
     doc.fontSize(8).font("Helvetica").fillColor(COLORS.gray).text("Business Valuation & Advisory", 50, 790);
+
+    // ===== PAGE 2: FINANCIAL DATA =====
+    if (data.financialYears && data.financialData) {
+      console.log("Generating Page 2: Financial Data");
+      drawFinancialDataPage(doc, data);
+    }
+
+    // ===== PAGE 3: VALUATION SUMMARY =====
+    console.log("Generating Page 3: Valuation Summary");
+    drawValuationSummaryPage(doc, data);
+
+    // ===== PAGE 4: DISCLAIMER =====
+    console.log("Generating Page 4: Disclaimer");
+    drawFooterDisclaimer(doc, 720);
 
     doc.end();
   });

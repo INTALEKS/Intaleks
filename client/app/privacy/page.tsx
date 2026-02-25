@@ -11,7 +11,7 @@ const sections = [
     title: "Introduction",
     icon: FileText,
     category: "core",
-    content: "Welcome to TheBizEvaluator. Your privacy is important to us. This Privacy Policy explains what information we collect, how we use it, and how we protect it when you use our website, app, or services. By using TheBizEvaluator, you agree to the practices described in this policy.",
+    content: "Welcome to Intaleks. Your privacy is important to us. This Privacy Policy explains what information we collect, how we use it, and how we protect it when you use our website, app, or services operated by Perth Business Evaluators Pty Ltd (ABN: 51 622 231 832) trading as Intaleks. By using Intaleks, you agree to the practices described in this policy. Personal data is handled under the Australian Privacy Act 1988 (Cth).",
   },
   {
     id: "information-collect",
@@ -32,7 +32,7 @@ const sections = [
     title: "Business Data",
     icon: FileText,
     category: "core",
-    content: "Any business or financial data entered into TheBizEvaluator is used strictly for valuation and analysis purposes. This data remains confidential, is not shared with other users, and is not disclosed to third parties without your permission. You retain full ownership of your business data at all times.",
+    content: "Any business or financial data entered into Intaleks is used strictly for valuation and analysis purposes. This data remains confidential, is not shared with other users, and is not disclosed to third parties without your permission. You retain full ownership of your business data at all times.",
   },
   {
     id: "cookies",
@@ -129,8 +129,22 @@ export default function PrivacyPage() {
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
-            <p className="text-gray-500 text-sm mb-8">Last update: DEC 13, 2025</p>
+            <h1 className="text-3xl font-bold mb-2">Intaleks Privacy Policy</h1>
+            <p className="text-gray-500 text-sm mb-4">Last update: FEB 25, 2026</p>
+
+            {/* Company Information */}
+            <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-gray-700">
+                <strong>Perth Business Evaluators Pty Ltd</strong>
+                <br />
+                ABN: 51 622 231 832
+                <br />
+                Trading as: Intaleks
+                <br />
+                <br />
+                Personal data is handled under the Australian Privacy Act 1988 (Cth).
+              </p>
+            </div>
 
             {/* Core Section */}
             <section className="mb-10">

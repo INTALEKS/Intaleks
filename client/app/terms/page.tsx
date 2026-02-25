@@ -8,91 +8,119 @@ import { FileText, Monitor, UserCheck, Users, AlertTriangle, Database, Copyright
 const sections = [
   {
     id: "introduction",
-    title: "Introduction",
+    title: "1. Introduction",
     icon: FileText,
     category: "core",
-    content: "Welcome to TheBizEvaluator. These Terms and Conditions govern your access to and use of our website, application, and services. By accessing or using TheBizEvaluator, you agree to be bound by these Terms. If you do not agree, please do not use our services.",
+    content: 'These Terms and Conditions ("Terms") govern access to and use of the valuation software platform ("Platform") operated by Perth Business Evaluators Pty Ltd (ABN: 51 622 231 832) trading as Intaleks ("Intaleks", "Company", "we", "our", "us"). By using the Platform, you ("User", "you") agree to be bound by these Terms. If you do not agree, you must not use the Platform.',
   },
   {
-    id: "use-of-platform",
-    title: "Use of the Platform",
+    id: "nature-of-service",
+    title: "2. Nature of the Service",
     icon: Monitor,
     category: "core",
-    content: "You agree to use TheBizEvaluator only for lawful purposes and in a manner that does not violate any applicable laws or regulations. You must not misuse the platform, attempt unauthorized access, interfere with system security, or use the service in a way that could harm the platform or other users.",
-  },
-  {
-    id: "eligibility",
-    title: "Eligibility",
-    icon: UserCheck,
-    category: "core",
-    content: "You must be at least 18 years old or have legal capacity under applicable law to use TheBizEvaluator. By using the platform, you confirm that you meet this requirement.",
-  },
-  {
-    id: "accounts",
-    title: "Accounts & User Responsibilities",
-    icon: Users,
-    category: "core",
-    content: "To access certain features, you may be required to create an account. You are responsible for maintaining the confidentiality of your login details and for all activities carried out under your account. You agree to provide accurate and up-to-date information and to notify us immediately of any unauthorized use of your account.",
+    content: "The Platform provides automated business valuation estimates generated using algorithms, data sources, and user inputs. Estimates are computer-generated, model-based, and dependent on input quality. The Platform does not provide certified valuations or legal, financial, taxation, accounting, or investment advice. All outputs are estimates only and must not be relied upon for legal, tax, court, compliance, or regulatory purposes.",
   },
   {
     id: "disclaimer",
-    title: "Business Valuation Disclaimer",
+    title: "3. Disclaimer – Guidance Only",
     icon: AlertTriangle,
-    category: "others",
-    content: "TheBizEvaluator provides valuation tools and insights for informational and educational purposes only. Valuation results are estimates and should not be considered financial, investment, legal, or tax advice. We do not guarantee the accuracy, completeness, or suitability of valuation outputs for any specific purpose. You are solely responsible for decisions made based on the information provided.",
+    category: "core",
+    content: "Valuation outputs are informational guides only and cannot be used for legal proceedings, tax matters, regulatory submissions, or as certified valuations. Users must obtain a qualified, independent valuation for legal or commercial purposes.",
   },
   {
-    id: "user-content",
-    title: "User Content and Business Data",
-    icon: Database,
+    id: "user-responsibilities",
+    title: "4. User Responsibilities",
+    icon: UserCheck,
+    category: "core",
+    content: "Users agree to provide accurate information, have legal authority to provide data, use the Platform lawfully, and not misuse or reverse engineer the Platform.",
+  },
+  {
+    id: "accuracy",
+    title: "5. Accuracy and Limitations",
+    icon: ShieldAlert,
     category: "others",
-    content: "You retain ownership of all business data and information you submit to the platform. By using TheBizEvaluator, you grant us a limited right to process this data solely for the purpose of providing valuation services, improving the platform, and maintaining system functionality. We do not claim ownership of your content.",
+    content: "Valuations are estimates only. No guarantees are made regarding accuracy, completeness, reliability, or suitability. Results may be affected by market conditions, poor inputs, or model assumptions.",
+  },
+  {
+    id: "limitation-liability",
+    title: "6. Limitation of Liability",
+    icon: Scale,
+    category: "others",
+    content: 'The Platform is provided "as is." The Company is not liable for financial losses, business interruptions, indirect damages, or decisions based on valuation outputs. Liability is limited to fees paid for relevant services.',
+  },
+  {
+    id: "third-party-data",
+    title: "7. Third-Party Data",
+    icon: Link2,
+    category: "others",
+    content: "The Platform may rely on external data sources. The Company does not guarantee the accuracy or availability of third-party data.",
+  },
+  {
+    id: "fees-payments",
+    title: "8. Fees and Payments",
+    icon: Copyright,
+    category: "others",
+    content: "Some features require payment. Payments are non-refundable except where required by law. Subscription services auto-renew unless cancelled.",
   },
   {
     id: "intellectual-property",
-    title: "Intellectual Property",
+    title: "9. Intellectual Property",
     icon: Copyright,
     category: "others",
-    content: "All content, features, designs, trademarks, logos, and software used on TheBizEvaluator are owned by or licensed to us and are protected by intellectual property laws. You may not copy, modify, distribute, or reproduce any part of the platform without prior written permission.",
+    content: "All software, algorithms, content, and branding are owned by the Company. Users receive a limited licence and may not copy, modify, or resell outputs.",
   },
   {
-    id: "third-party",
-    title: "Third-party Services",
-    icon: Link2,
+    id: "acceptable-use",
+    title: "10. Acceptable Use",
+    icon: Users,
     category: "others",
-    content: "The platform may include links to or integrations with third-party services. We are not responsible for the content, policies, or practices of third-party platforms. Your use of third-party services is governed by their respective terms and policies.",
+    content: "Users must not engage in unlawful use, security breaches, scraping, or misrepresentation of outputs as certified valuations.",
   },
   {
-    id: "limitation",
-    title: "Limitation of Liabilities",
+    id: "privacy",
+    title: "11. Privacy",
+    icon: Database,
+    category: "others",
+    content: "Personal data is handled under the Australian Privacy Act 1988 (Cth) and the Company's Privacy Policy.",
+  },
+  {
+    id: "service-availability",
+    title: "12. Service Availability",
+    icon: Monitor,
+    category: "others",
+    content: "The Company does not guarantee uninterrupted access and may modify or discontinue features without notice.",
+  },
+  {
+    id: "indemnification",
+    title: "13. Indemnification",
     icon: ShieldAlert,
     category: "others",
-    content: "To the maximum extent permitted by law, TheBizEvaluator shall not be liable for any direct, indirect, incidental, consequential, or special damages arising from your use of or inability to use the platform, including reliance on valuation results.",
+    content: "Users agree to indemnify the Company for losses arising from misuse, breaches, or reliance on outputs.",
   },
   {
     id: "termination",
-    title: "Termination",
+    title: "14. Termination",
     icon: XCircle,
     category: "others",
-    content: "We reserve the right to suspend or terminate your access to TheBizEvaluator at any time, with or without notice, if you violate these Terms or misuse the platform. You may stop using the service at any time.",
-  },
-  {
-    id: "changes",
-    title: "Changes to the Terms",
-    icon: RefreshCw,
-    category: "others",
-    content: 'We may update these Terms and Conditions from time to time. When changes are made, the "Last updated" date will be revised. Continued use of the platform after changes indicates acceptance of the updated Terms.',
+    content: "The Company may terminate access for breaches or suspected fraud. Users may request account termination.",
   },
   {
     id: "governing-law",
-    title: "Governing Law",
+    title: "15. Governing Law",
     icon: Scale,
     category: "others",
-    content: "These Terms and Conditions shall be governed by and interpreted in accordance with the laws applicable in the jurisdiction where TheBizEvaluator operates, without regard to conflict of law principles.",
+    content: "These Terms are governed by Western Australian law.",
+  },
+  {
+    id: "changes",
+    title: "16. Changes to Terms",
+    icon: RefreshCw,
+    category: "others",
+    content: "The Company may modify these Terms at any time. Continued use constitutes acceptance.",
   },
   {
     id: "contact",
-    title: "Contact Info",
+    title: "Contact Information",
     icon: Phone,
     category: "others",
     content: "If you have any questions about these Terms and Conditions, please contact us at admin@intaleks.com.",
@@ -148,8 +176,27 @@ export default function TermsPage() {
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-3xl font-bold mb-2">Terms and Condition</h1>
-            <p className="text-gray-500 text-sm mb-8">Last update: DEC 23, 2025</p>
+            <h1 className="text-3xl font-bold mb-2">Intaleks Terms and Conditions</h1>
+            <p className="text-gray-500 text-sm mb-4">Last update: FEB 25, 2026</p>
+
+            {/* Important Legal Notice */}
+            <div className="mb-8 p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
+              <h2 className="font-semibold text-amber-900 mb-2">⚠️ Important Legal Notice</h2>
+              <p className="text-sm text-amber-800">
+                The Platform provides automated valuation estimates only and is <strong>not a certified valuation</strong> and cannot be used for legal, tax, court, or regulatory purposes.
+              </p>
+            </div>
+
+            {/* Company Information */}
+            <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-gray-700">
+                <strong>Perth Business Evaluators Pty Ltd</strong>
+                <br />
+                ABN: 51 622 231 832
+                <br />
+                Trading as: Intaleks
+              </p>
+            </div>
 
             {/* Core Section */}
             <section className="mb-10">

@@ -21,6 +21,8 @@ export interface User {
   avatar?: string | null;
   subscriptionStatus?: SubscriptionStatus;
   currentPeriodEnd?: string | null;
+  termsAccepted?: boolean;
+  termsAcceptedAt?: string | null;
   subscription?: {
     id: string;
     name: string;
@@ -361,6 +363,31 @@ export class ApiClient {
 
       if (!response.ok || !data.success) {
         throw new Error(data?.error?.message || data?.message || "Failed to cancel subscription");
+      }
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Accept terms and conditions
+   */
+  static async acceptTerms(): Promise<{ success: boolean; message: string; data: { termsAccepted: boolean; termsAcceptedAt: string } }> {
+    try {
+      const response = await fetch(`${this.BASE_URL}/users/accept-terms`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data?.message || "Failed to accept terms");
       }
 
       return data;

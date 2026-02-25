@@ -428,5 +428,59 @@ class UserService {
         const { password, ...userWithoutPassword } = user;
         return userWithoutPassword;
     }
+    /**
+     * Accept terms and conditions for a user
+     */
+    static async acceptTerms(userId) {
+        // Check if user exists
+        const existingUser = await db_1.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!existingUser) {
+            throw new errors_1.NotFoundError(`User with ID ${userId} not found`);
+        }
+        // Update user with terms acceptance
+        const user = await db_1.prisma.user.update({
+            where: { id: userId },
+            data: {
+                termsAccepted: true,
+                termsAcceptedAt: new Date(),
+            },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                termsAccepted: true,
+                termsAcceptedAt: true,
+            },
+        });
+        return user;
+    }
+    /**
+     * Change user role
+     */
+    static async changeRole(userId, role) {
+        // Check if user exists
+        const existingUser = await db_1.prisma.user.findUnique({
+            where: { id: userId },
+        });
+        if (!existingUser) {
+            throw new errors_1.NotFoundError(`User with ID ${userId} not found`);
+        }
+        // Update user role
+        const user = await db_1.prisma.user.update({
+            where: { id: userId },
+            data: { role },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                status: true,
+                subscriptionStatus: true,
+            },
+        });
+        return user;
+    }
 }
 exports.UserService = UserService;

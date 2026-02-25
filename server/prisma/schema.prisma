@@ -28,6 +28,10 @@ model User {
   currentPeriodEnd     DateTime?          @map("current_period_end")
   cancelAtPeriodEnd    Boolean            @default(false) @map("cancel_at_period_end")
 
+  // Terms and conditions acceptance
+  termsAccepted        Boolean            @default(false) @map("terms_accepted")
+  termsAcceptedAt      DateTime?          @map("terms_accepted_at")
+
   subscription      SubscriptionPlan?  @relation(fields: [subscriptionId], references: [id])
   eventParticipants EventParticipant[]
   forumPosts        ForumPost[]

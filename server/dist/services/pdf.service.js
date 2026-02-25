@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateValuationPDF = generateValuationPDF;
 const ravdaScorecardPDF_1 = require("./ravdaScorecardPDF");
 /**
- * Generate RAVDA Scorecard PDF from valuation data
+ * Generate comprehensive valuation PDF from calculator data
  */
 async function generateValuationPDF(data) {
     // Convert 50-point questionnaire score to 10-point RAVDA score
@@ -75,13 +75,15 @@ async function generateValuationPDF(data) {
         score: ravdaScore,
         rating,
         industry: data.industry,
+        country: data.country,
         industryStandard,
         industryBenchmark,
-        generatedDate: new Date().toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-        }),
+        generatedDate: data.generatedDate ||
+            new Date().toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+            }),
         logoBase64: data.logoBase64,
         logoMimeType: data.logoMimeType,
         drivers,
@@ -90,6 +92,25 @@ async function generateValuationPDF(data) {
         industryBenchmarkValue,
         currentYear: new Date().getFullYear(),
         nextSteps,
+        // Financial data
+        financialYears: data.financialYears,
+        financialData: data.financialData,
+        addbacks: data.addbacks,
+        totalAddbacks: data.totalAddbacks,
+        averageEbit: data.averageEbit,
+        adjustedEbit: data.adjustedEbit,
+        valuationMethod: data.valuationMethod,
+        finalValuation: data.finalValuation,
+        calculatedMultiple: data.calculatedMultiple,
+        // Company info
+        startedYear: data.startedYear,
+        employees: data.employees,
+        stage: data.stage,
+        // Asset method data
+        assets: data.assets,
+        liabilities: data.liabilities,
+        totalAssets: data.totalAssets,
+        totalLiabilities: data.totalLiabilities,
     };
     return (0, ravdaScorecardPDF_1.generateRAVDAScorecardPDF)(ravdaData);
 }

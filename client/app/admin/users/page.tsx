@@ -10,8 +10,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { MoreVertical, UserPlus, Ban, Trash2, Filter, Play, Loader2, CreditCard, XCircle } from "lucide-react";
-import { useUsers, useCreateUser, useDeleteUser, useSuspendUser, useReactivateUser } from "@/app/hooks/useUsers";
+import { MoreVertical, UserPlus, Ban, Trash2, Filter, Play, Loader2, CreditCard, XCircle, Shield } from "lucide-react";
+import { useUsers, useCreateUser, useDeleteUser, useSuspendUser, useReactivateUser, useChangeRole } from "@/app/hooks/useUsers";
 import { useGrantSubscription, useRevokeSubscription } from "@/app/hooks/usePayments";
 import { useSubscriptionPlans } from "@/app/hooks/useSubscriptions";
 import type { UserFilters, User } from "@/app/services/users";
@@ -28,10 +28,12 @@ export default function UsersPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isGrantSubscriptionOpen, setIsGrantSubscriptionOpen] = useState(false);
   const [isRevokeSubscriptionOpen, setIsRevokeSubscriptionOpen] = useState(false);
+  const [isChangeRoleOpen, setIsChangeRoleOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newUser, setNewUser] = useState({ email: "", password: "", name: "" });
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [revokeReason, setRevokeReason] = useState("");
+  const [selectedRole, setSelectedRole] = useState<"USER" | "ADMIN">("USER");
 
   const { data, isLoading, error } = useUsers(filters);
   const { data: plans } = useSubscriptionPlans();
@@ -41,6 +43,7 @@ export default function UsersPage() {
   const reactivateUser = useReactivateUser();
   const grantSubscription = useGrantSubscription();
   const revokeSubscription = useRevokeSubscription();
+  const changeRole = useChangeRole();
 
   const handleStatusFilter = (value: string) => {
     setSelectedStatus(value);
@@ -104,6 +107,13 @@ export default function UsersPage() {
     setIsRevokeSubscriptionOpen(false);
     setSelectedUser(null);
     setRevokeReason("");
+  };
+
+  const handleChangeRole = async () => {
+    if (!selectedUser) return;
+    await changeRole.mutateAsync({ userId: selectedUser.id, role: selectedRole });
+    setIsChangeRoleOpen(false);
+    setSelectedUser(null);
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -282,6 +292,19 @@ export default function UsersPage() {
                             Revoke Subscription
                           </DropdownMenuItem>
                         )}
+
+                        <DropdownMenuSeparator />
+
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setSelectedRole(user.role === "ADMIN" ? "USER" : "ADMIN");
+                            setIsChangeRoleOpen(true);
+                          }}
+                        >
+                          <Shield className="h-4 w-4 mr-2" />
+                          Change Role to {user.role === "ADMIN" ? "User" : "Admin"}
+                        </DropdownMenuItem>
 
                         <DropdownMenuSeparator />
 
@@ -472,6 +495,45 @@ export default function UsersPage() {
             <Button variant="destructive" onClick={handleRevokeSubscription} disabled={revokeSubscription.isPending}>
               {revokeSubscription.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Revoke Access
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Role Dialog */}
+      <Dialog open={isChangeRoleOpen} onOpenChange={setIsChangeRoleOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Change User Role</DialogTitle>
+            <DialogDescription>Change the role for {selectedUser?.name || selectedUser?.email}. This will affect their permissions and access level.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="p-3 bg-muted rounded-md">
+              <p className="text-sm">
+                <strong>Current Role:</strong> {selectedUser?.role}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="role">New Role</Label>
+              <Select value={selectedRole} onValueChange={(value: "USER" | "ADMIN") => setSelectedRole(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USER">User</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{selectedRole === "ADMIN" ? "Admins have full access to the admin panel and can manage all users." : "Users have standard access without admin privileges."}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsChangeRoleOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleChangeRole} disabled={changeRole.isPending}>
+              {changeRole.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Change Role
             </Button>
           </DialogFooter>
         </DialogContent>

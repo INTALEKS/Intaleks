@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ApiClient, type SubscriptionPlan } from "@/app/services/api";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useCreateCheckout } from "@/app/hooks/usePayments";
+import { toast } from "sonner";
 
 /**
  * PricingSection Component
@@ -53,10 +54,12 @@ export function PricingSection() {
       return;
     }
 
+    // Proceed directly to checkout
     setProcessingPlanId(planId);
+
     createCheckout.mutate(
       {
-        planId,
+        planId: planId,
         successUrl: `${window.location.origin}/?success=true`,
         cancelUrl: `${window.location.origin}/?canceled=true`,
       },

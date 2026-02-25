@@ -84,4 +84,7 @@ router.post("/:id/reset-password", UserController.resetPassword);
 // Requirements: 14.1, 14.2, 14.3
 router.post("/:userId/subscription", UserController.assignSubscription);
 
+// PATCH /api/admin/users/:userId/role - Change user role
+router.patch("/:userId/role", UserController.changeRole);
+
 export default router;

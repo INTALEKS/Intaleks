@@ -219,6 +219,8 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
         role: true,
         subscriptionStatus: true,
         currentPeriodEnd: true,
+        termsAccepted: true,
+        termsAcceptedAt: true,
         subscription: {
           select: {
             id: true,

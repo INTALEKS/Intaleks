@@ -226,4 +226,19 @@ export class UsersApi {
     }
     return data.data;
   }
+
+  static async changeRole(userId: string, role: UserRole): Promise<User> {
+    const response = await fetch(`${BASE_URL}/admin/users/${userId}/role`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ role }),
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data?.error?.message || "Failed to change user role");
+    }
+    return data.data;
+  }
 }

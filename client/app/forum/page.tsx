@@ -3,7 +3,7 @@
 import { useState, useMemo, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Navbar } from "@/components/home";
+import { Navbar, Footer } from "@/components/home";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Filter, ChevronDown, Check, MessageCircle, MoreHorizontal, Search, ThumbsUp, ThumbsDown, Send, Bookmark, BookmarkCheck, Flame, HelpCircle, Sparkles, PaperclipIcon, Crown, Loader2, ArrowLeft, AlertCircle } from "lucide-react";
@@ -305,7 +305,7 @@ function ForumPageContent() {
         onSuccess: () => {
           onSuccess?.();
         },
-      }
+      },
     );
   };
 
@@ -355,7 +355,7 @@ function ForumPageContent() {
           setTitleError("");
           setContentError("");
         },
-      }
+      },
     );
   };
 
@@ -560,7 +560,7 @@ function ForumPageContent() {
         </DialogContent>
       </Dialog>
 
-      {/* <Footer /> */}
+      <Footer />
     </div>
   );
 }

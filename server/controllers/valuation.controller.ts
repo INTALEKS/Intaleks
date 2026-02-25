@@ -114,12 +114,21 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
 
     // Upload PDF to R2 storage
     let fileUrl: string | undefined;
+    let fileSize: number = pdfBuffer.length;
+
     try {
       const filename = `${data.companyName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-valuation-${Date.now()}.pdf`;
       const uploadResult = await StorageService.uploadPDF(pdfBuffer, filename);
       fileUrl = uploadResult.url;
+      fileSize = uploadResult.size;
+    } catch (storageError) {
+      // Log error but don't fail the request - user can still download the PDF
+      console.error("Failed to upload PDF to R2:", storageError);
+      // Continue without fileUrl - record will be saved without R2 link
+    }
 
-      // Save document record to database with R2 URL
+    // Save document record to database (with or without R2 URL)
+    try {
       await ValuationService.createDocument({
         userId,
         companyName: data.companyName,
@@ -127,12 +136,12 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
         industry: data.industry,
         method: "ravda",
         valuation: data.finalValuation,
-        fileUrl: uploadResult.url,
-        fileSize: uploadResult.size,
+        fileUrl: fileUrl, // Will be undefined if R2 upload failed
+        fileSize: fileSize,
       });
-    } catch (storageError) {
-      // Log error but don't fail the request - user can still download the PDF
-      console.error("Failed to upload PDF to R2:", storageError);
+    } catch (dbError) {
+      console.error("Failed to save valuation document to database:", dbError);
+      // Continue - user can still download the PDF
     }
 
     res.setHeader("Content-Type", "application/pdf");

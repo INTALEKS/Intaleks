@@ -61,6 +61,8 @@ class AuthService {
                     name: user.name,
                     role: user.role,
                     subscriptionStatus: user.subscriptionStatus,
+                    termsAccepted: user.termsAccepted,
+                    termsAcceptedAt: user.termsAcceptedAt,
                 },
             };
         }
@@ -131,6 +133,8 @@ class AuthService {
                     role: user.role,
                     subscriptionStatus: user.subscriptionStatus,
                     currentPeriodEnd: user.currentPeriodEnd,
+                    termsAccepted: user.termsAccepted,
+                    termsAcceptedAt: user.termsAcceptedAt,
                 },
             };
         }

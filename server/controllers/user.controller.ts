@@ -545,4 +545,106 @@ export class UserController {
       });
     }
   }
+
+  /**
+   * Accept terms and conditions
+   * POST /api/users/accept-terms
+   */
+  static async acceptTerms(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          error: {
+            code: "UNAUTHORIZED",
+            message: "User not authenticated",
+          },
+        });
+        return;
+      }
+
+      const user = await UserService.acceptTerms(userId);
+
+      res.status(200).json({
+        success: true,
+        message: "Terms and conditions accepted successfully",
+        data: {
+          termsAccepted: user.termsAccepted,
+          termsAcceptedAt: user.termsAcceptedAt,
+        },
+      });
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).json({
+          success: false,
+          error: {
+            code: "NOT_FOUND",
+            message: error.message,
+          },
+        });
+        return;
+      }
+
+      console.error("Accept terms error:", error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "An error occurred while accepting terms",
+        },
+      });
+    }
+  }
+
+  /**
+   * Change user role
+   * PATCH /api/admin/users/:userId/role
+   */
+  static async changeRole(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+      const { role } = req.body;
+
+      if (!role || !["USER", "ADMIN"].includes(role)) {
+        res.status(400).json({
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message: "Invalid role. Must be USER or ADMIN",
+          },
+        });
+        return;
+      }
+
+      const user = await UserService.changeRole(userId, role);
+
+      res.status(200).json({
+        success: true,
+        message: "User role updated successfully",
+        data: user,
+      });
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).json({
+          success: false,
+          error: {
+            code: "NOT_FOUND",
+            message: error.message,
+          },
+        });
+        return;
+      }
+
+      console.error("Change role error:", error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "An error occurred while changing user role",
+        },
+      });
+    }
+  }
 }

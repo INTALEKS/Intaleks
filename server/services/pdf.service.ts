@@ -4,12 +4,44 @@ export interface ValuationPDFData {
   companyName: string;
   country: string;
   industry: string;
+  customMultiple: string;
+  financialYears: string[];
+  financialData: Record<
+    string,
+    {
+      sales: number;
+      cogs: number;
+      grossProfit: number;
+      operatingExpenses: number;
+      netProfitAndLoss: number;
+      interestExpense: number;
+      interestIncome: number;
+      ebit: number;
+    }
+  >;
+  addbacks: Array<{
+    id: string;
+    reason: string;
+    values: Record<string, number>;
+  }>;
+  totalAddbacks: number;
+  averageEbit: number;
+  adjustedEbit: number;
+  valuationMethod: "profit" | "asset" | "dcf";
   finalValuation: number;
+
+  // Optional fields
+  startedYear?: string;
+  employees?: string;
+  stage?: "startup" | "1-2-years" | "3-5-years" | "5-10-years" | "10-plus-years";
+  logoBase64?: string;
+  logoMimeType?: string;
+  generatedDate?: string;
+
+  // Questionnaire data
   questionnaireScore?: number;
   questionnaireCategory?: string;
   calculatedMultiple?: number;
-  logoBase64?: string;
-  logoMimeType?: string;
   questionnaireScores?: {
     ownerDependence: number;
     recurringRevenue: number;
@@ -22,10 +54,31 @@ export interface ValuationPDFData {
     marginStability: number;
     externalRisk: number;
   };
+
+  // Asset method specific
+  assets?: {
+    plantEquipment: number;
+    inventory: number;
+    vehicles: number;
+    goodwill: number;
+    otherIntangible: number;
+  };
+  liabilities?: {
+    loans: number;
+    annualLeave: number;
+    longServiceLeave: number;
+    otherLiabilities: number;
+  };
+  totalAssets?: number;
+  totalLiabilities?: number;
+  assetValuation?: number;
+
+  // Profit method specific
+  profitValuation?: number;
 }
 
 /**
- * Generate RAVDA Scorecard PDF from valuation data
+ * Generate comprehensive valuation PDF from calculator data
  */
 export async function generateValuationPDF(data: ValuationPDFData): Promise<Buffer> {
   // Convert 50-point questionnaire score to 10-point RAVDA score
@@ -97,13 +150,16 @@ export async function generateValuationPDF(data: ValuationPDFData): Promise<Buff
     score: ravdaScore,
     rating,
     industry: data.industry,
+    country: data.country,
     industryStandard,
     industryBenchmark,
-    generatedDate: new Date().toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }),
+    generatedDate:
+      data.generatedDate ||
+      new Date().toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
     logoBase64: data.logoBase64,
     logoMimeType: data.logoMimeType,
     drivers,
@@ -112,6 +168,28 @@ export async function generateValuationPDF(data: ValuationPDFData): Promise<Buff
     industryBenchmarkValue,
     currentYear: new Date().getFullYear(),
     nextSteps,
+
+    // Financial data
+    financialYears: data.financialYears,
+    financialData: data.financialData,
+    addbacks: data.addbacks,
+    totalAddbacks: data.totalAddbacks,
+    averageEbit: data.averageEbit,
+    adjustedEbit: data.adjustedEbit,
+    valuationMethod: data.valuationMethod,
+    finalValuation: data.finalValuation,
+    calculatedMultiple: data.calculatedMultiple,
+
+    // Company info
+    startedYear: data.startedYear,
+    employees: data.employees,
+    stage: data.stage,
+
+    // Asset method data
+    assets: data.assets,
+    liabilities: data.liabilities,
+    totalAssets: data.totalAssets,
+    totalLiabilities: data.totalLiabilities,
   };
 
   return generateRAVDAScorecardPDF(ravdaData);

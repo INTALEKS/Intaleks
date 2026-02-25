@@ -172,4 +172,46 @@ router.post("/avatar", authMiddleware_1.authenticateToken, upload.single("file")
         });
     }
 });
+/**
+ * POST /api/users/accept-terms - Accept terms and conditions
+ */
+router.post("/accept-terms", authMiddleware_1.authenticateToken, async (req, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication required",
+            });
+        }
+        const user = await db_1.prisma.user.update({
+            where: { id: req.user.id },
+            data: {
+                termsAccepted: true,
+                termsAcceptedAt: new Date(),
+            },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                termsAccepted: true,
+                termsAcceptedAt: true,
+            },
+        });
+        return res.status(200).json({
+            success: true,
+            message: "Terms and conditions accepted successfully",
+            data: {
+                termsAccepted: user.termsAccepted,
+                termsAcceptedAt: user.termsAcceptedAt,
+            },
+        });
+    }
+    catch (error) {
+        console.error("Accept terms error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "An error occurred while accepting terms",
+        });
+    }
+});
 exports.default = router;

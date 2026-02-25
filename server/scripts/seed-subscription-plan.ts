@@ -23,7 +23,7 @@ export async function seedSubscriptionPlan(): Promise<void> {
         name: "One-Off",
         price: 29700, // $297.00 in cents
         billingPeriod: BillingPeriod.ONE_TIME,
-        features: ["Industry-Specific Multiples", "Professional PDF Report", "Company Logo Integration", "10+ Industry Categories", "Asset & Liability Tracking"],
+        features: ["Worldwide Industry Multiples (US, Canada, UK, Australia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking"],
         active: true,
       },
     });

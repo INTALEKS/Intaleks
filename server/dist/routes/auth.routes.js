@@ -198,6 +198,8 @@ router.get("/me", authMiddleware_1.authenticateToken, async (req, res) => {
                 role: true,
                 subscriptionStatus: true,
                 currentPeriodEnd: true,
+                termsAccepted: true,
+                termsAcceptedAt: true,
                 subscription: {
                     select: {
                         id: true,

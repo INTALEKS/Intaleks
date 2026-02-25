@@ -145,3 +145,19 @@ export function useAssignSubscription() {
     },
   });
 }
+
+export function useChangeRole() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: "USER" | "ADMIN" }) => UsersApi.changeRole(userId, role),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: USER_KEYS.lists() });
+      queryClient.invalidateQueries({ queryKey: USER_KEYS.detail(data.id) });
+      toast.success("User role updated successfully");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+}

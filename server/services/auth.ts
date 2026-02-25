@@ -39,6 +39,8 @@ export interface RegisterResponse {
     name: string | null;
     role: UserRole;
     subscriptionStatus: SubscriptionStatus;
+    termsAccepted: boolean;
+    termsAcceptedAt: Date | null;
   };
 }
 
@@ -53,6 +55,8 @@ export interface UserLoginResponse {
     role: UserRole;
     subscriptionStatus: SubscriptionStatus;
     currentPeriodEnd: Date | null;
+    termsAccepted: boolean;
+    termsAcceptedAt: Date | null;
   };
 }
 
@@ -127,6 +131,8 @@ export class AuthService {
           name: user.name,
           role: user.role,
           subscriptionStatus: user.subscriptionStatus,
+          termsAccepted: user.termsAccepted,
+          termsAcceptedAt: user.termsAcceptedAt,
         },
       };
     } catch (error) {
@@ -204,6 +210,8 @@ export class AuthService {
           role: user.role,
           subscriptionStatus: user.subscriptionStatus,
           currentPeriodEnd: user.currentPeriodEnd,
+          termsAccepted: user.termsAccepted,
+          termsAcceptedAt: user.termsAcceptedAt,
         },
       };
     } catch (error) {

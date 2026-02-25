@@ -11,6 +11,8 @@ export interface AuthenticatedUser {
   name: string | null;
   role: UserRole;
   subscriptionStatus: SubscriptionStatus;
+  termsAccepted: boolean;
+  termsAcceptedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }

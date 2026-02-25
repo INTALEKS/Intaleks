@@ -105,11 +105,20 @@ const generatePDF = async (req, res, next) => {
         const pdfBuffer = await (0, pdf_service_1.generateValuationPDF)(data);
         // Upload PDF to R2 storage
         let fileUrl;
+        let fileSize = pdfBuffer.length;
         try {
             const filename = `${data.companyName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-valuation-${Date.now()}.pdf`;
             const uploadResult = await storage_1.StorageService.uploadPDF(pdfBuffer, filename);
             fileUrl = uploadResult.url;
-            // Save document record to database with R2 URL
+            fileSize = uploadResult.size;
+        }
+        catch (storageError) {
+            // Log error but don't fail the request - user can still download the PDF
+            console.error("Failed to upload PDF to R2:", storageError);
+            // Continue without fileUrl - record will be saved without R2 link
+        }
+        // Save document record to database (with or without R2 URL)
+        try {
             await valuation_1.ValuationService.createDocument({
                 userId,
                 companyName: data.companyName,
@@ -117,13 +126,13 @@ const generatePDF = async (req, res, next) => {
                 industry: data.industry,
                 method: "ravda",
                 valuation: data.finalValuation,
-                fileUrl: uploadResult.url,
-                fileSize: uploadResult.size,
+                fileUrl: fileUrl, // Will be undefined if R2 upload failed
+                fileSize: fileSize,
             });
         }
-        catch (storageError) {
-            // Log error but don't fail the request - user can still download the PDF
-            console.error("Failed to upload PDF to R2:", storageError);
+        catch (dbError) {
+            console.error("Failed to save valuation document to database:", dbError);
+            // Continue - user can still download the PDF
         }
         res.setHeader("Content-Type", "application/pdf");
         res.setHeader("Content-Disposition", `attachment; filename="ravda-scorecard-${Date.now()}.pdf"`);

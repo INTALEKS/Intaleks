@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { Download, Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/home";
+import { Navbar, Footer } from "@/components/home";
 import { AccordionSection, MethodToggle, ValuationMethod, CountryIndustrySelector, FinancialDataTable, AddbacksTable, StepProgress, CompanyQuestionnaire, ValuationDocumentList, YearSelector, EarningCapacitySection, AddbacksExamplesSection, ValuationSummaryCard } from "@/components/calculator";
 import { AssetMethod } from "@/components/calculator/methods";
 import { calculateAverageEBIT, formatCurrency, FinancialYearData } from "@/lib/calculator-utils";
@@ -12,10 +12,14 @@ import { useAuthState } from "@/app/hooks/useAuthState";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { ApiClient } from "@/app/services/api";
 import { ValuationQuestionnaire } from "@/components/calculator/ValuationQuestionnaire";
 import { useCalculatePreview } from "@/app/hooks/useQuestionnaire";
 import { useValuationMultiples } from "@/app/hooks/useValuationMultiples";
 import type { QuestionnaireScores } from "@/lib/questionnaire-api";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import Link from "next/link";
 
 // LocalStorage key for calculator data persistence
 const CALCULATOR_STORAGE_KEY = "intaleks_calculator_data";
@@ -54,48 +58,74 @@ interface CalculatorState {
   selectedMethod: ValuationMethod;
   assets: Record<string, string>;
   liabilities: Record<string, string>;
+  companyLogoData?: string; // base64 encoded logo
+  companyLogoName?: string;
+  companyLogoType?: string;
 }
 
 export default function CalculatorPage() {
   const router = useRouter();
-  const { isAuthenticated, hasActiveSubscription, subscriptionStatus, isAuthentiating } = useAuthState();
+  const { isAuthenticated, hasActiveSubscription, subscriptionStatus, isAuthentiating, user } = useAuthState();
   const queryClient = useQueryClient();
   const { getMultiple } = useValuationMultiples();
 
+  // Helper function to get initial state from localStorage
+  const getInitialState = () => {
+    try {
+      const savedState = localStorage.getItem(CALCULATOR_STORAGE_KEY);
+      if (savedState) {
+        return JSON.parse(savedState) as CalculatorState;
+      }
+    } catch (error) {
+      console.error("Failed to parse saved state:", error);
+    }
+    return null;
+  };
+
+  const initialState = getInitialState();
+
   // Track if we've restored data from localStorage
   const [hasRestoredData, setHasRestoredData] = useState(false);
+  const [isInitialMount, setIsInitialMount] = useState(true);
+
+  // Terms and Conditions acceptance state
+  const [showTermsDialog, setShowTermsDialog] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [hasCheckedTerms, setHasCheckedTerms] = useState(false);
 
   // ============================================
   // STEP 1: Company Information State
   // ============================================
-  const [companyName, setCompanyName] = useState("");
-  const [startedYear, setStartedYear] = useState("");
-  const [employees, setEmployees] = useState("");
-  const [stage, setStage] = useState("startup");
+  const [companyName, setCompanyName] = useState(initialState?.companyName || "");
+  const [startedYear, setStartedYear] = useState(initialState?.startedYear || "");
+  const [employees, setEmployees] = useState(initialState?.employees || "");
+  const [stage, setStage] = useState(initialState?.stage || "startup");
   const [companyLogo, setCompanyLogo] = useState<File | null>(null);
-  const [country, setCountry] = useState("australia");
-  const [industry, setIndustry] = useState("retail");
-  const [customMultiple, setCustomMultiple] = useState("3");
+  const [country, setCountry] = useState(initialState?.country || "australia");
+  const [industry, setIndustry] = useState(initialState?.industry || "retail");
+  const [customMultiple, setCustomMultiple] = useState(initialState?.customMultiple || "3");
 
   // ============================================
   // Questionnaire State
   // ============================================
-  const [questionnaireScores, setQuestionnaireScores] = useState<QuestionnaireScores>({
-    ownerDependence: 0,
-    recurringRevenue: 0,
-    customerConcentration: 0,
-    managementDepth: 0,
-    growthRate: 0,
-    competitiveAdvantage: 0,
-    revenueDiversification: 0,
-    systemsScalability: 0,
-    marginStability: 0,
-    externalRisk: 0,
-  });
-  const [calculatedMultiple, setCalculatedMultiple] = useState<number | undefined>(undefined);
-  const [multipleCategory, setMultipleCategory] = useState<string | undefined>(undefined);
-  const [totalScore, setTotalScore] = useState<number | undefined>(undefined);
-  const [useQuestionnaireMultiple, setUseQuestionnaireMultiple] = useState(false);
+  const [questionnaireScores, setQuestionnaireScores] = useState<QuestionnaireScores>(
+    initialState?.questionnaireScores || {
+      ownerDependence: 0,
+      recurringRevenue: 0,
+      customerConcentration: 0,
+      managementDepth: 0,
+      growthRate: 0,
+      competitiveAdvantage: 0,
+      revenueDiversification: 0,
+      systemsScalability: 0,
+      marginStability: 0,
+      externalRisk: 0,
+    },
+  );
+  const [calculatedMultiple, setCalculatedMultiple] = useState<number | undefined>(initialState?.calculatedMultiple);
+  const [multipleCategory, setMultipleCategory] = useState<string | undefined>(initialState?.multipleCategory);
+  const [totalScore, setTotalScore] = useState<number | undefined>(initialState?.totalScore);
+  const [useQuestionnaireMultiple, setUseQuestionnaireMultiple] = useState(initialState?.useQuestionnaireMultiple || false);
 
   const calculatePreviewMutation = useCalculatePreview();
 
@@ -103,28 +133,30 @@ export default function CalculatorPage() {
   // STEP 2: Financial Data State
   // ============================================
   // Year selection state - default to last 3 years excluding current year
-  const [selectedYears, setSelectedYears] = useState<number[]>([currentYear - 3, currentYear - 2, currentYear - 1]);
+  const [selectedYears, setSelectedYears] = useState<number[]>(initialState?.selectedYears || [currentYear - 3, currentYear - 2, currentYear - 1]);
 
   // Generate financial years array based on selected years
   const financialYears = useMemo(() => {
     return selectedYears.map((year) => `Year ${year}`);
   }, [selectedYears]);
 
-  const [financialData, setFinancialData] = useState<Record<string, Record<string, string>>>({});
-  const [addbacks, setAddbacks] = useState([
-    { id: "1", reason: "", values: {} as Record<string, string> },
-    { id: "2", reason: "", values: {} as Record<string, string> },
-    { id: "3", reason: "", values: {} as Record<string, string> },
-  ]);
+  const [financialData, setFinancialData] = useState<Record<string, Record<string, string>>>(initialState?.financialData || {});
+  const [addbacks, setAddbacks] = useState(
+    initialState?.addbacks || [
+      { id: "1", reason: "", values: {} as Record<string, string> },
+      { id: "2", reason: "", values: {} as Record<string, string> },
+      { id: "3", reason: "", values: {} as Record<string, string> },
+    ],
+  );
 
   // ============================================
   // STEP 3: Valuation Model State
   // ============================================
-  const [selectedMethod, setSelectedMethod] = useState<ValuationMethod>("profit");
+  const [selectedMethod, setSelectedMethod] = useState<ValuationMethod>(initialState?.selectedMethod || "profit");
 
   // Asset Method
-  const [assets, setAssets] = useState<Record<string, string>>({});
-  const [liabilities, setLiabilities] = useState<Record<string, string>>({});
+  const [assets, setAssets] = useState<Record<string, string>>(initialState?.assets || {});
+  const [liabilities, setLiabilities] = useState<Record<string, string>>(initialState?.liabilities || {});
 
   // ============================================
   // UI State
@@ -533,90 +565,113 @@ export default function CalculatorPage() {
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
-    if (!hasRestoredData) return; // Don't save until we've restored initial data
+    // Skip saving on initial mount to avoid overwriting with default values
+    if (isInitialMount) {
+      return;
+    }
 
-    const stateToSave: CalculatorState = {
-      companyName,
-      startedYear,
-      employees,
-      stage,
-      country,
-      industry,
-      customMultiple,
-      questionnaireScores,
-      calculatedMultiple,
-      multipleCategory,
-      totalScore,
-      useQuestionnaireMultiple,
-      selectedYears,
-      financialData,
-      addbacks,
-      selectedMethod,
-      assets,
-      liabilities,
+    const saveState = async () => {
+      // Convert logo to base64 if present
+      let logoData: string | undefined;
+      let logoName: string | undefined;
+      let logoType: string | undefined;
+
+      if (companyLogo) {
+        try {
+          const reader = new FileReader();
+          logoData = await new Promise<string>((resolve, reject) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(companyLogo);
+          });
+          logoName = companyLogo.name;
+          logoType = companyLogo.type;
+        } catch (error) {
+          console.error("Failed to convert logo to base64:", error);
+        }
+      }
+
+      const stateToSave: CalculatorState = {
+        companyName,
+        startedYear,
+        employees,
+        stage,
+        country,
+        industry,
+        customMultiple,
+        questionnaireScores,
+        calculatedMultiple,
+        multipleCategory,
+        totalScore,
+        useQuestionnaireMultiple,
+        selectedYears,
+        financialData,
+        addbacks,
+        selectedMethod,
+        assets,
+        liabilities,
+        companyLogoData: logoData,
+        companyLogoName: logoName,
+        companyLogoType: logoType,
+      };
+
+      try {
+        localStorage.setItem(CALCULATOR_STORAGE_KEY, JSON.stringify(stateToSave));
+        console.log("Calculator data saved to localStorage");
+      } catch (error) {
+        console.error("Failed to save calculator state:", error);
+      }
     };
 
-    try {
-      localStorage.setItem(CALCULATOR_STORAGE_KEY, JSON.stringify(stateToSave));
-    } catch (error) {
-      console.error("Failed to save calculator state:", error);
-    }
-  }, [hasRestoredData, companyName, startedYear, employees, stage, country, industry, customMultiple, questionnaireScores, calculatedMultiple, multipleCategory, totalScore, useQuestionnaireMultiple, selectedYears, financialData, addbacks, selectedMethod, assets, liabilities]);
+    saveState();
+  }, [isInitialMount, companyName, startedYear, employees, stage, country, industry, customMultiple, questionnaireScores, calculatedMultiple, multipleCategory, totalScore, useQuestionnaireMultiple, selectedYears, financialData, addbacks, selectedMethod, assets, liabilities, companyLogo]);
 
-  // Restore state from localStorage on mount
+  // Restore logo and check terms on mount
   useEffect(() => {
-    try {
-      const savedState = localStorage.getItem(CALCULATOR_STORAGE_KEY);
-      if (savedState) {
-        const parsed: CalculatorState = JSON.parse(savedState);
+    const initialize = async () => {
+      try {
+        // Restore logo from base64 if present
+        if (initialState?.companyLogoData && initialState?.companyLogoName && initialState?.companyLogoType) {
+          try {
+            const response = await fetch(initialState.companyLogoData);
+            const blob = await response.blob();
+            const file = new File([blob], initialState.companyLogoName, { type: initialState.companyLogoType });
+            setCompanyLogo(file);
+          } catch (error) {
+            console.error("Failed to restore logo:", error);
+          }
+        }
 
-        // Restore all state
-        setCompanyName(parsed.companyName || "");
-        setStartedYear(parsed.startedYear || "");
-        setEmployees(parsed.employees || "");
-        setStage(parsed.stage || "startup");
-        setCountry(parsed.country || "australia");
-        setIndustry(parsed.industry || "retail");
-        setCustomMultiple(parsed.customMultiple || "3");
-        setQuestionnaireScores(
-          parsed.questionnaireScores || {
-            ownerDependence: 0,
-            recurringRevenue: 0,
-            customerConcentration: 0,
-            managementDepth: 0,
-            growthRate: 0,
-            competitiveAdvantage: 0,
-            revenueDiversification: 0,
-            systemsScalability: 0,
-            marginStability: 0,
-            externalRisk: 0,
-          },
-        );
-        setCalculatedMultiple(parsed.calculatedMultiple);
-        setMultipleCategory(parsed.multipleCategory);
-        setTotalScore(parsed.totalScore);
-        setUseQuestionnaireMultiple(parsed.useQuestionnaireMultiple || false);
-        setSelectedYears(parsed.selectedYears || [currentYear - 3, currentYear - 2, currentYear - 1]);
-        setFinancialData(parsed.financialData || {});
-        setAddbacks(
-          parsed.addbacks || [
-            { id: "1", reason: "", values: {} },
-            { id: "2", reason: "", values: {} },
-            { id: "3", reason: "", values: {} },
-          ],
-        );
-        setSelectedMethod(parsed.selectedMethod || "profit");
-        setAssets(parsed.assets || {});
-        setLiabilities(parsed.liabilities || {});
-
-        toast.success("Your previous data has been restored");
+        // Check if terms have been accepted (only for authenticated users)
+        if (isAuthenticated && user) {
+          if (user.termsAccepted) {
+            setTermsAccepted(true);
+            setHasCheckedTerms(true);
+            if (initialState) {
+              console.log("Calculator data restored from localStorage");
+              toast.success("Your previous data has been restored");
+            }
+          } else {
+            // User hasn't accepted terms in database
+            setShowTermsDialog(true);
+            setHasCheckedTerms(true);
+          }
+        } else {
+          setHasCheckedTerms(true);
+        }
+      } catch (error) {
+        console.error("Failed to initialize calculator:", error);
+        setHasCheckedTerms(true);
+      } finally {
+        setHasRestoredData(true);
+        // Allow saving after initialization is complete
+        setTimeout(() => setIsInitialMount(false), 100);
       }
-    } catch (error) {
-      console.error("Failed to restore calculator state:", error);
-    } finally {
-      setHasRestoredData(true);
-    }
-  }, []);
+    };
+
+    initialize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user]);
 
   // Clear localStorage after successful download
   const clearSavedData = () => {
@@ -628,11 +683,23 @@ export default function CalculatorPage() {
   };
 
   // ============================================
+  // AUTHENTICATION CHECK
+  // ============================================
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthentiating && !isAuthenticated) {
+      toast.error("Please log in to access the calculator");
+      router.push("/login");
+    }
+  }, [isAuthentiating, isAuthenticated, router]);
+
+  // ============================================
   // LOADING STATE
   // ============================================
 
-  // Show loading state while restoring data
-  if (!hasRestoredData) {
+  // Show loading state while checking authentication or restoring data
+  if (isAuthentiating || !hasRestoredData || !hasCheckedTerms) {
     return (
       <div className="min-h-screen bg-linear-to-b from-blue-50 via-white to-white">
         <Navbar />
@@ -645,6 +712,100 @@ export default function CalculatorPage() {
       </div>
     );
   }
+
+  // Don't render calculator if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  // Handle terms acceptance
+  const handleAcceptTerms = async () => {
+    if (!termsAccepted) {
+      toast.error("Please accept the terms and conditions to continue");
+      return;
+    }
+
+    try {
+      // Save to database for authenticated users and wait for response
+      const response = await ApiClient.acceptTerms();
+
+      if (response.success) {
+        // Close dialog immediately
+        setShowTermsDialog(false);
+
+        toast.success("Terms and conditions accepted successfully!");
+
+        // Wait for user data to refresh from server
+        await queryClient.refetchQueries({ queryKey: ["auth"] });
+
+        // Restore saved data after accepting terms
+        try {
+          const savedState = localStorage.getItem(CALCULATOR_STORAGE_KEY);
+          if (savedState) {
+            const parsed: CalculatorState = JSON.parse(savedState);
+
+            setCompanyName(parsed.companyName || "");
+            setStartedYear(parsed.startedYear || "");
+            setEmployees(parsed.employees || "");
+            setStage(parsed.stage || "startup");
+            setCountry(parsed.country || "australia");
+            setIndustry(parsed.industry || "retail");
+            setCustomMultiple(parsed.customMultiple || "3");
+            setQuestionnaireScores(
+              parsed.questionnaireScores || {
+                ownerDependence: 0,
+                recurringRevenue: 0,
+                customerConcentration: 0,
+                managementDepth: 0,
+                growthRate: 0,
+                competitiveAdvantage: 0,
+                revenueDiversification: 0,
+                systemsScalability: 0,
+                marginStability: 0,
+                externalRisk: 0,
+              },
+            );
+            setCalculatedMultiple(parsed.calculatedMultiple);
+            setMultipleCategory(parsed.multipleCategory);
+            setTotalScore(parsed.totalScore);
+            setUseQuestionnaireMultiple(parsed.useQuestionnaireMultiple || false);
+            setSelectedYears(parsed.selectedYears || [currentYear - 3, currentYear - 2, currentYear - 1]);
+            setFinancialData(parsed.financialData || {});
+            setAddbacks(
+              parsed.addbacks || [
+                { id: "1", reason: "", values: {} },
+                { id: "2", reason: "", values: {} },
+                { id: "3", reason: "", values: {} },
+              ],
+            );
+            setSelectedMethod(parsed.selectedMethod || "profit");
+            setAssets(parsed.assets || {});
+            setLiabilities(parsed.liabilities || {});
+
+            // Restore logo from base64
+            if (parsed.companyLogoData && parsed.companyLogoName && parsed.companyLogoType) {
+              try {
+                const response = await fetch(parsed.companyLogoData);
+                const blob = await response.blob();
+                const file = new File([blob], parsed.companyLogoName, { type: parsed.companyLogoType });
+                setCompanyLogo(file);
+              } catch (logoError) {
+                console.error("Failed to restore logo:", logoError);
+              }
+            }
+
+            console.log("Calculator data restored after accepting terms");
+            toast.success("Your previous data has been restored");
+          }
+        } catch (restoreError) {
+          console.error("Failed to restore data after accepting terms:", restoreError);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to accept terms:", error);
+      toast.error("Failed to accept terms. Please try again.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 via-white to-white">
@@ -772,7 +933,7 @@ export default function CalculatorPage() {
         <AccordionSection title="Download Valuation Document (PDF)" stepNumber={5} isOpen={openSections[5]} onToggle={() => toggleSection(5)}>
           <div className="py-6 space-y-6">
             {/* Comprehensive Valuation Summary Card */}
-            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} totalAddbacks={financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0)} adjustedEbit={averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0} finalValuation={finalValuation} totalAssets={selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} />
+            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} totalAddbacks={financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0)} adjustedEbit={averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0} finalValuation={finalValuation} totalAssets={selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} />
 
             <div className="text-center">
               {!isStep4Complete ? (
@@ -862,6 +1023,92 @@ export default function CalculatorPage() {
           </div>
         </AccordionSection>
       </main>
+
+      {/* Footer */}
+      <Footer />
+
+      {/* Terms and Conditions Dialog */}
+      <Dialog
+        open={showTermsDialog}
+        onOpenChange={(open) => {
+          // Prevent closing without accepting
+          if (!open && !termsAccepted) {
+            toast.error("You must accept the terms and conditions to use the calculator");
+            return;
+          }
+          setShowTermsDialog(open);
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Terms and Conditions</DialogTitle>
+            <DialogDescription>Please read and accept our terms and conditions before using the Business Valuation Calculator.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="prose prose-sm max-w-none">
+              <h3 className="font-semibold text-gray-900">Intaleks – Online Business Valuation Software Platform</h3>
+
+              <h4 className="font-semibold text-gray-900 mt-4">1. Introduction</h4>
+              <p className="text-gray-600">These Terms and Conditions govern access to and use of the valuation software platform operated by Perth Business Evaluators Pty Ltd (ABN: 51 622 231 832) trading as Intaleks. By using the Platform, you agree to be bound by these Terms.</p>
+
+              <h4 className="font-semibold text-gray-900 mt-4">2. Nature of the Service</h4>
+              <p className="text-gray-600">The Platform provides automated business valuation estimates generated using algorithms, data sources, and user inputs. Estimates are computer-generated, model-based, and dependent on input quality. The Platform does not provide certified valuations or legal, financial, taxation, accounting, or investment advice.</p>
+
+              <h4 className="font-semibold text-gray-900 mt-4">3. Disclaimer – Guidance Only</h4>
+              <p className="text-gray-600">
+                <strong>Valuation outputs are informational guides only and cannot be used for legal proceedings, tax matters, regulatory submissions, or as certified valuations.</strong> Users must obtain a qualified, independent valuation for legal or commercial purposes.
+              </p>
+
+              <h4 className="font-semibold text-gray-900 mt-4">4. User Responsibilities</h4>
+              <p className="text-gray-600">Users agree to provide accurate information, have legal authority to provide data, use the Platform lawfully, and not misuse or reverse engineer the Platform.</p>
+
+              <h4 className="font-semibold text-gray-900 mt-4">5. Accuracy and Limitations</h4>
+              <p className="text-gray-600">Valuations are estimates only. No guarantees are made regarding accuracy, completeness, reliability, or suitability. Results may be affected by market conditions, poor inputs, or model assumptions.</p>
+
+              <h4 className="font-semibold text-gray-900 mt-4">6. Limitation of Liability</h4>
+              <p className="text-gray-600">The Platform is provided &quot;as is.&quot; The Company is not liable for financial losses, business interruptions, indirect damages, or decisions based on valuation outputs. Liability is limited to fees paid for relevant services.</p>
+
+              <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                <p className="text-sm text-gray-700">
+                  <strong>⚠️ Important Legal Notice:</strong> The Platform provides automated valuation estimates only and is not a certified valuation and cannot be used for legal, tax, court, or regulatory purposes.
+                </p>
+              </div>
+
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-gray-700">
+                  For complete terms and conditions, please visit our{" "}
+                  <Link href="/terms" target="_blank" className="text-blue-600 hover:underline">
+                    Terms and Conditions page
+                  </Link>
+                  .
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-3 pt-4 border-t">
+              <Checkbox id="terms-accept" checked={termsAccepted} onCheckedChange={(checked) => setTermsAccepted(checked === true)} />
+              <label htmlFor="terms-accept" className="text-sm text-gray-700 cursor-pointer leading-relaxed">
+                I have read and agree to the{" "}
+                <Link href="/terms" target="_blank" className="text-blue-600 hover:underline">
+                  Terms and Conditions
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" target="_blank" className="text-blue-600 hover:underline">
+                  Privacy Policy
+                </Link>
+                . I understand that valuations are estimates only and cannot be used for legal, tax, or regulatory purposes.
+              </label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={handleAcceptTerms} disabled={!termsAccepted} className="bg-blue-500 hover:bg-blue-600">
+              Accept and Continue
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
