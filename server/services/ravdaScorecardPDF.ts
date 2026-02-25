@@ -95,6 +95,14 @@ const COLORS = {
   darkGray: "#374151",
 };
 
+const PAGE = {
+  margin: 50,
+  width: 595,
+  contentBottom: 750,
+};
+
+const CONTENT_WIDTH = PAGE.width - PAGE.margin * 2;
+
 function getRatingColor(rating: string): string {
   switch (rating.toLowerCase()) {
     case "excellent":
@@ -110,6 +118,41 @@ function getRatingColor(rating: string): string {
     default:
       return COLORS.gray;
   }
+}
+
+function safeSingleLineText(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  x: number,
+  y: number,
+  width: number,
+  align: PDFKit.Mixins.TextOptions["align"] = "left",
+): void {
+  doc.text(text, x, y, {
+    width,
+    align,
+    lineBreak: false,
+    ellipsis: true,
+  });
+}
+
+function formatMoneyCompact(value: number): string {
+  const safeValue = Number.isFinite(value) ? value : 0;
+  return `$${(safeValue / 1000).toFixed(0)}k`;
+}
+
+function formatCurrency(value: number, compact = false): string {
+  const safeValue = Number.isFinite(value) ? value : 0;
+
+  if (compact) {
+    return formatMoneyCompact(safeValue);
+  }
+
+  return new Intl.NumberFormat("en-AU", {
+    style: "currency",
+    currency: "AUD",
+    maximumFractionDigits: 0,
+  }).format(safeValue);
 }
 
 function drawHeader(doc: PDFKit.PDFDocument, data: RAVDAData, yPos: number): number {
@@ -197,7 +240,7 @@ function drawScoreBox(doc: PDFKit.PDFDocument, data: RAVDAData, xPos: number, yP
 
 function drawDriverRatings(doc: PDFKit.PDFDocument, data: RAVDAData, yPos: number): number {
   const boxWidth = 250;
-  const boxHeight = 200;
+  const boxHeight = 150;
 
   // Background box
   doc.rect(50, yPos, boxWidth, boxHeight).fillAndStroke(COLORS.lightGray, "#D1D5DB");
@@ -214,7 +257,10 @@ function drawDriverRatings(doc: PDFKit.PDFDocument, data: RAVDAData, yPos: numbe
     doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.success).text("STRONG", 60, textY);
     textY += 15;
     data.drivers.strong.forEach((driver) => {
-      doc.fontSize(9).font("Helvetica").fillColor(COLORS.darkGray).text(driver, 60, textY);
+      if (textY > yPos + boxHeight - 18) {
+        return;
+      }
+      doc.fontSize(9).font("Helvetica").fillColor(COLORS.darkGray).text(driver, 60, textY, { width: boxWidth - 20, lineBreak: false, ellipsis: true });
       textY += 12;
     });
     textY += 5;
@@ -225,7 +271,10 @@ function drawDriverRatings(doc: PDFKit.PDFDocument, data: RAVDAData, yPos: numbe
     doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.warning).text("AVERAGE", 60, textY);
     textY += 15;
     data.drivers.average.forEach((driver) => {
-      doc.fontSize(9).font("Helvetica").fillColor(COLORS.darkGray).text(driver, 60, textY);
+      if (textY > yPos + boxHeight - 18) {
+        return;
+      }
+      doc.fontSize(9).font("Helvetica").fillColor(COLORS.darkGray).text(driver, 60, textY, { width: boxWidth - 20, lineBreak: false, ellipsis: true });
       textY += 12;
     });
     textY += 5;
@@ -236,7 +285,10 @@ function drawDriverRatings(doc: PDFKit.PDFDocument, data: RAVDAData, yPos: numbe
     doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.danger).text("WEAK", 60, textY);
     textY += 15;
     data.drivers.weak.forEach((driver) => {
-      doc.fontSize(9).font("Helvetica").fillColor(COLORS.darkGray).text(driver, 60, textY);
+      if (textY > yPos + boxHeight - 18) {
+        return;
+      }
+      doc.fontSize(9).font("Helvetica").fillColor(COLORS.darkGray).text(driver, 60, textY, { width: boxWidth - 20, lineBreak: false, ellipsis: true });
       textY += 12;
     });
   }
@@ -339,7 +391,7 @@ function drawTrackProgress(doc: PDFKit.PDFDocument, data: RAVDAData, yPos: numbe
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.darkGray)
-    .text(progressText, 60, textY, { width: boxWidth - 20, align: "left" });
+    .text(progressText, 60, textY, { width: boxWidth - 20, height: 42, align: "left", ellipsis: true });
 
   textY += 50;
 
@@ -417,17 +469,21 @@ Based on your responses and our data analytics, we believe these services will i
     .fontSize(9)
     .font("Helvetica")
     .fillColor(COLORS.darkGray)
-    .text(introText, xPos + 10, textY, { width: boxWidth - 20, align: "left" });
+    .text(introText, xPos + 10, textY, { width: boxWidth - 20, height: 52, align: "left", ellipsis: true });
 
   textY += 70;
 
   // Next steps list
   data.nextSteps.forEach((step, index) => {
+    if (textY > yPos + boxHeight - 18) {
+      return;
+    }
+
     doc
       .fontSize(9)
       .font("Helvetica-Bold")
       .fillColor(COLORS.darkGray)
-      .text(`${index + 1}. ${step}`, xPos + 10, textY, { width: boxWidth - 20 });
+      .text(`${index + 1}. ${step}`, xPos + 10, textY, { width: boxWidth - 20, lineBreak: false, ellipsis: true });
     textY += 15;
   });
 }
@@ -435,184 +491,178 @@ Based on your responses and our data analytics, we believe these services will i
 function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
   doc.addPage();
   let yPos = 50;
+  const startX = PAGE.margin;
+  const metricColWidth = 140;
+  const maxYears = 5;
+  const years = (data.financialYears || []).slice(0, maxYears);
+  const visibleYearCount = Math.max(1, years.length);
+  const yearColWidth = (CONTENT_WIDTH - metricColWidth) / visibleYearCount;
+  const tableHeaderHeight = 22;
+  const metricRowHeight = 18;
 
-  // Page title
-  doc.fontSize(18).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Financial Analysis", 50, yPos);
-  yPos += 40;
-
-  // Company info summary
-  doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.darkGray).text(`Company: ${data.companyName}`, 50, yPos);
-  yPos += 15;
-  doc.fontSize(10).font("Helvetica").fillColor(COLORS.gray).text(`Industry: ${data.industry} | Country: ${data.country}`, 50, yPos);
-  yPos += 30;
-
-  // Financial data table
-  doc.fontSize(14).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Profit & Loss Statement", 50, yPos);
-  yPos += 20;
-
-  // Table headers
-  const colWidth = 100;
-  const startX = 50;
-
-  doc.fontSize(9).font("Helvetica-Bold").fillColor("white");
-  doc.rect(startX, yPos, 150, 25).fillAndStroke(COLORS.darkGray, COLORS.darkGray);
-  doc.text("Metric", startX + 5, yPos + 8);
-
-  data.financialYears.forEach((year, index) => {
-    const x = startX + 150 + index * colWidth;
-    doc.rect(x, yPos, colWidth, 25).fillAndStroke(COLORS.primary, COLORS.primary);
-    doc.text(year, x + 5, yPos + 8, { width: colWidth - 10, align: "right" });
+  console.log("[PDF] Page 2 start", {
+    yPos,
+    financialYears: data.financialYears?.length || 0,
+    visibleYearCount,
+    addbacks: data.addbacks?.length || 0,
   });
-  yPos += 25;
 
-  // Table rows
-  const metrics = [
+  doc.fontSize(20).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Financial Analysis", startX, yPos);
+  yPos += 28;
+
+  doc.fontSize(9).font("Helvetica").fillColor(COLORS.gray).text("Performance summary from calculator inputs", startX, yPos);
+  yPos += 18;
+
+  doc.rect(startX, yPos, CONTENT_WIDTH, 36).fillAndStroke("#F8FAFC", "#E2E8F0");
+  doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.darkGray).text(data.companyName || "N/A", startX + 10, yPos + 9, { width: 220, lineBreak: false, ellipsis: true });
+  doc.fontSize(9).font("Helvetica").fillColor(COLORS.gray).text(`Industry: ${data.industry || "N/A"}`, startX + 240, yPos + 9, { width: 120, lineBreak: false, ellipsis: true });
+  doc.text(`Country: ${data.country || "N/A"}`, startX + 370, yPos + 9, { width: 115, lineBreak: false, ellipsis: true, align: "right" });
+  yPos += 50;
+
+  doc.fontSize(13).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Profit & Loss Statement", startX, yPos);
+  yPos += 18;
+
+  doc.fontSize(8).font("Helvetica-Bold").fillColor("white");
+  doc.rect(startX, yPos, metricColWidth, tableHeaderHeight).fillAndStroke(COLORS.darkGray, COLORS.darkGray);
+  doc.text("Metric", startX + 6, yPos + 7, { width: metricColWidth - 12, lineBreak: false, ellipsis: true });
+
+  years.forEach((year, index) => {
+    const x = startX + metricColWidth + index * yearColWidth;
+    doc.rect(x, yPos, yearColWidth, tableHeaderHeight).fillAndStroke(COLORS.primary, COLORS.primary);
+    safeSingleLineText(doc, year, x + 4, yPos + 7, yearColWidth - 8, "right");
+  });
+  yPos += tableHeaderHeight;
+
+  const metrics: Array<{ key: string; label: string; bold?: boolean; highlight?: boolean; calc?: (yearData: any) => number }> = [
     { key: "sales", label: "Sales" },
     { key: "cogs", label: "COGS" },
-    { key: "grossProfit", label: "Gross Profit", bold: true },
+    { key: "grossProfit", label: "Gross Profit", bold: true, calc: (v) => (v.sales || 0) - (v.cogs || 0) },
     { key: "operatingExpenses", label: "Operating Expenses" },
-    { key: "netProfitAndLoss", label: "Net Profit/Loss", bold: true },
+    { key: "netProfitAndLoss", label: "Net Profit/Loss", bold: true, calc: (v) => (v.grossProfit ?? (v.sales || 0) - (v.cogs || 0)) - (v.operatingExpenses || 0) },
     { key: "interestExpense", label: "Interest Expense" },
     { key: "interestIncome", label: "Interest Income" },
-    { key: "ebit", label: "EBIT", bold: true, highlight: true },
+    { key: "ebit", label: "EBIT", bold: true, highlight: true, calc: (v) => (v.netProfitAndLoss ?? ((v.grossProfit ?? (v.sales || 0) - (v.cogs || 0)) - (v.operatingExpenses || 0))) + (v.interestExpense || 0) - (v.interestIncome || 0) },
   ];
 
-  metrics.forEach((metric) => {
-    const bgColor = metric.highlight ? "#EFF6FF" : yPos % 50 < 25 ? "#F9FAFB" : "white";
-    doc.rect(startX, yPos, 150, 20).fillAndStroke(bgColor, "#E5E7EB");
+  metrics.forEach((metric, rowIndex) => {
+    const bgColor = metric.highlight ? "#E8F1FF" : rowIndex % 2 === 0 ? "#FFFFFF" : "#F9FAFB";
+    doc.rect(startX, yPos, metricColWidth, metricRowHeight).fillAndStroke(bgColor, "#E5E7EB");
 
-    doc
-      .fontSize(9)
-      .font(metric.bold ? "Helvetica-Bold" : "Helvetica")
-      .fillColor(COLORS.darkGray);
-    doc.text(metric.label, startX + 5, yPos + 6);
+    doc.fontSize(8.5).font(metric.bold ? "Helvetica-Bold" : "Helvetica").fillColor(COLORS.darkGray);
+    safeSingleLineText(doc, metric.label, startX + 6, yPos + 5, metricColWidth - 12);
 
-    data.financialYears.forEach((year, index) => {
-      const x = startX + 150 + index * colWidth;
-      doc.rect(x, yPos, colWidth, 20).fillAndStroke(bgColor, "#E5E7EB");
+    years.forEach((year, index) => {
+      const x = startX + metricColWidth + index * yearColWidth;
+      doc.rect(x, yPos, yearColWidth, metricRowHeight).fillAndStroke(bgColor, "#E5E7EB");
 
-      const value = data.financialData[year]?.[metric.key as keyof (typeof data.financialData)[string]] || 0;
-      const formattedValue = `$${(value / 1000).toFixed(0)}k`;
-      doc.text(formattedValue, x + 5, yPos + 6, { width: colWidth - 10, align: "right" });
+      const yearData = data.financialData?.[year] || {};
+      const rawValue = yearData[metric.key as keyof typeof yearData];
+      const value = typeof rawValue === "number" ? rawValue : metric.calc ? metric.calc(yearData) : 0;
+      safeSingleLineText(doc, formatCurrency(value), x + 4, yPos + 5, yearColWidth - 8, "right");
     });
 
-    yPos += 20;
+    yPos += metricRowHeight;
   });
 
-  yPos += 30;
+  yPos += 20;
 
-  // Addbacks section
-  if (data.addbacks && data.addbacks.length > 0 && data.addbacks.some((a) => a.reason)) {
-    doc.fontSize(14).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Addbacks", 50, yPos);
-    yPos += 20;
+  const addbacks = (data.addbacks || []).filter((a) => a.reason);
+  if (addbacks.length > 0) {
+    doc.fontSize(13).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Addbacks", startX, yPos);
+    yPos += 18;
 
-    // Addbacks table
-    doc.fontSize(9).font("Helvetica-Bold").fillColor("white");
-    doc.rect(startX, yPos, 150, 25).fillAndStroke(COLORS.darkGray, COLORS.darkGray);
-    doc.text("Reason", startX + 5, yPos + 8);
+    const availableRows = Math.max(2, Math.floor((PAGE.contentBottom - yPos - tableHeaderHeight) / 12));
+    const addbackRowHeight = Math.min(18, Math.max(11, Math.floor((PAGE.contentBottom - yPos - tableHeaderHeight) / (addbacks.length + 1))));
 
-    data.financialYears.forEach((year, index) => {
-      const x = startX + 150 + index * colWidth;
-      doc.rect(x, yPos, colWidth, 25).fillAndStroke(COLORS.warning, COLORS.warning);
-      doc.text(year, x + 5, yPos + 8, { width: colWidth - 10, align: "right" });
+    doc.fontSize(8).font("Helvetica-Bold").fillColor("white");
+    doc.rect(startX, yPos, metricColWidth, tableHeaderHeight).fillAndStroke(COLORS.darkGray, COLORS.darkGray);
+    safeSingleLineText(doc, "Reason", startX + 6, yPos + 7, metricColWidth - 12);
+
+    years.forEach((year, index) => {
+      const x = startX + metricColWidth + index * yearColWidth;
+      doc.rect(x, yPos, yearColWidth, tableHeaderHeight).fillAndStroke(COLORS.warning, COLORS.warning);
+      safeSingleLineText(doc, year, x + 4, yPos + 7, yearColWidth - 8, "right");
     });
-    yPos += 25;
+    yPos += tableHeaderHeight;
 
-    data.addbacks
-      .filter((a) => a.reason)
-      .forEach((addback) => {
-        const bgColor = yPos % 50 < 25 ? "#FFFBEB" : "#FEF3C7";
-        doc.rect(startX, yPos, 150, 20).fillAndStroke(bgColor, "#F59E0B");
+    addbacks.slice(0, availableRows - 1).forEach((addback, rowIndex) => {
+      const bgColor = rowIndex % 2 === 0 ? "#FFFBEB" : "#FEF3C7";
+      doc.rect(startX, yPos, metricColWidth, addbackRowHeight).fillAndStroke(bgColor, "#F59E0B");
 
-        doc.fontSize(8).font("Helvetica").fillColor(COLORS.darkGray);
-        doc.text(addback.reason || "Other", startX + 5, yPos + 6, { width: 140 });
+      doc.fontSize(7.5).font("Helvetica").fillColor(COLORS.darkGray);
+      safeSingleLineText(doc, addback.reason || "Other", startX + 6, yPos + 3.5, metricColWidth - 12);
 
-        data.financialYears.forEach((year, index) => {
-          const x = startX + 150 + index * colWidth;
-          doc.rect(x, yPos, colWidth, 20).fillAndStroke(bgColor, "#F59E0B");
-
-          const value = addback.values[year] || 0;
-          const formattedValue = `$${(value / 1000).toFixed(0)}k`;
-          doc.text(formattedValue, x + 5, yPos + 6, { width: colWidth - 10, align: "right" });
-        });
-
-        yPos += 20;
+      years.forEach((year, index) => {
+        const x = startX + metricColWidth + index * yearColWidth;
+        doc.rect(x, yPos, yearColWidth, addbackRowHeight).fillAndStroke(bgColor, "#F59E0B");
+        const value = addback.values?.[year] || 0;
+        safeSingleLineText(doc, formatCurrency(value), x + 4, yPos + 3.5, yearColWidth - 8, "right");
       });
 
-    // Total addbacks row
-    doc.rect(startX, yPos, 150, 20).fillAndStroke("#FEF3C7", "#F59E0B");
-    doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.darkGray);
-    doc.text("Total Addbacks", startX + 5, yPos + 6);
-
-    data.financialYears.forEach((year, index) => {
-      const x = startX + 150 + index * colWidth;
-      doc.rect(x, yPos, colWidth, 20).fillAndStroke("#FEF3C7", "#F59E0B");
-
-      const totalForYear = data.addbacks.reduce((sum, a) => sum + (a.values[year] || 0), 0);
-      const formattedValue = `$${(totalForYear / 1000).toFixed(0)}k`;
-      doc.text(formattedValue, x + 5, yPos + 6, { width: colWidth - 10, align: "right" });
+      yPos += addbackRowHeight;
     });
+
+    doc.rect(startX, yPos, metricColWidth, addbackRowHeight).fillAndStroke("#FEF3C7", "#F59E0B");
+    doc.fontSize(8).font("Helvetica-Bold").fillColor(COLORS.darkGray);
+    safeSingleLineText(doc, "Total Addbacks", startX + 6, yPos + 4, metricColWidth - 12);
+
+    years.forEach((year, index) => {
+      const x = startX + metricColWidth + index * yearColWidth;
+      doc.rect(x, yPos, yearColWidth, addbackRowHeight).fillAndStroke("#FEF3C7", "#F59E0B");
+      const totalForYear = addbacks.reduce((sum, a) => sum + (a.values?.[year] || 0), 0);
+      safeSingleLineText(doc, formatCurrency(totalForYear), x + 4, yPos + 4, yearColWidth - 8, "right");
+    });
+
+    yPos += addbackRowHeight;
+
+    if (data.financialYears.length > maxYears) {
+      doc.fontSize(7).font("Helvetica-Oblique").fillColor(COLORS.gray).text(`Showing first ${maxYears} years only due to page width constraints.`, startX, yPos + 5, { width: CONTENT_WIDTH });
+    }
   }
+
+  console.log("[PDF] Page 2 end", { yPos, safeBottom: PAGE.contentBottom });
 }
 
 function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
   doc.addPage();
   let yPos = 50;
 
-  // Page title
-  doc.fontSize(18).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Valuation Summary", 50, yPos);
-  yPos += 40;
-
-  // Valuation method
-  const methodName = data.valuationMethod === "profit" ? "Profit Multiple Method" : data.valuationMethod === "asset" ? "Asset-Based Method" : "DCF Method";
-  doc.fontSize(12).font("Helvetica-Bold").fillColor(COLORS.primary).text(`Method: ${methodName}`, 50, yPos);
+  doc.fontSize(20).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Valuation Summary", 50, yPos);
   yPos += 30;
 
-  if (data.valuationMethod === "profit") {
-    // Profit method calculation
-    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Calculation:", 50, yPos);
-    yPos += 25;
+  const methodName = data.valuationMethod === "profit" ? "Profit Multiple Method" : data.valuationMethod === "asset" ? "Asset-Based Method" : "DCF Method";
+  doc.rect(50, yPos, 500, 28).fillAndStroke("#EEF2FF", "#C7D2FE");
+  doc.fontSize(10).font("Helvetica-Bold").fillColor("#1E3A8A").text(`Method: ${methodName}`, 60, yPos + 9, { width: 480, lineBreak: false, ellipsis: true });
+  yPos += 42;
 
+  if (data.valuationMethod === "profit") {
     const calcSteps = [
       { label: "Average EBIT", value: data.averageEbit },
       { label: "Total Addbacks", value: data.totalAddbacks },
-      { label: "Adjusted EBIT (Earning Capacity)", value: data.adjustedEbit, highlight: true },
+      { label: "Adjusted EBIT", value: data.adjustedEbit, highlight: true },
       { label: "Valuation Multiple", value: data.calculatedMultiple || 4.0, isMultiple: true },
-      { label: "Estimated Business Value", value: data.finalValuation, highlight: true, large: true },
     ];
 
-    calcSteps.forEach((step) => {
-      const bgColor = step.highlight ? "#EFF6FF" : "white";
-      const height = step.large ? 40 : 30;
-
-      doc.rect(50, yPos, 500, height).fillAndStroke(bgColor, "#E5E7EB");
-
-      const fontSize = step.large ? 14 : 10;
-      const font = step.highlight ? "Helvetica-Bold" : "Helvetica";
-      doc.fontSize(fontSize).font(font).fillColor(COLORS.darkGray);
-      doc.text(step.label, 60, yPos + height / 2 - 6);
-
-      let valueText: string;
-      if (step.isMultiple) {
-        valueText = `${step.value.toFixed(2)}x`;
-      } else {
-        valueText = `$${(step.value / 1000).toFixed(0)}k`;
-      }
-
-      doc.text(valueText, 300, yPos + height / 2 - 6, { width: 240, align: "right" });
-
-      yPos += height + 5;
+    calcSteps.forEach((step, index) => {
+      const bgColor = index % 2 === 0 ? "#FFFFFF" : "#F8FAFC";
+      doc.rect(50, yPos, 500, 28).fillAndStroke(bgColor, "#E5E7EB");
+      doc.fontSize(10).font(step.highlight ? "Helvetica-Bold" : "Helvetica").fillColor(COLORS.darkGray).text(step.label, 60, yPos + 9);
+      const valueText = step.isMultiple ? `${step.value.toFixed(2)}x` : formatCurrency(step.value);
+      doc.text(valueText, 280, yPos + 9, { width: 260, align: "right", lineBreak: false, ellipsis: true });
+      yPos += 28;
     });
 
-    yPos += 20;
+    yPos += 16;
 
-    // Formula explanation
-    doc.fontSize(10).font("Helvetica-Oblique").fillColor(COLORS.gray);
-    doc.text("Formula: Business Value = Adjusted EBIT × Valuation Multiple", 50, yPos, { width: 500, align: "center" });
+    doc.rect(50, yPos, 500, 76).fillAndStroke("#E8F1FF", "#3B82F6");
+    doc.fontSize(11).font("Helvetica-Bold").fillColor("#1D4ED8").text("Estimated Business Value", 60, yPos + 14);
+    doc.fontSize(28).font("Helvetica-Bold").fillColor("#1D4ED8").text(formatCurrency(data.finalValuation), 60, yPos + 34, { width: 480, align: "right" });
+    yPos += 92;
+
+    doc.fontSize(10).font("Helvetica-Oblique").fillColor(COLORS.gray).text("Formula: Adjusted EBIT × Valuation Multiple", 50, yPos, { width: 500, align: "center" });
   } else if (data.valuationMethod === "asset" && data.assets && data.liabilities) {
-    // Asset method calculation
-    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Assets:", 50, yPos);
-    yPos += 25;
+    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Assets", 50, yPos);
+    yPos += 18;
 
     const assetItems = [
       { label: "Plant & Equipment", value: data.assets.plantEquipment },
@@ -622,22 +672,20 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData): voi
       { label: "Other Intangibles", value: data.assets.otherIntangible },
     ];
 
-    assetItems.forEach((item) => {
-      doc.rect(50, yPos, 500, 25).fillAndStroke("white", "#E5E7EB");
-      doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray);
-      doc.text(item.label, 60, yPos + 8);
-      doc.text(`$${(item.value / 1000).toFixed(0)}k`, 300, yPos + 8, { width: 240, align: "right" });
-      yPos += 25;
+    assetItems.forEach((item, index) => {
+      doc.rect(50, yPos, 500, 24).fillAndStroke(index % 2 === 0 ? "#FFFFFF" : "#F8FAFC", "#E5E7EB");
+      doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.darkGray).text(item.label, 60, yPos + 8);
+      doc.text(formatCurrency(item.value), 280, yPos + 8, { width: 260, align: "right" });
+      yPos += 24;
     });
 
-    doc.rect(50, yPos, 500, 30).fillAndStroke("#EFF6FF", "#3B82F6");
-    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray);
-    doc.text("Total Assets", 60, yPos + 10);
-    doc.text(`$${((data.totalAssets || 0) / 1000).toFixed(0)}k`, 300, yPos + 10, { width: 240, align: "right" });
+    doc.rect(50, yPos, 500, 28).fillAndStroke("#E8F1FF", "#3B82F6");
+    doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Total Assets", 60, yPos + 9);
+    doc.text(formatCurrency(data.totalAssets || 0), 280, yPos + 9, { width: 260, align: "right" });
     yPos += 40;
 
-    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Liabilities:", 50, yPos);
-    yPos += 25;
+    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Liabilities", 50, yPos);
+    yPos += 18;
 
     const liabilityItems = [
       { label: "Loans", value: data.liabilities.loans },
@@ -646,28 +694,24 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData): voi
       { label: "Other Liabilities", value: data.liabilities.otherLiabilities },
     ];
 
-    liabilityItems.forEach((item) => {
-      doc.rect(50, yPos, 500, 25).fillAndStroke("white", "#E5E7EB");
-      doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray);
-      doc.text(item.label, 60, yPos + 8);
-      doc.text(`$${(item.value / 1000).toFixed(0)}k`, 300, yPos + 8, { width: 240, align: "right" });
-      yPos += 25;
+    liabilityItems.forEach((item, index) => {
+      doc.rect(50, yPos, 500, 24).fillAndStroke(index % 2 === 0 ? "#FFFFFF" : "#F8FAFC", "#E5E7EB");
+      doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.darkGray).text(item.label, 60, yPos + 8);
+      doc.text(formatCurrency(item.value), 280, yPos + 8, { width: 260, align: "right" });
+      yPos += 24;
     });
 
-    doc.rect(50, yPos, 500, 30).fillAndStroke("#FEF2F2", "#EF4444");
-    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray);
-    doc.text("Total Liabilities", 60, yPos + 10);
-    doc.text(`$${((data.totalLiabilities || 0) / 1000).toFixed(0)}k`, 300, yPos + 10, { width: 240, align: "right" });
-    yPos += 40;
+    doc.rect(50, yPos, 500, 28).fillAndStroke("#FEF2F2", "#EF4444");
+    doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Total Liabilities", 60, yPos + 9);
+    doc.text(formatCurrency(data.totalLiabilities || 0), 280, yPos + 9, { width: 260, align: "right" });
+    yPos += 42;
 
-    doc.rect(50, yPos, 500, 40).fillAndStroke("#EFF6FF", "#3B82F6");
-    doc.fontSize(14).font("Helvetica-Bold").fillColor(COLORS.darkGray);
-    doc.text("Net Asset Value", 60, yPos + 12);
-    doc.text(`$${(data.finalValuation / 1000).toFixed(0)}k`, 300, yPos + 12, { width: 240, align: "right" });
-    yPos += 50;
+    doc.rect(50, yPos, 500, 70).fillAndStroke("#E8F1FF", "#3B82F6");
+    doc.fontSize(11).font("Helvetica-Bold").fillColor("#1D4ED8").text("Net Asset Value", 60, yPos + 14);
+    doc.fontSize(28).font("Helvetica-Bold").fillColor("#1D4ED8").text(formatCurrency(data.finalValuation), 60, yPos + 34, { width: 480, align: "right" });
+    yPos += 86;
 
-    doc.fontSize(10).font("Helvetica-Oblique").fillColor(COLORS.gray);
-    doc.text("Formula: Net Asset Value = Total Assets - Total Liabilities", 50, yPos, { width: 500, align: "center" });
+    doc.fontSize(10).font("Helvetica-Oblique").fillColor(COLORS.gray).text("Formula: Total Assets − Total Liabilities", 50, yPos, { width: 500, align: "center" });
   }
 }
 
@@ -687,7 +731,7 @@ function drawFooterDisclaimer(doc: PDFKit.PDFDocument, yPos: number): void {
 
   // Main disclaimer text
   const mainDisclaimer = `The valuation estimate generated by Perth Business Evaluators Pty Ltd (ABN: 51 622 231 832), trading as Intaleks ("Intaleks") is a general informational guide only. It is based on automated modelling, user-provided inputs, and available data sources.`;
-  doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray).text(mainDisclaimer, 50, yPos, { width: 500, align: "justify" });
+  doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray).text(mainDisclaimer, 50, yPos, { width: 500, align: "justify", height: 40 });
   yPos += 50;
 
   // "This valuation is not:" section
@@ -697,7 +741,7 @@ function drawFooterDisclaimer(doc: PDFKit.PDFDocument, yPos: number): void {
   const notItems = ["A certified business valuation", "A legal valuation for court, taxation, or regulatory purposes", "Financial, accounting, investment, or legal advice", "A substitute for professional valuation services"];
 
   notItems.forEach((item) => {
-    doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray).text(`• ${item}`, 70, yPos, { width: 480 });
+    doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray).text(`• ${item}`, 70, yPos, { width: 480, lineBreak: false, ellipsis: true });
     yPos += 18;
   });
   yPos += 10;
@@ -707,7 +751,7 @@ function drawFooterDisclaimer(doc: PDFKit.PDFDocument, yPos: number): void {
   yPos += 20;
 
   const estimatesText = `and may not reflect actual market value or current economic conditions. No action or decision should be made based solely on this valuation output.`;
-  doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray).text(estimatesText, 50, yPos, { width: 500, align: "justify" });
+  doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray).text(estimatesText, 50, yPos, { width: 500, align: "justify", height: 30 });
   yPos += 40;
 
   // Legal proceedings section
@@ -761,7 +805,7 @@ function drawFooterDisclaimer(doc: PDFKit.PDFDocument, yPos: number): void {
   const ravdaDisclaimer = `The RAVDA is a proprietary tool developed by Intaleks to help business owners understand the key risk and value drivers. A high RAVDA score usually indicates lower risks and potentially a more valuable business. The score is calculated using a combination of your responses and industry data. The score is intended as an introduction to assess key risk and value drivers. There may be omissions or inaccuracies, and the reader needs to make their own enquiries before making any decision. The issuer shall not be held liable for any loss or damage arising from relying on this document.`;
 
   // Add disclaimer at bottom of the new page
-  doc.fontSize(7).font("Helvetica").fillColor(COLORS.gray).text(ravdaDisclaimer, 50, 720, { width: 500, align: "left", lineGap: 2 });
+  doc.fontSize(7).font("Helvetica").fillColor(COLORS.gray).text(ravdaDisclaimer, 50, 720, { width: 500, height: 70, align: "left", lineGap: 2, ellipsis: true });
 }
 
 export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer> {
@@ -769,15 +813,21 @@ export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer
     const doc = new PDFDocument({ margin: 50, size: "A4", bufferPages: true });
     const chunks: Buffer[] = [];
 
+    let pageCount = 1;
+    doc.on("pageAdded", () => {
+      pageCount += 1;
+      console.log(`[PDF] pageAdded -> ${pageCount}`);
+    });
+
     doc.on("data", (chunk) => chunks.push(chunk));
     doc.on("end", () => {
-      console.log(`PDF generated with ${doc.bufferedPageRange().count} pages`);
+      console.log(`[PDF] generated with ${pageCount} pages`);
       resolve(Buffer.concat(chunks));
     });
     doc.on("error", reject);
 
     // ===== PAGE 1: RAVDA SCORECARD =====
-    console.log("Generating Page 1: RAVDA Scorecard");
+    console.log("[PDF] Generating Page 1: RAVDA Scorecard");
     let yPos = 50;
 
     // Header
@@ -803,21 +853,21 @@ export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer
     drawNextSteps(doc, data, 320, bottomStartY);
 
     // Footer on page 1
-    doc.fontSize(8).font("Helvetica-Bold").fillColor(COLORS.primary).text("Intaleks", 50, 780);
-    doc.fontSize(8).font("Helvetica").fillColor(COLORS.gray).text("Business Valuation & Advisory", 50, 790);
+    doc.fontSize(8).font("Helvetica-Bold").fillColor(COLORS.primary).text("Intaleks", 50, 760);
+    doc.fontSize(8).font("Helvetica").fillColor(COLORS.gray).text("Business Valuation & Advisory", 50, 772);
 
     // ===== PAGE 2: FINANCIAL DATA =====
     if (data.financialYears && data.financialData) {
-      console.log("Generating Page 2: Financial Data");
+      console.log("[PDF] Generating Page 2: Financial Data");
       drawFinancialDataPage(doc, data);
     }
 
     // ===== PAGE 3: VALUATION SUMMARY =====
-    console.log("Generating Page 3: Valuation Summary");
+    console.log("[PDF] Generating Page 3: Valuation Summary");
     drawValuationSummaryPage(doc, data);
 
     // ===== PAGE 4: DISCLAIMER =====
-    console.log("Generating Page 4: Disclaimer");
+    console.log("[PDF] Generating Page 4: Disclaimer");
     drawFooterDisclaimer(doc, 720);
 
     doc.end();
