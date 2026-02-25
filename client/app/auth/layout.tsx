@@ -22,7 +22,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         // Admin logging in via admin login page -> redirect to admin dashboard
         router.replace("/admin");
       } else {
-        // Regular users or admins on user auth pages -> redirect to home
         router.replace("/");
       }
     }
