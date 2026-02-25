@@ -141,20 +141,6 @@ function formatMoneyCompact(value: number): string {
   return `$${(safeValue / 1000).toFixed(0)}k`;
 }
 
-function formatCurrency(value: number, compact = false): string {
-  const safeValue = Number.isFinite(value) ? value : 0;
-
-  if (compact) {
-    return formatMoneyCompact(safeValue);
-  }
-
-  return new Intl.NumberFormat("en-AU", {
-    style: "currency",
-    currency: "AUD",
-    maximumFractionDigits: 0,
-  }).format(safeValue);
-}
-
 function drawHeader(doc: PDFKit.PDFDocument, data: RAVDAData, yPos: number): number {
   // Add Intaleks logo on the left
   try {
@@ -491,14 +477,14 @@ Based on your responses and our data analytics, we believe these services will i
 function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
   doc.addPage();
   let yPos = 50;
-  const startX = PAGE.margin;
-  const metricColWidth = 140;
+  const tableStartX = PAGE.margin;
+  const metricColWidth = 120;
   const maxYears = 5;
-  const years = (data.financialYears || []).slice(0, maxYears);
-  const visibleYearCount = Math.max(1, years.length);
+  const rowHeight = 18;
+  const headerHeight = 20;
+  const yearList = (data.financialYears || []).slice(0, maxYears);
+  const visibleYearCount = Math.max(1, yearList.length);
   const yearColWidth = (CONTENT_WIDTH - metricColWidth) / visibleYearCount;
-  const tableHeaderHeight = 22;
-  const metricRowHeight = 18;
 
   console.log("[PDF] Page 2 start", {
     yPos,
@@ -519,19 +505,21 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
   doc.text(`Country: ${data.country || "N/A"}`, startX + 370, yPos + 9, { width: 115, lineBreak: false, ellipsis: true, align: "right" });
   yPos += 50;
 
-  doc.fontSize(13).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Profit & Loss Statement", startX, yPos);
-  yPos += 18;
+  if (yPos > PAGE.contentBottom) {
+    console.log("[PDF] Warning: yPos exceeded safe bounds before table", yPos);
+  }
 
-  doc.fontSize(8).font("Helvetica-Bold").fillColor("white");
-  doc.rect(startX, yPos, metricColWidth, tableHeaderHeight).fillAndStroke(COLORS.darkGray, COLORS.darkGray);
-  doc.text("Metric", startX + 6, yPos + 7, { width: metricColWidth - 12, lineBreak: false, ellipsis: true });
+  // Table headers
+  doc.fontSize(9).font("Helvetica-Bold").fillColor("white");
+  doc.rect(tableStartX, yPos, metricColWidth, headerHeight).fillAndStroke(COLORS.darkGray, COLORS.darkGray);
+  safeSingleLineText(doc, "Metric", tableStartX + 5, yPos + 6, metricColWidth - 10);
 
-  years.forEach((year, index) => {
-    const x = startX + metricColWidth + index * yearColWidth;
-    doc.rect(x, yPos, yearColWidth, tableHeaderHeight).fillAndStroke(COLORS.primary, COLORS.primary);
-    safeSingleLineText(doc, year, x + 4, yPos + 7, yearColWidth - 8, "right");
+  yearList.forEach((year, index) => {
+    const x = tableStartX + metricColWidth + index * yearColWidth;
+    doc.rect(x, yPos, yearColWidth, headerHeight).fillAndStroke(COLORS.primary, COLORS.primary);
+    safeSingleLineText(doc, year, x + 4, yPos + 6, yearColWidth - 8, "right");
   });
-  yPos += tableHeaderHeight;
+  yPos += headerHeight;
 
   const metrics: Array<{ key: string; label: string; bold?: boolean; highlight?: boolean; calc?: (yearData: any) => number }> = [
     { key: "sales", label: "Sales" },
@@ -544,80 +532,93 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
     { key: "ebit", label: "EBIT", bold: true, highlight: true, calc: (v) => (v.netProfitAndLoss ?? ((v.grossProfit ?? (v.sales || 0) - (v.cogs || 0)) - (v.operatingExpenses || 0))) + (v.interestExpense || 0) - (v.interestIncome || 0) },
   ];
 
-  metrics.forEach((metric, rowIndex) => {
-    const bgColor = metric.highlight ? "#E8F1FF" : rowIndex % 2 === 0 ? "#FFFFFF" : "#F9FAFB";
-    doc.rect(startX, yPos, metricColWidth, metricRowHeight).fillAndStroke(bgColor, "#E5E7EB");
+  metrics.forEach((metric) => {
+    const bgColor = metric.highlight ? "#EFF6FF" : yPos % 50 < 25 ? "#F9FAFB" : "white";
+    doc.rect(tableStartX, yPos, metricColWidth, rowHeight).fillAndStroke(bgColor, "#E5E7EB");
 
-    doc.fontSize(8.5).font(metric.bold ? "Helvetica-Bold" : "Helvetica").fillColor(COLORS.darkGray);
-    safeSingleLineText(doc, metric.label, startX + 6, yPos + 5, metricColWidth - 12);
+    doc
+      .fontSize(9)
+      .font(metric.bold ? "Helvetica-Bold" : "Helvetica")
+      .fillColor(COLORS.darkGray);
+    safeSingleLineText(doc, metric.label, tableStartX + 5, yPos + 5, metricColWidth - 10);
 
-    years.forEach((year, index) => {
-      const x = startX + metricColWidth + index * yearColWidth;
-      doc.rect(x, yPos, yearColWidth, metricRowHeight).fillAndStroke(bgColor, "#E5E7EB");
+    yearList.forEach((year, index) => {
+      const x = tableStartX + metricColWidth + index * yearColWidth;
+      doc.rect(x, yPos, yearColWidth, rowHeight).fillAndStroke(bgColor, "#E5E7EB");
 
-      const yearData = data.financialData?.[year] || {};
-      const rawValue = yearData[metric.key as keyof typeof yearData];
-      const value = typeof rawValue === "number" ? rawValue : metric.calc ? metric.calc(yearData) : 0;
-      safeSingleLineText(doc, formatCurrency(value), x + 4, yPos + 5, yearColWidth - 8, "right");
+      const value = data.financialData?.[year]?.[metric.key as keyof (typeof data.financialData)[string]] || 0;
+      safeSingleLineText(doc, formatMoneyCompact(value), x + 4, yPos + 5, yearColWidth - 8, "right");
     });
 
-    yPos += metricRowHeight;
+    yPos += rowHeight;
   });
 
-  yPos += 20;
+  yPos += 24;
 
-  const addbacks = (data.addbacks || []).filter((a) => a.reason);
-  if (addbacks.length > 0) {
-    doc.fontSize(13).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Addbacks", startX, yPos);
-    yPos += 18;
+  // Addbacks section
+  if (data.addbacks && data.addbacks.length > 0 && data.addbacks.some((a) => a.reason)) {
+    doc.fontSize(14).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Addbacks", 50, yPos);
+    yPos += 20;
 
-    const availableRows = Math.max(2, Math.floor((PAGE.contentBottom - yPos - tableHeaderHeight) / 12));
-    const addbackRowHeight = Math.min(18, Math.max(11, Math.floor((PAGE.contentBottom - yPos - tableHeaderHeight) / (addbacks.length + 1))));
+    doc.fontSize(9).font("Helvetica-Bold").fillColor("white");
+    doc.rect(tableStartX, yPos, metricColWidth, headerHeight).fillAndStroke(COLORS.darkGray, COLORS.darkGray);
+    safeSingleLineText(doc, "Reason", tableStartX + 5, yPos + 6, metricColWidth - 10);
 
-    doc.fontSize(8).font("Helvetica-Bold").fillColor("white");
-    doc.rect(startX, yPos, metricColWidth, tableHeaderHeight).fillAndStroke(COLORS.darkGray, COLORS.darkGray);
-    safeSingleLineText(doc, "Reason", startX + 6, yPos + 7, metricColWidth - 12);
-
-    years.forEach((year, index) => {
-      const x = startX + metricColWidth + index * yearColWidth;
-      doc.rect(x, yPos, yearColWidth, tableHeaderHeight).fillAndStroke(COLORS.warning, COLORS.warning);
-      safeSingleLineText(doc, year, x + 4, yPos + 7, yearColWidth - 8, "right");
+    yearList.forEach((year, index) => {
+      const x = tableStartX + metricColWidth + index * yearColWidth;
+      doc.rect(x, yPos, yearColWidth, headerHeight).fillAndStroke(COLORS.warning, COLORS.warning);
+      safeSingleLineText(doc, year, x + 4, yPos + 6, yearColWidth - 8, "right");
     });
-    yPos += tableHeaderHeight;
+    yPos += headerHeight;
 
-    addbacks.slice(0, availableRows - 1).forEach((addback, rowIndex) => {
-      const bgColor = rowIndex % 2 === 0 ? "#FFFBEB" : "#FEF3C7";
-      doc.rect(startX, yPos, metricColWidth, addbackRowHeight).fillAndStroke(bgColor, "#F59E0B");
+    const validAddbacks = data.addbacks.filter((a) => a.reason);
+    const rowsAvailable = Math.max(1, Math.floor((PAGE.contentBottom - yPos - rowHeight - 5) / rowHeight));
+    const addbacksToRender = validAddbacks.slice(0, rowsAvailable);
 
-      doc.fontSize(7.5).font("Helvetica").fillColor(COLORS.darkGray);
-      safeSingleLineText(doc, addback.reason || "Other", startX + 6, yPos + 3.5, metricColWidth - 12);
+    addbacksToRender.forEach((addback) => {
+      const bgColor = yPos % 50 < 25 ? "#FFFBEB" : "#FEF3C7";
+      doc.rect(tableStartX, yPos, metricColWidth, rowHeight).fillAndStroke(bgColor, "#F59E0B");
 
-      years.forEach((year, index) => {
-        const x = startX + metricColWidth + index * yearColWidth;
-        doc.rect(x, yPos, yearColWidth, addbackRowHeight).fillAndStroke(bgColor, "#F59E0B");
-        const value = addback.values?.[year] || 0;
-        safeSingleLineText(doc, formatCurrency(value), x + 4, yPos + 3.5, yearColWidth - 8, "right");
+      doc.fontSize(8).font("Helvetica").fillColor(COLORS.darkGray);
+      safeSingleLineText(doc, addback.reason || "Other", tableStartX + 5, yPos + 5, metricColWidth - 10);
+
+      yearList.forEach((year, index) => {
+        const x = tableStartX + metricColWidth + index * yearColWidth;
+        doc.rect(x, yPos, yearColWidth, rowHeight).fillAndStroke(bgColor, "#F59E0B");
+
+        const value = addback.values[year] || 0;
+        safeSingleLineText(doc, formatMoneyCompact(value), x + 4, yPos + 5, yearColWidth - 8, "right");
       });
 
-      yPos += addbackRowHeight;
+      yPos += rowHeight;
     });
 
-    doc.rect(startX, yPos, metricColWidth, addbackRowHeight).fillAndStroke("#FEF3C7", "#F59E0B");
-    doc.fontSize(8).font("Helvetica-Bold").fillColor(COLORS.darkGray);
-    safeSingleLineText(doc, "Total Addbacks", startX + 6, yPos + 4, metricColWidth - 12);
-
-    years.forEach((year, index) => {
-      const x = startX + metricColWidth + index * yearColWidth;
-      doc.rect(x, yPos, yearColWidth, addbackRowHeight).fillAndStroke("#FEF3C7", "#F59E0B");
-      const totalForYear = addbacks.reduce((sum, a) => sum + (a.values?.[year] || 0), 0);
-      safeSingleLineText(doc, formatCurrency(totalForYear), x + 4, yPos + 4, yearColWidth - 8, "right");
-    });
-
-    yPos += addbackRowHeight;
-
-    if (data.financialYears.length > maxYears) {
-      doc.fontSize(7).font("Helvetica-Oblique").fillColor(COLORS.gray).text(`Showing first ${maxYears} years only due to page width constraints.`, startX, yPos + 5, { width: CONTENT_WIDTH });
+    if (validAddbacks.length > addbacksToRender.length && yPos <= PAGE.contentBottom - rowHeight) {
+      doc.rect(tableStartX, yPos, CONTENT_WIDTH, rowHeight).fillAndStroke("#FEF3C7", "#F59E0B");
+      doc.fontSize(8).font("Helvetica-Oblique").fillColor(COLORS.darkGray);
+      safeSingleLineText(
+        doc,
+        `+ ${validAddbacks.length - addbacksToRender.length} additional addback(s) not shown to keep this page to one sheet.`,
+        tableStartX + 5,
+        yPos + 5,
+        CONTENT_WIDTH - 10,
+      );
+      yPos += rowHeight;
     }
+
+    doc.rect(tableStartX, yPos, metricColWidth, rowHeight).fillAndStroke("#FEF3C7", "#F59E0B");
+    doc.fontSize(9).font("Helvetica-Bold").fillColor(COLORS.darkGray);
+    safeSingleLineText(doc, "Total Addbacks", tableStartX + 5, yPos + 5, metricColWidth - 10);
+
+    yearList.forEach((year, index) => {
+      const x = tableStartX + metricColWidth + index * yearColWidth;
+      doc.rect(x, yPos, yearColWidth, rowHeight).fillAndStroke("#FEF3C7", "#F59E0B");
+
+      const totalForYear = data.addbacks.reduce((sum, a) => sum + (a.values[year] || 0), 0);
+      safeSingleLineText(doc, formatMoneyCompact(totalForYear), x + 4, yPos + 5, yearColWidth - 8, "right");
+    });
+
+    yPos += rowHeight;
   }
 
   console.log("[PDF] Page 2 end", { yPos, safeBottom: PAGE.contentBottom });
