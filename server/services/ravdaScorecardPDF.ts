@@ -493,19 +493,17 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
     addbacks: data.addbacks?.length || 0,
   });
 
-  // Page title
-  doc.fontSize(18).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Financial Analysis", 50, yPos);
-  yPos += 40;
+  doc.fontSize(20).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Financial Analysis", startX, yPos);
+  yPos += 28;
 
-  // Company info summary
-  doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.darkGray).text(`Company: ${data.companyName}`, 50, yPos);
-  yPos += 15;
-  doc.fontSize(10).font("Helvetica").fillColor(COLORS.gray).text(`Industry: ${data.industry} | Country: ${data.country}`, 50, yPos);
-  yPos += 30;
+  doc.fontSize(9).font("Helvetica").fillColor(COLORS.gray).text("Performance summary from calculator inputs", startX, yPos);
+  yPos += 18;
 
-  // Financial data table
-  doc.fontSize(14).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Profit & Loss Statement", 50, yPos);
-  yPos += 20;
+  doc.rect(startX, yPos, CONTENT_WIDTH, 36).fillAndStroke("#F8FAFC", "#E2E8F0");
+  doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.darkGray).text(data.companyName || "N/A", startX + 10, yPos + 9, { width: 220, lineBreak: false, ellipsis: true });
+  doc.fontSize(9).font("Helvetica").fillColor(COLORS.gray).text(`Industry: ${data.industry || "N/A"}`, startX + 240, yPos + 9, { width: 120, lineBreak: false, ellipsis: true });
+  doc.text(`Country: ${data.country || "N/A"}`, startX + 370, yPos + 9, { width: 115, lineBreak: false, ellipsis: true, align: "right" });
+  yPos += 50;
 
   if (yPos > PAGE.contentBottom) {
     console.log("[PDF] Warning: yPos exceeded safe bounds before table", yPos);
@@ -523,16 +521,15 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
   });
   yPos += headerHeight;
 
-  // Table rows
-  const metrics = [
+  const metrics: Array<{ key: string; label: string; bold?: boolean; highlight?: boolean; calc?: (yearData: any) => number }> = [
     { key: "sales", label: "Sales" },
     { key: "cogs", label: "COGS" },
-    { key: "grossProfit", label: "Gross Profit", bold: true },
+    { key: "grossProfit", label: "Gross Profit", bold: true, calc: (v) => (v.sales || 0) - (v.cogs || 0) },
     { key: "operatingExpenses", label: "Operating Expenses" },
-    { key: "netProfitAndLoss", label: "Net Profit/Loss", bold: true },
+    { key: "netProfitAndLoss", label: "Net Profit/Loss", bold: true, calc: (v) => (v.grossProfit ?? (v.sales || 0) - (v.cogs || 0)) - (v.operatingExpenses || 0) },
     { key: "interestExpense", label: "Interest Expense" },
     { key: "interestIncome", label: "Interest Income" },
-    { key: "ebit", label: "EBIT", bold: true, highlight: true },
+    { key: "ebit", label: "EBIT", bold: true, highlight: true, calc: (v) => (v.netProfitAndLoss ?? ((v.grossProfit ?? (v.sales || 0) - (v.cogs || 0)) - (v.operatingExpenses || 0))) + (v.interestExpense || 0) - (v.interestIncome || 0) },
   ];
 
   metrics.forEach((metric) => {
@@ -631,60 +628,42 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData): voi
   doc.addPage();
   let yPos = 50;
 
-  // Page title
-  doc.fontSize(18).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Valuation Summary", 50, yPos);
-  yPos += 40;
-
-  // Valuation method
-  const methodName = data.valuationMethod === "profit" ? "Profit Multiple Method" : data.valuationMethod === "asset" ? "Asset-Based Method" : "DCF Method";
-  doc.fontSize(12).font("Helvetica-Bold").fillColor(COLORS.primary).text(`Method: ${methodName}`, 50, yPos);
+  doc.fontSize(20).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Valuation Summary", 50, yPos);
   yPos += 30;
 
-  if (data.valuationMethod === "profit") {
-    // Profit method calculation
-    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Calculation:", 50, yPos);
-    yPos += 25;
+  const methodName = data.valuationMethod === "profit" ? "Profit Multiple Method" : data.valuationMethod === "asset" ? "Asset-Based Method" : "DCF Method";
+  doc.rect(50, yPos, 500, 28).fillAndStroke("#EEF2FF", "#C7D2FE");
+  doc.fontSize(10).font("Helvetica-Bold").fillColor("#1E3A8A").text(`Method: ${methodName}`, 60, yPos + 9, { width: 480, lineBreak: false, ellipsis: true });
+  yPos += 42;
 
+  if (data.valuationMethod === "profit") {
     const calcSteps = [
       { label: "Average EBIT", value: data.averageEbit },
       { label: "Total Addbacks", value: data.totalAddbacks },
-      { label: "Adjusted EBIT (Earning Capacity)", value: data.adjustedEbit, highlight: true },
+      { label: "Adjusted EBIT", value: data.adjustedEbit, highlight: true },
       { label: "Valuation Multiple", value: data.calculatedMultiple || 4.0, isMultiple: true },
-      { label: "Estimated Business Value", value: data.finalValuation, highlight: true, large: true },
     ];
 
-    calcSteps.forEach((step) => {
-      const bgColor = step.highlight ? "#EFF6FF" : "white";
-      const height = step.large ? 40 : 30;
-
-      doc.rect(50, yPos, 500, height).fillAndStroke(bgColor, "#E5E7EB");
-
-      const fontSize = step.large ? 14 : 10;
-      const font = step.highlight ? "Helvetica-Bold" : "Helvetica";
-      doc.fontSize(fontSize).font(font).fillColor(COLORS.darkGray);
-      doc.text(step.label, 60, yPos + height / 2 - 6);
-
-      let valueText: string;
-      if (step.isMultiple) {
-        valueText = `${step.value.toFixed(2)}x`;
-      } else {
-        valueText = `$${(step.value / 1000).toFixed(0)}k`;
-      }
-
-      doc.text(valueText, 300, yPos + height / 2 - 6, { width: 240, align: "right" });
-
-      yPos += height + 5;
+    calcSteps.forEach((step, index) => {
+      const bgColor = index % 2 === 0 ? "#FFFFFF" : "#F8FAFC";
+      doc.rect(50, yPos, 500, 28).fillAndStroke(bgColor, "#E5E7EB");
+      doc.fontSize(10).font(step.highlight ? "Helvetica-Bold" : "Helvetica").fillColor(COLORS.darkGray).text(step.label, 60, yPos + 9);
+      const valueText = step.isMultiple ? `${step.value.toFixed(2)}x` : formatCurrency(step.value);
+      doc.text(valueText, 280, yPos + 9, { width: 260, align: "right", lineBreak: false, ellipsis: true });
+      yPos += 28;
     });
 
-    yPos += 20;
+    yPos += 16;
 
-    // Formula explanation
-    doc.fontSize(10).font("Helvetica-Oblique").fillColor(COLORS.gray);
-    doc.text("Formula: Business Value = Adjusted EBIT × Valuation Multiple", 50, yPos, { width: 500, align: "center" });
+    doc.rect(50, yPos, 500, 76).fillAndStroke("#E8F1FF", "#3B82F6");
+    doc.fontSize(11).font("Helvetica-Bold").fillColor("#1D4ED8").text("Estimated Business Value", 60, yPos + 14);
+    doc.fontSize(28).font("Helvetica-Bold").fillColor("#1D4ED8").text(formatCurrency(data.finalValuation), 60, yPos + 34, { width: 480, align: "right" });
+    yPos += 92;
+
+    doc.fontSize(10).font("Helvetica-Oblique").fillColor(COLORS.gray).text("Formula: Adjusted EBIT × Valuation Multiple", 50, yPos, { width: 500, align: "center" });
   } else if (data.valuationMethod === "asset" && data.assets && data.liabilities) {
-    // Asset method calculation
-    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Assets:", 50, yPos);
-    yPos += 25;
+    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Assets", 50, yPos);
+    yPos += 18;
 
     const assetItems = [
       { label: "Plant & Equipment", value: data.assets.plantEquipment },
@@ -694,22 +673,20 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData): voi
       { label: "Other Intangibles", value: data.assets.otherIntangible },
     ];
 
-    assetItems.forEach((item) => {
-      doc.rect(50, yPos, 500, 25).fillAndStroke("white", "#E5E7EB");
-      doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray);
-      doc.text(item.label, 60, yPos + 8);
-      doc.text(`$${(item.value / 1000).toFixed(0)}k`, 300, yPos + 8, { width: 240, align: "right" });
-      yPos += 25;
+    assetItems.forEach((item, index) => {
+      doc.rect(50, yPos, 500, 24).fillAndStroke(index % 2 === 0 ? "#FFFFFF" : "#F8FAFC", "#E5E7EB");
+      doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.darkGray).text(item.label, 60, yPos + 8);
+      doc.text(formatCurrency(item.value), 280, yPos + 8, { width: 260, align: "right" });
+      yPos += 24;
     });
 
-    doc.rect(50, yPos, 500, 30).fillAndStroke("#EFF6FF", "#3B82F6");
-    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray);
-    doc.text("Total Assets", 60, yPos + 10);
-    doc.text(`$${((data.totalAssets || 0) / 1000).toFixed(0)}k`, 300, yPos + 10, { width: 240, align: "right" });
+    doc.rect(50, yPos, 500, 28).fillAndStroke("#E8F1FF", "#3B82F6");
+    doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Total Assets", 60, yPos + 9);
+    doc.text(formatCurrency(data.totalAssets || 0), 280, yPos + 9, { width: 260, align: "right" });
     yPos += 40;
 
-    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Liabilities:", 50, yPos);
-    yPos += 25;
+    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Liabilities", 50, yPos);
+    yPos += 18;
 
     const liabilityItems = [
       { label: "Loans", value: data.liabilities.loans },
@@ -718,28 +695,24 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData): voi
       { label: "Other Liabilities", value: data.liabilities.otherLiabilities },
     ];
 
-    liabilityItems.forEach((item) => {
-      doc.rect(50, yPos, 500, 25).fillAndStroke("white", "#E5E7EB");
-      doc.fontSize(10).font("Helvetica").fillColor(COLORS.darkGray);
-      doc.text(item.label, 60, yPos + 8);
-      doc.text(`$${(item.value / 1000).toFixed(0)}k`, 300, yPos + 8, { width: 240, align: "right" });
-      yPos += 25;
+    liabilityItems.forEach((item, index) => {
+      doc.rect(50, yPos, 500, 24).fillAndStroke(index % 2 === 0 ? "#FFFFFF" : "#F8FAFC", "#E5E7EB");
+      doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.darkGray).text(item.label, 60, yPos + 8);
+      doc.text(formatCurrency(item.value), 280, yPos + 8, { width: 260, align: "right" });
+      yPos += 24;
     });
 
-    doc.rect(50, yPos, 500, 30).fillAndStroke("#FEF2F2", "#EF4444");
-    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray);
-    doc.text("Total Liabilities", 60, yPos + 10);
-    doc.text(`$${((data.totalLiabilities || 0) / 1000).toFixed(0)}k`, 300, yPos + 10, { width: 240, align: "right" });
-    yPos += 40;
+    doc.rect(50, yPos, 500, 28).fillAndStroke("#FEF2F2", "#EF4444");
+    doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Total Liabilities", 60, yPos + 9);
+    doc.text(formatCurrency(data.totalLiabilities || 0), 280, yPos + 9, { width: 260, align: "right" });
+    yPos += 42;
 
-    doc.rect(50, yPos, 500, 40).fillAndStroke("#EFF6FF", "#3B82F6");
-    doc.fontSize(14).font("Helvetica-Bold").fillColor(COLORS.darkGray);
-    doc.text("Net Asset Value", 60, yPos + 12);
-    doc.text(`$${(data.finalValuation / 1000).toFixed(0)}k`, 300, yPos + 12, { width: 240, align: "right" });
-    yPos += 50;
+    doc.rect(50, yPos, 500, 70).fillAndStroke("#E8F1FF", "#3B82F6");
+    doc.fontSize(11).font("Helvetica-Bold").fillColor("#1D4ED8").text("Net Asset Value", 60, yPos + 14);
+    doc.fontSize(28).font("Helvetica-Bold").fillColor("#1D4ED8").text(formatCurrency(data.finalValuation), 60, yPos + 34, { width: 480, align: "right" });
+    yPos += 86;
 
-    doc.fontSize(10).font("Helvetica-Oblique").fillColor(COLORS.gray);
-    doc.text("Formula: Net Asset Value = Total Assets - Total Liabilities", 50, yPos, { width: 500, align: "center" });
+    doc.fontSize(10).font("Helvetica-Oblique").fillColor(COLORS.gray).text("Formula: Total Assets − Total Liabilities", 50, yPos, { width: 500, align: "center" });
   }
 }
 
