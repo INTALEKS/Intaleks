@@ -51,6 +51,10 @@ function formatMoneyCompact(value) {
     const safeValue = Number.isFinite(value) ? value : 0;
     return `$${(safeValue / 1000).toFixed(0)}k`;
 }
+function formatCurrency(value) {
+    const safeValue = Number.isFinite(value) ? value : 0;
+    return `$${safeValue.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
 function drawHeader(doc, data, yPos) {
     // Add Intaleks logo on the left
     try {
@@ -138,7 +142,11 @@ function drawDriverRatings(doc, data, yPos) {
             if (textY > yPos + boxHeight - 18) {
                 return;
             }
-            doc.fontSize(9).font("Helvetica").fillColor(COLORS.darkGray).text(driver, 60, textY, { width: boxWidth - 20, lineBreak: false, ellipsis: true });
+            doc
+                .fontSize(9)
+                .font("Helvetica")
+                .fillColor(COLORS.darkGray)
+                .text(driver, 60, textY, { width: boxWidth - 20, lineBreak: false, ellipsis: true });
             textY += 12;
         });
         textY += 5;
@@ -151,7 +159,11 @@ function drawDriverRatings(doc, data, yPos) {
             if (textY > yPos + boxHeight - 18) {
                 return;
             }
-            doc.fontSize(9).font("Helvetica").fillColor(COLORS.darkGray).text(driver, 60, textY, { width: boxWidth - 20, lineBreak: false, ellipsis: true });
+            doc
+                .fontSize(9)
+                .font("Helvetica")
+                .fillColor(COLORS.darkGray)
+                .text(driver, 60, textY, { width: boxWidth - 20, lineBreak: false, ellipsis: true });
             textY += 12;
         });
         textY += 5;
@@ -164,7 +176,11 @@ function drawDriverRatings(doc, data, yPos) {
             if (textY > yPos + boxHeight - 18) {
                 return;
             }
-            doc.fontSize(9).font("Helvetica").fillColor(COLORS.darkGray).text(driver, 60, textY, { width: boxWidth - 20, lineBreak: false, ellipsis: true });
+            doc
+                .fontSize(9)
+                .font("Helvetica")
+                .fillColor(COLORS.darkGray)
+                .text(driver, 60, textY, { width: boxWidth - 20, lineBreak: false, ellipsis: true });
             textY += 12;
         });
     }
@@ -344,17 +360,23 @@ function drawFinancialDataPage(doc, data) {
         visibleYearCount,
         addbacks: data.addbacks?.length || 0,
     });
-    // Page title
-    doc.fontSize(18).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Financial Analysis", 50, yPos);
-    yPos += 40;
-    // Company info summary
-    doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.darkGray).text(`Company: ${data.companyName}`, 50, yPos);
-    yPos += 15;
-    doc.fontSize(10).font("Helvetica").fillColor(COLORS.gray).text(`Industry: ${data.industry} | Country: ${data.country}`, 50, yPos);
-    yPos += 30;
-    // Financial data table
-    doc.fontSize(14).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Profit & Loss Statement", 50, yPos);
-    yPos += 20;
+    doc.fontSize(20).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Financial Analysis", PAGE.margin, yPos);
+    yPos += 28;
+    doc.fontSize(9).font("Helvetica").fillColor(COLORS.gray).text("Performance summary from calculator inputs", PAGE.margin, yPos);
+    yPos += 18;
+    doc.rect(PAGE.margin, yPos, CONTENT_WIDTH, 36).fillAndStroke("#F8FAFC", "#E2E8F0");
+    doc
+        .fontSize(10)
+        .font("Helvetica-Bold")
+        .fillColor(COLORS.darkGray)
+        .text(data.companyName || "N/A", PAGE.margin + 10, yPos + 9, { width: 220, lineBreak: false, ellipsis: true });
+    doc
+        .fontSize(9)
+        .font("Helvetica")
+        .fillColor(COLORS.gray)
+        .text(`Industry: ${data.industry || "N/A"}`, PAGE.margin + 240, yPos + 9, { width: 120, lineBreak: false, ellipsis: true });
+    doc.text(`Country: ${data.country || "N/A"}`, PAGE.margin + 370, yPos + 9, { width: 115, lineBreak: false, ellipsis: true, align: "right" });
+    yPos += 50;
     if (yPos > PAGE.contentBottom) {
         console.log("[PDF] Warning: yPos exceeded safe bounds before table", yPos);
     }
@@ -368,7 +390,6 @@ function drawFinancialDataPage(doc, data) {
         safeSingleLineText(doc, year, x + 4, yPos + 6, yearColWidth - 8, "right");
     });
     yPos += headerHeight;
-    // Table rows
     const metrics = [
         { key: "sales", label: "Sales" },
         { key: "cogs", label: "COGS" },
@@ -377,7 +398,7 @@ function drawFinancialDataPage(doc, data) {
         { key: "netProfitAndLoss", label: "Net Profit/Loss", bold: true, calc: (v) => (v.grossProfit ?? (v.sales || 0) - (v.cogs || 0)) - (v.operatingExpenses || 0) },
         { key: "interestExpense", label: "Interest Expense" },
         { key: "interestIncome", label: "Interest Income" },
-        { key: "ebit", label: "EBIT", bold: true, highlight: true, calc: (v) => (v.netProfitAndLoss ?? ((v.grossProfit ?? (v.sales || 0) - (v.cogs || 0)) - (v.operatingExpenses || 0))) + (v.interestExpense || 0) - (v.interestIncome || 0) },
+        { key: "ebit", label: "EBIT", bold: true, highlight: true, calc: (v) => (v.netProfitAndLoss ?? (v.grossProfit ?? (v.sales || 0) - (v.cogs || 0)) - (v.operatingExpenses || 0)) + (v.interestExpense || 0) - (v.interestIncome || 0) },
     ];
     metrics.forEach((metric) => {
         const bgColor = metric.highlight ? "#EFF6FF" : yPos % 50 < 25 ? "#F9FAFB" : "white";
@@ -451,7 +472,11 @@ function drawValuationSummaryPage(doc, data) {
     yPos += 30;
     const methodName = data.valuationMethod === "profit" ? "Profit Multiple Method" : data.valuationMethod === "asset" ? "Asset-Based Method" : "DCF Method";
     doc.rect(50, yPos, 500, 28).fillAndStroke("#EEF2FF", "#C7D2FE");
-    doc.fontSize(10).font("Helvetica-Bold").fillColor("#1E3A8A").text(`Method: ${methodName}`, 60, yPos + 9, { width: 480, lineBreak: false, ellipsis: true });
+    doc
+        .fontSize(10)
+        .font("Helvetica-Bold")
+        .fillColor("#1E3A8A")
+        .text(`Method: ${methodName}`, 60, yPos + 9, { width: 480, lineBreak: false, ellipsis: true });
     yPos += 42;
     if (data.valuationMethod === "profit") {
         const calcSteps = [
@@ -463,15 +488,27 @@ function drawValuationSummaryPage(doc, data) {
         calcSteps.forEach((step, index) => {
             const bgColor = index % 2 === 0 ? "#FFFFFF" : "#F8FAFC";
             doc.rect(50, yPos, 500, 28).fillAndStroke(bgColor, "#E5E7EB");
-            doc.fontSize(10).font(step.highlight ? "Helvetica-Bold" : "Helvetica").fillColor(COLORS.darkGray).text(step.label, 60, yPos + 9);
+            doc
+                .fontSize(10)
+                .font(step.highlight ? "Helvetica-Bold" : "Helvetica")
+                .fillColor(COLORS.darkGray)
+                .text(step.label, 60, yPos + 9);
             const valueText = step.isMultiple ? `${step.value.toFixed(2)}x` : formatCurrency(step.value);
             doc.text(valueText, 280, yPos + 9, { width: 260, align: "right", lineBreak: false, ellipsis: true });
             yPos += 28;
         });
         yPos += 16;
         doc.rect(50, yPos, 500, 76).fillAndStroke("#E8F1FF", "#3B82F6");
-        doc.fontSize(11).font("Helvetica-Bold").fillColor("#1D4ED8").text("Estimated Business Value", 60, yPos + 14);
-        doc.fontSize(28).font("Helvetica-Bold").fillColor("#1D4ED8").text(formatCurrency(data.finalValuation), 60, yPos + 34, { width: 480, align: "right" });
+        doc
+            .fontSize(11)
+            .font("Helvetica-Bold")
+            .fillColor("#1D4ED8")
+            .text("Estimated Business Value", 60, yPos + 14);
+        doc
+            .fontSize(28)
+            .font("Helvetica-Bold")
+            .fillColor("#1D4ED8")
+            .text(formatCurrency(data.finalValuation), 60, yPos + 34, { width: 480, align: "right" });
         yPos += 92;
         doc.fontSize(10).font("Helvetica-Oblique").fillColor(COLORS.gray).text("Formula: Adjusted EBIT × Valuation Multiple", 50, yPos, { width: 500, align: "center" });
     }
@@ -487,12 +524,20 @@ function drawValuationSummaryPage(doc, data) {
         ];
         assetItems.forEach((item, index) => {
             doc.rect(50, yPos, 500, 24).fillAndStroke(index % 2 === 0 ? "#FFFFFF" : "#F8FAFC", "#E5E7EB");
-            doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.darkGray).text(item.label, 60, yPos + 8);
+            doc
+                .fontSize(9.5)
+                .font("Helvetica")
+                .fillColor(COLORS.darkGray)
+                .text(item.label, 60, yPos + 8);
             doc.text(formatCurrency(item.value), 280, yPos + 8, { width: 260, align: "right" });
             yPos += 24;
         });
         doc.rect(50, yPos, 500, 28).fillAndStroke("#E8F1FF", "#3B82F6");
-        doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Total Assets", 60, yPos + 9);
+        doc
+            .fontSize(10)
+            .font("Helvetica-Bold")
+            .fillColor(COLORS.darkGray)
+            .text("Total Assets", 60, yPos + 9);
         doc.text(formatCurrency(data.totalAssets || 0), 280, yPos + 9, { width: 260, align: "right" });
         yPos += 40;
         doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Liabilities", 50, yPos);
@@ -505,17 +550,33 @@ function drawValuationSummaryPage(doc, data) {
         ];
         liabilityItems.forEach((item, index) => {
             doc.rect(50, yPos, 500, 24).fillAndStroke(index % 2 === 0 ? "#FFFFFF" : "#F8FAFC", "#E5E7EB");
-            doc.fontSize(9.5).font("Helvetica").fillColor(COLORS.darkGray).text(item.label, 60, yPos + 8);
+            doc
+                .fontSize(9.5)
+                .font("Helvetica")
+                .fillColor(COLORS.darkGray)
+                .text(item.label, 60, yPos + 8);
             doc.text(formatCurrency(item.value), 280, yPos + 8, { width: 260, align: "right" });
             yPos += 24;
         });
         doc.rect(50, yPos, 500, 28).fillAndStroke("#FEF2F2", "#EF4444");
-        doc.fontSize(10).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Total Liabilities", 60, yPos + 9);
+        doc
+            .fontSize(10)
+            .font("Helvetica-Bold")
+            .fillColor(COLORS.darkGray)
+            .text("Total Liabilities", 60, yPos + 9);
         doc.text(formatCurrency(data.totalLiabilities || 0), 280, yPos + 9, { width: 260, align: "right" });
         yPos += 42;
         doc.rect(50, yPos, 500, 70).fillAndStroke("#E8F1FF", "#3B82F6");
-        doc.fontSize(11).font("Helvetica-Bold").fillColor("#1D4ED8").text("Net Asset Value", 60, yPos + 14);
-        doc.fontSize(28).font("Helvetica-Bold").fillColor("#1D4ED8").text(formatCurrency(data.finalValuation), 60, yPos + 34, { width: 480, align: "right" });
+        doc
+            .fontSize(11)
+            .font("Helvetica-Bold")
+            .fillColor("#1D4ED8")
+            .text("Net Asset Value", 60, yPos + 14);
+        doc
+            .fontSize(28)
+            .font("Helvetica-Bold")
+            .fillColor("#1D4ED8")
+            .text(formatCurrency(data.finalValuation), 60, yPos + 34, { width: 480, align: "right" });
         yPos += 86;
         doc.fontSize(10).font("Helvetica-Oblique").fillColor(COLORS.gray).text("Formula: Total Assets − Total Liabilities", 50, yPos, { width: 500, align: "center" });
     }

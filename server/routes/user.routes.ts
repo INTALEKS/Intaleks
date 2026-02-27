@@ -87,4 +87,10 @@ router.post("/:userId/subscription", UserController.assignSubscription);
 // PATCH /api/admin/users/:userId/role - Change user role
 router.patch("/:userId/role", UserController.changeRole);
 
+// POST /api/admin/users/:id/restore - Restore soft-deleted user
+router.post("/:id/restore", UserController.restoreUser);
+
+// DELETE /api/admin/users/:id/permanent - Permanently delete user (SUPER_ADMIN only)
+router.delete("/:id/permanent", UserController.permanentDeleteUser);
+
 export default router;

@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from "react";
 import AppSidebar from "./general-ui/AppSidebar";
 import { useAuthState } from "@/app/hooks/useAuthState";
+import { isAdminOrHigher } from "@/lib/role-utils";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -10,7 +11,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { isAuthentiating, isAuthenticated, user } = useAuthState();
 
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = isAdminOrHigher(user?.role);
 
   // Handle redirect in useEffect to avoid render-time navigation
   useEffect(() => {

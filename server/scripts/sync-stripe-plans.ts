@@ -10,7 +10,7 @@ async function syncStripePlans() {
 
     // Get all subscription plans from database
     const plans = await prisma.subscriptionPlan.findMany({
-      where: { isActive: true },
+      where: { active: true },
     });
 
     console.log(`📋 Found ${plans.length} active plans in database\n`);
@@ -49,8 +49,8 @@ async function syncStripePlans() {
       console.log(`   💰 Creating Stripe price...`);
       const priceData: Stripe.PriceCreateParams = {
         product: product.id,
-        currency: "aud",
-        unit_amount: Math.round(plan.price * 100), // Convert to cents
+        currency: "usd",
+        unit_amount: plan.price, // Already in cents
         metadata: {
           planId: plan.id,
         },
@@ -86,7 +86,7 @@ async function syncStripePlans() {
     console.log("\n\n✅ All plans synced successfully!");
     console.log("\n📊 Summary:");
     const updatedPlans = await prisma.subscriptionPlan.findMany({
-      where: { isActive: true },
+      where: { active: true },
     });
     updatedPlans.forEach((p: { name: string; stripePriceId: string | null }) => {
       console.log(`   ${p.name}: ${p.stripePriceId ? "✅ Synced" : "❌ Not synced"}`);

@@ -177,10 +177,12 @@ export class UserController {
    * Update an existing user
    * PUT /api/admin/users/:id
    * Requirements: 5.1, 5.2, 5.3
+   * ADMIN cannot modify other ADMIN or SUPER_ADMIN users
    */
   static async updateUser(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const currentUser = req.user!;
 
       // Validate request body
       const { error, value } = updateUserSchema.validate(req.body, {
@@ -204,6 +206,24 @@ export class UserController {
             code: "VALIDATION_ERROR",
             message: "Invalid update data",
             details,
+          },
+        });
+        return;
+      }
+
+      // Get target user to check permissions
+      const targetUser = await UserService.findById(id);
+
+      // Import role hierarchy utilities
+      const { canManageUser } = require("../utils/roleHierarchy");
+
+      // Check if current user can manage target user
+      if (!canManageUser(currentUser.role, targetUser.role)) {
+        res.status(403).json({
+          success: false,
+          error: {
+            code: "FORBIDDEN",
+            message: "You cannot modify users with equal or higher role than yours",
           },
         });
         return;
@@ -266,10 +286,30 @@ export class UserController {
    * Delete a user
    * DELETE /api/admin/users/:id
    * Requirements: 7.1, 7.2, 7.3
+   * ADMIN cannot delete other ADMIN or SUPER_ADMIN users
    */
   static async deleteUser(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const currentUser = req.user!;
+
+      // Get target user to check permissions
+      const targetUser = await UserService.findById(id);
+
+      // Import role hierarchy utilities
+      const { canManageUser } = require("../utils/roleHierarchy");
+
+      // Check if current user can manage target user
+      if (!canManageUser(currentUser.role, targetUser.role)) {
+        res.status(403).json({
+          success: false,
+          error: {
+            code: "FORBIDDEN",
+            message: "You cannot delete users with equal or higher role than yours",
+          },
+        });
+        return;
+      }
 
       await UserService.delete(id);
 
@@ -304,10 +344,30 @@ export class UserController {
    * Suspend a user account
    * PATCH /api/admin/users/:id/suspend
    * Requirements: 6.1, 6.3
+   * ADMIN cannot suspend other ADMIN or SUPER_ADMIN users
    */
   static async suspendUser(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      const currentUser = req.user!;
+
+      // Get target user to check permissions
+      const targetUser = await UserService.findById(id);
+
+      // Import role hierarchy utilities
+      const { canManageUser } = require("../utils/roleHierarchy");
+
+      // Check if current user can manage target user
+      if (!canManageUser(currentUser.role, targetUser.role)) {
+        res.status(403).json({
+          success: false,
+          error: {
+            code: "FORBIDDEN",
+            message: "You cannot suspend users with equal or higher role than yours",
+          },
+        });
+        return;
+      }
 
       const user = await UserService.suspend(id);
 
@@ -601,18 +661,51 @@ export class UserController {
   /**
    * Change user role
    * PATCH /api/admin/users/:userId/role
+   * Only SUPER_ADMIN can change roles to/from ADMIN or SUPER_ADMIN
+   * ADMIN cannot modify other ADMIN or SUPER_ADMIN users
    */
   static async changeRole(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
       const { role } = req.body;
+      const currentUser = req.user!;
 
-      if (!role || !["USER", "ADMIN"].includes(role)) {
+      if (!role || !["USER", "ADMIN", "SUPER_ADMIN"].includes(role)) {
         res.status(400).json({
           success: false,
           error: {
             code: "VALIDATION_ERROR",
-            message: "Invalid role. Must be USER or ADMIN",
+            message: "Invalid role. Must be USER, ADMIN, or SUPER_ADMIN",
+          },
+        });
+        return;
+      }
+
+      // Get target user
+      const targetUser = await UserService.findById(userId);
+
+      // Import role hierarchy utilities
+      const { canManageUser, isSuperAdmin } = require("../utils/roleHierarchy");
+
+      // Check if current user can manage target user
+      if (!canManageUser(currentUser.role, targetUser.role)) {
+        res.status(403).json({
+          success: false,
+          error: {
+            code: "FORBIDDEN",
+            message: "You cannot modify users with equal or higher role than yours",
+          },
+        });
+        return;
+      }
+
+      // Only SUPER_ADMIN can assign ADMIN or SUPER_ADMIN roles
+      if ((role === "ADMIN" || role === "SUPER_ADMIN") && !isSuperAdmin(currentUser.role)) {
+        res.status(403).json({
+          success: false,
+          error: {
+            code: "FORBIDDEN",
+            message: "Only SUPER_ADMIN can assign ADMIN or SUPER_ADMIN roles",
           },
         });
         return;
@@ -647,4 +740,124 @@ export class UserController {
       });
     }
   }
+
+  /**
+   * Restore a soft-deleted user
+   * POST /api/admin/users/:id/restore
+   */
+  static async restoreUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      const user = await UserService.restore(id);
+
+      res.status(200).json({
+        success: true,
+        message: "User restored successfully",
+        data: user,
+      });
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).json({
+          success: false,
+          error: {
+            code: "NOT_FOUND",
+            message: error.message,
+          },
+        });
+        return;
+      }
+
+      if (error instanceof ConflictError) {
+        res.status(409).json({
+          success: false,
+          error: {
+            code: "CONFLICT",
+            message: error.message,
+          },
+        });
+        return;
+      }
+
+      console.error("Restore user error:", error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "An error occurred while restoring the user",
+        },
+      });
+    }
+  }
+
+  /**
+   * Permanently delete a user (hard delete)
+   * DELETE /api/admin/users/:id/permanent
+   * Only SUPER_ADMIN can permanently delete users
+   */
+  static async permanentDeleteUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const currentUser = req.user!;
+
+      // Get target user to check permissions
+      const targetUser = await UserService.findById(id);
+
+      // Import role hierarchy utilities
+      const { canManageUser, isSuperAdmin } = require("../utils/roleHierarchy");
+
+      // Only SUPER_ADMIN can permanently delete
+      if (!isSuperAdmin(currentUser.role)) {
+        res.status(403).json({
+          success: false,
+          error: {
+            code: "FORBIDDEN",
+            message: "Only SUPER_ADMIN can permanently delete users",
+          },
+        });
+        return;
+      }
+
+      // Check if current user can manage target user
+      if (!canManageUser(currentUser.role, targetUser.role)) {
+        res.status(403).json({
+          success: false,
+          error: {
+            code: "FORBIDDEN",
+            message: "You cannot permanently delete users with equal or higher role than yours",
+          },
+        });
+        return;
+      }
+
+      await UserService.permanentDelete(id);
+
+      res.status(200).json({
+        success: true,
+        message: "User permanently deleted successfully",
+      });
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).json({
+          success: false,
+          error: {
+            code: "NOT_FOUND",
+            message: error.message,
+          },
+        });
+        return;
+      }
+
+      console.error("Permanent delete user error:", error);
+      res.status(500).json({
+        success: false,
+        error: {
+          code: "INTERNAL_ERROR",
+          message: "An error occurred while permanently deleting the user",
+        },
+      });
+    }
+  }
 }
+
+export default UserController;

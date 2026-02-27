@@ -1,9 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.authenticateToken = void 0;
+exports.requireSuperAdmin = exports.requireAdmin = exports.requireRole = exports.authenticateToken = void 0;
 const cookieUtils_1 = require("../utils/cookieUtils");
 const auth_1 = require("../services/auth");
 const db_1 = require("../config/db");
+const client_1 = require("@prisma/client");
 /**
  * Authentication middleware to protect routes
  * Verifies JWT token and attaches user to request object
@@ -58,3 +59,32 @@ const authenticateToken = async (req, res, next) => {
     }
 };
 exports.authenticateToken = authenticateToken;
+/**
+ * Middleware to check if user has required role or higher
+ */
+const requireRole = (requiredRole) => {
+    return (req, res, next) => {
+        if (!req.user) {
+            res.status(401).json({ error: "Unauthorized", message: "Authentication required" });
+            return;
+        }
+        const { hasRole } = require("../utils/roleHierarchy");
+        if (!hasRole(req.user.role, requiredRole)) {
+            res.status(403).json({
+                error: "Forbidden",
+                message: `This action requires ${requiredRole} role or higher`,
+            });
+            return;
+        }
+        next();
+    };
+};
+exports.requireRole = requireRole;
+/**
+ * Middleware to check if user is admin or higher
+ */
+exports.requireAdmin = (0, exports.requireRole)(client_1.UserRole.ADMIN);
+/**
+ * Middleware to check if user is super admin
+ */
+exports.requireSuperAdmin = (0, exports.requireRole)(client_1.UserRole.SUPER_ADMIN);

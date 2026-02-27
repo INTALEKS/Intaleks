@@ -2,8 +2,8 @@ import { prisma } from "../config/db";
 import { BillingPeriod } from "@prisma/client";
 
 /**
- * Seeds the One-Off subscription plan shown in the pricing image
- * This plan includes all premium features for a one-time payment of $297
+ * Seeds the One-Off subscription plan
+ * This plan includes all premium features for a one-time payment of $399
  */
 export async function seedSubscriptionPlan(): Promise<void> {
   try {
@@ -13,7 +13,19 @@ export async function seedSubscriptionPlan(): Promise<void> {
     });
 
     if (existingPlan) {
-      console.log("✅ One-Off subscription plan already exists");
+      // Update existing plan to $399 if it's different
+      if (existingPlan.price !== 39900) {
+        await prisma.subscriptionPlan.update({
+          where: { name: "One-Off" },
+          data: {
+            price: 39900,
+            features: ["Worldwide Industry Multiples (US, Canada, UK, Australia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking"],
+          },
+        });
+        console.log("✅ One-Off subscription plan updated to $399");
+      } else {
+        console.log("✅ One-Off subscription plan already exists");
+      }
       return;
     }
 
@@ -21,7 +33,7 @@ export async function seedSubscriptionPlan(): Promise<void> {
     const plan = await prisma.subscriptionPlan.create({
       data: {
         name: "One-Off",
-        price: 29700, // $297.00 in cents
+        price: 39900, // $399.00 in cents
         billingPeriod: BillingPeriod.ONE_TIME,
         features: ["Worldwide Industry Multiples (US, Canada, UK, Australia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking"],
         active: true,

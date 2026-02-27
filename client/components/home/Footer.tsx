@@ -5,7 +5,7 @@ import Link from "next/link";
 
 const navigateLinks = [
   { label: "Home", href: "/" },
-  { label: "Subscriptions", href: "/#pricing" },
+  // { label: "Subscriptions", href: "/#pricing" },
   { label: "About", href: "/#about" },
   { label: "Contact", href: "/contact" },
 ];
@@ -78,7 +78,7 @@ export function Footer() {
           {/* Premium/Upgrade */}
           <div className="col-span-1">
             <h3 className="font-semibold text-gray-900 mb-4 flex gap-x-2 items-center text-sm md:text-base">
-              Premium/Upgrade{" "}
+              Premium Features{" "}
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
                 <path fill="#F4B400" d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14z" />
               </svg>
@@ -100,7 +100,7 @@ export function Footer() {
             <ul className="space-y-2">
               {startLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
+                  <Link target="_blank" href={link.href} className="text-gray-600 hover:text-gray-900 text-sm transition-colors flex items-center gap-1">
                     {link.label}
                   </Link>
                 </li>

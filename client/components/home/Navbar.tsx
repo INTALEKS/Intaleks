@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { isAdminOrHigher } from "@/lib/role-utils";
 import Image from "next/image";
 import { ChevronDown, LogOut, User, Settings, Menu } from "lucide-react";
 import { useAuthState } from "@/app/hooks/useAuthState";
@@ -86,15 +87,23 @@ export function Navbar() {
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[300px]">
-            <div className="flex flex-col gap-4 mt-8">
+          <SheetContent side="left" className="w-[300px] p-0">
+            {/* Logo Header */}
+            <div className="px-6 py-6 border-b">
+              <Link href="/" onClick={() => setMobileMenuOpen(false)}>
+                <Image src="/intaleks.png" alt="Intaleks logo" width={140} height={30} />
+              </Link>
+            </div>
+
+            {/* Navigation Links */}
+            <div className="flex flex-col gap-1 px-4 py-4">
               {navLinks.map((link) =>
                 "dropdown" in link ? (
-                  <div key={link.label} className="flex flex-col gap-2">
-                    <span className="text-sm font-medium text-gray-900">{link.label}</span>
+                  <div key={link.label} className="flex flex-col gap-1 py-2">
+                    <span className="text-sm font-semibold text-gray-900 px-2">{link.label}</span>
                     <div className="flex flex-col gap-1 pl-4">
                       {link.dropdown?.map((item) => (
-                        <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} className={cn("text-sm py-2 transition-colors", pathname === item.href ? "text-blue-500 font-medium" : "text-gray-600")}>
+                        <Link key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)} className={cn("text-sm py-2.5 px-2 rounded-md transition-colors", pathname === item.href ? "text-blue-600 bg-blue-50 font-medium" : "text-gray-700 hover:bg-gray-50")}>
                           {item.label}
                         </Link>
                       ))}
@@ -107,26 +116,26 @@ export function Navbar() {
                       handleAnchorClick(e, new URL(link.href, "http://x").searchParams.get("scrollTo") || "");
                       setMobileMenuOpen(false);
                     }}
-                    className="text-sm py-2 text-left text-gray-600"
+                    className="text-sm py-2.5 px-2 text-left text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
                   >
                     {link.label}
                   </button>
                 ) : (
-                  <Link key={link.href} href={link.href} onClick={() => setMobileMenuOpen(false)} className={cn("text-sm py-2 transition-colors", pathname === link.href ? "text-blue-500 font-medium" : "text-gray-600")}>
+                  <Link key={link.href} href={link.href} onClick={() => setMobileMenuOpen(false)} className={cn("text-sm py-2.5 px-2 rounded-md transition-colors", pathname === link.href ? "text-blue-600 bg-blue-50 font-medium" : "text-gray-700 hover:bg-gray-50")}>
                     {link.label}
                   </Link>
                 ),
               )}
 
               {/* Mobile Auth Buttons */}
-              <div className="flex flex-col gap-2 mt-4 pt-4 border-t">
+              <div className="flex flex-col gap-3 mt-auto pt-4 px-4 pb-6 border-t">
                 {isAuthenticated && user ? (
                   <>
-                    <div className="text-sm text-gray-600 mb-2">
-                      <p className="font-medium">{displayName}</p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
+                    <div className="px-2 py-3 bg-gray-50 rounded-lg">
+                      <p className="font-semibold text-gray-900 text-sm">{displayName}</p>
+                      <p className="text-xs text-gray-600 mt-0.5">{user.email}</p>
                     </div>
-                    {user.role === "ADMIN" && (
+                    {isAdminOrHigher(user.role) && (
                       <Link href="/admin" onClick={() => setMobileMenuOpen(false)}>
                         <Button variant="outline" size="sm" className="w-full justify-start">
                           <User className="mr-2 h-4 w-4" />
@@ -232,7 +241,7 @@ export function Navbar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {user.role === "ADMIN" && (
+                {isAdminOrHigher(user.role) && (
                   <DropdownMenuItem asChild className="cursor-pointer">
                     <Link href="/admin">
                       <User className="mr-2 h-4 w-4" />

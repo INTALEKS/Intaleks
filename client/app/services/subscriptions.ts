@@ -61,6 +61,22 @@ export function centsToDollars(cents: number): number {
 }
 
 export class SubscriptionsApi {
+  // Public endpoint - Get active subscription plans (for settings page, pricing page, etc.)
+  static async getActivePlans(): Promise<SubscriptionPlan[]> {
+    const response = await fetch(`${BASE_URL}/subscriptions/plans`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data?.error?.message || "Failed to fetch subscription plans");
+    }
+    return data.data;
+  }
+
+  // Admin endpoint - Get all subscription plans (for admin panel)
   static async getPlans(): Promise<SubscriptionPlan[]> {
     const response = await fetch(`${BASE_URL}/admin/subscriptions`, {
       method: "GET",

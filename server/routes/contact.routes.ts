@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../config/db";
 import Joi from "joi";
+import emailService from "../services/email";
 
 const router = Router();
 
@@ -32,6 +33,23 @@ router.post("/", async (req: Request, res: Response) => {
         message: value.message,
       },
     });
+
+    // Send confirmation email to user (non-blocking)
+    emailService.sendContactConfirmationToUser(value.name, value.email).catch((error) => {
+      console.error("Failed to send contact confirmation email:", error);
+    });
+
+    // Send notification email to admin (non-blocking)
+    emailService
+      .sendContactNotificationToAdmin({
+        name: value.name,
+        email: value.email,
+        message: value.message,
+        contactId: contact.id,
+      })
+      .catch((error) => {
+        console.error("Failed to send admin notification email:", error);
+      });
 
     return res.status(201).json({
       success: true,

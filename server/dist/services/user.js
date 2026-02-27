@@ -20,7 +20,9 @@ class UserService {
         const { search, subscriptionPlanId, month, day, year, planType, status, page, limit = this.DEFAULT_LIMIT } = filters;
         const skip = (page - 1) * limit;
         // Build where clause with AND logic for all filters
-        const where = {};
+        const where = {
+            deletedAt: null, // Exclude soft-deleted users by default
+        };
         // Search filter on name or email
         if (search) {
             where.OR = [{ name: { contains: search, mode: "insensitive" } }, { email: { contains: search, mode: "insensitive" } }];
@@ -232,10 +234,34 @@ class UserService {
         return userWithoutPassword;
     }
     /**
-     * Delete a user (cascade deletes related records via Prisma)
+     * Soft delete a user (sets deletedAt timestamp)
      * Requirements: 7.1, 7.2, 7.3
      */
     static async delete(id) {
+        // Check if user exists and is not already deleted
+        const existingUser = await db_1.prisma.user.findUnique({
+            where: { id },
+        });
+        if (!existingUser) {
+            throw new errors_1.NotFoundError(`User with ID ${id} not found`);
+        }
+        if (existingUser.deletedAt) {
+            throw new errors_1.ConflictError(`User with ID ${id} is already deleted`);
+        }
+        // Soft delete user by setting deletedAt timestamp
+        await db_1.prisma.user.update({
+            where: { id },
+            data: {
+                deletedAt: new Date(),
+                status: client_1.UserStatus.SUSPENDED, // Also suspend the account
+            },
+        });
+    }
+    /**
+     * Permanently delete a user (hard delete)
+     * Only for SUPER_ADMIN use
+     */
+    static async permanentDelete(id) {
         // Check if user exists
         const existingUser = await db_1.prisma.user.findUnique({
             where: { id },
@@ -243,10 +269,46 @@ class UserService {
         if (!existingUser) {
             throw new errors_1.NotFoundError(`User with ID ${id} not found`);
         }
-        // Delete user (cascade deletes event participations and forum posts via Prisma schema)
+        // Permanently delete user (cascade deletes related records via Prisma schema)
         await db_1.prisma.user.delete({
             where: { id },
         });
+    }
+    /**
+     * Restore a soft-deleted user
+     */
+    static async restore(id) {
+        // Check if user exists and is deleted
+        const existingUser = await db_1.prisma.user.findUnique({
+            where: { id },
+        });
+        if (!existingUser) {
+            throw new errors_1.NotFoundError(`User with ID ${id} not found`);
+        }
+        if (!existingUser.deletedAt) {
+            throw new errors_1.ConflictError(`User with ID ${id} is not deleted`);
+        }
+        // Restore user by clearing deletedAt and reactivating
+        const user = await db_1.prisma.user.update({
+            where: { id },
+            data: {
+                deletedAt: null,
+                status: client_1.UserStatus.ACTIVE,
+            },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                role: true,
+                status: true,
+                planType: true,
+                subscriptionStatus: true,
+                createdAt: true,
+                updatedAt: true,
+                deletedAt: true,
+            },
+        });
+        return user;
     }
     /**
      * Reset a user's password

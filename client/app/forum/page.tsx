@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Filter, ChevronDown, Check, MessageCircle, MoreHorizontal, Search, ThumbsUp, ThumbsDown, Send, Bookmark, BookmarkCheck, Flame, HelpCircle, Sparkles, PaperclipIcon, Crown, Loader2, ArrowLeft, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isAdminOrHigher } from "@/lib/role-utils";
 import { PageHeader } from "@/components/general-ui/PageHeader";
 import { FeatureCards } from "@/components/general-ui/FeatureCards";
 import { useAuthState } from "@/app/hooks/useAuthState";
@@ -103,8 +104,8 @@ function transformApiPostToUIPost(apiPost: APIForumPost): Post {
   // Check if post is new (created within last 24 hours)
   const isNew = diffHours < 24;
 
-  // Check if author is admin
-  const isAdmin = apiPost.author.role === "ADMIN";
+  // Check if author is admin or super admin
+  const isAdmin = isAdminOrHigher(apiPost.author.role);
 
   // Transform replies to UI format
   const comments: Reply[] = apiPost.replies.map((reply) => transformApiReplyToUIReply(reply));
@@ -190,8 +191,7 @@ export default function ForumPage() {
 
 function ForumPageContent() {
   const { isAuthenticated, isAuthentiating, hasActiveSubscription, user } = useAuthState();
-  const isAdmin = user?.role === "ADMIN";
-  const canAccessForum = isAdmin || hasActiveSubscription;
+  const canAccessForum = isAdminOrHigher(user?.role) || hasActiveSubscription;
 
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("all");
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);

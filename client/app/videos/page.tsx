@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/general-ui/PageHeader";
 import { FeatureCards } from "@/components/general-ui/FeatureCards";
 import { usePublicVideos } from "@/app/hooks/useVideos";
 import { useAuthState } from "@/app/hooks/useAuthState";
+import { isAdminOrHigher } from "@/lib/role-utils";
 import { formatDuration, formatViews } from "@/lib/video-utils";
 import { useIncrementVideoViews } from "@/app/hooks/useVideos";
 import type { Video, VideoCategory } from "@/app/services/videos";
@@ -60,8 +61,7 @@ export default function VideosPage() {
   const limit = 12;
 
   const { isAuthenticated, isAuthentiating, hasActiveSubscription, user } = useAuthState();
-  const isAdmin = user?.role === "ADMIN";
-  const canAccessVideos = isAdmin || hasActiveSubscription;
+  const canAccessVideos = isAdminOrHigher(user?.role) || hasActiveSubscription;
 
   const { data, isLoading, error } = usePublicVideos({
     page,

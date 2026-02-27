@@ -49,7 +49,7 @@
     "multer": "^2.0.2",
     "pdfkit": "^0.15.0",
     "redis": "^4.6.12",
-    "stripe": "^20.1.0",
+    "stripe": "^20.4.0",
     "svg-to-pdfkit": "^0.1.8"
   },
   "devDependencies": {
@@ -60,6 +60,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
     "@types/node": "^20.10.5",
+    "@types/nodemailer": "^7.0.11",
     "@types/pdfkit": "^0.13.5",
     "fast-check": "^4.3.0",
     "nodemon": "^3.1.11",

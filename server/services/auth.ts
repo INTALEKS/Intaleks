@@ -5,6 +5,7 @@ import { prisma } from "../config/db";
 import { SubscriptionStatus, UserRole, UserStatus } from "@prisma/client";
 import { config } from "../config/environment";
 import { AuthenticatedUser } from "../middleware/authMiddleware";
+import emailService from "./email";
 
 export interface LoginCredentials {
   email: string;
@@ -113,6 +114,17 @@ export class AuthService {
           subscriptionStatus: SubscriptionStatus.NONE,
         },
       });
+
+      // Send welcome email (non-blocking)
+      emailService
+        .sendWelcomeEmail({
+          name: user.name || "",
+          email: user.email,
+        })
+        .catch((error) => {
+          console.error("Failed to send welcome email:", error);
+          // Don't fail registration if email fails
+        });
 
       // Generate JWT token (Requirement 1.6)
       const tokenPayload: TokenPayload = {
@@ -236,8 +248,7 @@ export class AuthService {
   }
 
   /**
-   * Request password reset - generates token and returns it
-   * In production, this would send an email instead
+   * Request password reset - generates token and sends email
    */
   static async requestPasswordReset(email: string): Promise<{ success: boolean; message: string; token?: string }> {
     const normalizedEmail = email.toLowerCase().trim();
@@ -269,12 +280,25 @@ export class AuthService {
         },
       });
 
-      // In production, send email here
-      // For now, return the token directly for testing
+      // Send password reset email
+      const emailSent = await emailService.sendPasswordResetEmail(normalizedEmail, token);
+
+      if (!emailSent) {
+        console.error("Failed to send password reset email to:", normalizedEmail);
+        // Still return success for security (don't reveal if email exists)
+        // But in development, you might want to return the token
+        if (process.env.NODE_ENV === "development") {
+          return {
+            success: true,
+            message: "Password reset token generated (email service not configured).",
+            token, // Only in development
+          };
+        }
+      }
+
       return {
         success: true,
-        message: "Password reset token generated successfully.",
-        token, // Remove this in production
+        message: "If an account exists with this email, a password reset link has been sent.",
       };
     } catch (error) {
       console.error("Password reset request error:", error);

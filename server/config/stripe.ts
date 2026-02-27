@@ -11,7 +11,7 @@ let stripe: Stripe | null = null;
 
 if (config.stripe.secretKey) {
   stripe = new Stripe(config.stripe.secretKey, {
-    apiVersion: "2025-12-15.clover",
+    apiVersion: "2026-02-25.clover",
     typescript: true,
   });
 } else {

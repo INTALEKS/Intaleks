@@ -20,6 +20,7 @@ model User {
   subscriptionDate DateTime?          @map("subscription_date")
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
+  deletedAt        DateTime?          @map("deleted_at")
 
   // Stripe payment fields
   stripeCustomerId     String?            @unique @map("stripe_customer_id")
@@ -109,6 +110,7 @@ model EventParticipant {
 enum UserRole {
   USER
   ADMIN
+  SUPER_ADMIN
 }
 
 enum EventCategory {

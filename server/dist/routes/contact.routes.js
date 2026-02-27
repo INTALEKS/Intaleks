@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const db_1 = require("../config/db");
 const joi_1 = __importDefault(require("joi"));
+const email_1 = __importDefault(require("../services/email"));
 const router = (0, express_1.Router)();
 // Validation schema
 const contactSchema = joi_1.default.object({
@@ -32,6 +33,21 @@ router.post("/", async (req, res) => {
                 email: value.email,
                 message: value.message,
             },
+        });
+        // Send confirmation email to user (non-blocking)
+        email_1.default.sendContactConfirmationToUser(value.name, value.email).catch((error) => {
+            console.error("Failed to send contact confirmation email:", error);
+        });
+        // Send notification email to admin (non-blocking)
+        email_1.default
+            .sendContactNotificationToAdmin({
+            name: value.name,
+            email: value.email,
+            message: value.message,
+            contactId: contact.id,
+        })
+            .catch((error) => {
+            console.error("Failed to send admin notification email:", error);
         });
         return res.status(201).json({
             success: true,

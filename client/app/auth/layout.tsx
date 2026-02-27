@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuthState } from "@/app/hooks/useAuthState";
+import { isAdminOrHigher } from "@/lib/role-utils";
 
 /**
  * Shared layout for login/signup pages
@@ -18,8 +19,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     // Redirect logged-in users appropriately
     if (!isAuthentiating && isAuthenticated) {
-      if (user?.role === "ADMIN" && isAdminAuthPage) {
-        // Admin logging in via admin login page -> redirect to admin dashboard
+      if (isAdminOrHigher(user?.role) && isAdminAuthPage) {
+        // Admin/SuperAdmin logging in via admin login page -> redirect to admin dashboard
         router.replace("/admin");
       } else {
         router.replace("/");

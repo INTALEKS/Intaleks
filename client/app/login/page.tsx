@@ -123,6 +123,13 @@ function LoginForm() {
           {isLoggingIn ? "Logging in..." : "Log In"}
         </button>
 
+        {/* Forgot password link */}
+        <div className="text-center mt-2">
+          <Link href="/auth/forgot-password" className="text-sm text-blue-500 hover:text-blue-600 hover:underline">
+            Forgot your password?
+          </Link>
+        </div>
+
         {/* Link to signup page */}
         <p className="text-center text-gray-600 text-sm mt-2">
           Don&apos;t have an account?{" "}

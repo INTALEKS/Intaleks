@@ -33,7 +33,7 @@ export default function UsersPage() {
   const [newUser, setNewUser] = useState({ email: "", password: "", name: "" });
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [revokeReason, setRevokeReason] = useState("");
-  const [selectedRole, setSelectedRole] = useState<"USER" | "ADMIN">("USER");
+  const [selectedRole, setSelectedRole] = useState<"USER" | "ADMIN" | "SUPER_ADMIN">("USER");
 
   const { data, isLoading, error } = useUsers(filters);
   const { data: plans } = useSubscriptionPlans();
@@ -298,12 +298,12 @@ export default function UsersPage() {
                         <DropdownMenuItem
                           onClick={() => {
                             setSelectedUser(user);
-                            setSelectedRole(user.role === "ADMIN" ? "USER" : "ADMIN");
+                            setSelectedRole(user.role);
                             setIsChangeRoleOpen(true);
                           }}
                         >
                           <Shield className="h-4 w-4 mr-2" />
-                          Change Role to {user.role === "ADMIN" ? "User" : "Admin"}
+                          Change Role
                         </DropdownMenuItem>
 
                         <DropdownMenuSeparator />
@@ -515,16 +515,17 @@ export default function UsersPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">New Role</Label>
-              <Select value={selectedRole} onValueChange={(value: "USER" | "ADMIN") => setSelectedRole(value)}>
+              <Select value={selectedRole} onValueChange={(value: "USER" | "ADMIN" | "SUPER_ADMIN") => setSelectedRole(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="USER">User</SelectItem>
                   <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">{selectedRole === "ADMIN" ? "Admins have full access to the admin panel and can manage all users." : "Users have standard access without admin privileges."}</p>
+              <p className="text-xs text-muted-foreground">{selectedRole === "SUPER_ADMIN" ? "Super Admins have full system access and can manage all users including other admins." : selectedRole === "ADMIN" ? "Admins have access to the admin panel and can manage regular users." : "Users have standard access without admin privileges."}</p>
             </div>
           </div>
           <DialogFooter>

@@ -19,6 +19,14 @@ export function useSubscriptionPlans() {
   });
 }
 
+// Public hook for non-admin users (settings page, pricing page, etc.)
+export function useActiveSubscriptionPlans() {
+  return useQuery({
+    queryKey: [...SUBSCRIPTION_KEYS.list(), "active"],
+    queryFn: () => SubscriptionsApi.getActivePlans(),
+  });
+}
+
 export function useSubscriptionPlan(id: string) {
   return useQuery({
     queryKey: SUBSCRIPTION_KEYS.detail(id),

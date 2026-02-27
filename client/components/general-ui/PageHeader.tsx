@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuthState } from "@/app/hooks/useAuthState";
+import { isAdminOrHigher } from "@/lib/role-utils";
 
 interface PageHeaderProps {
   /** Main title with optional highlighted word */
@@ -24,9 +25,8 @@ interface PageHeaderProps {
 export function PageHeader({ title, subtitle, ctaText, ctaHref, onCtaClick, altCtaText, altCtaHref = "/pricing" }: PageHeaderProps) {
   const { isAuthenticated, hasActiveSubscription, isAuthentiating, user } = useAuthState();
 
-  // Admins or subscribed users can access content
-  const isAdmin = user?.role === "ADMIN";
-  const canAccess = isAdmin || hasActiveSubscription;
+  // Admins (including SUPER_ADMIN) or subscribed users can access content
+  const canAccess = isAdminOrHigher(user?.role) || hasActiveSubscription;
 
   // Determine which CTA to show
   const showSubscribeCta = !isAuthentiating && (!isAuthenticated || !canAccess);

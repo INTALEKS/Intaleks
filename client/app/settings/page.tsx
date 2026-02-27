@@ -10,8 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useAuthState } from "@/app/hooks/useAuthState";
-import { useSubscriptionPlans } from "@/app/hooks/useSubscriptions";
-import { Loader2, Check, Phone, Mail, Camera } from "lucide-react";
+import { useActiveSubscriptionPlans } from "@/app/hooks/useSubscriptions";
+import { Loader2, Check, Mail, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { ApiClient } from "@/app/services/api";
 
@@ -90,10 +90,20 @@ function SettingsPageContent() {
       <Navbar />
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex gap-8">
-          {/* Sidebar */}
-          <div className="w-48 shrink-0">
-            <nav className="space-y-1">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Sidebar - Hidden on mobile, shown as horizontal tabs */}
+          <div className="lg:w-48 lg:shrink-0">
+            {/* Mobile tabs */}
+            <nav className="flex lg:hidden overflow-x-auto gap-2 pb-2 mb-4 border-b">
+              {tabs.map((tab) => (
+                <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={cn("px-4 py-2 text-sm rounded-lg whitespace-nowrap transition-colors", activeTab === tab.key ? "bg-blue-500 text-white font-semibold" : "bg-gray-100 text-gray-600 hover:bg-gray-200")}>
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+
+            {/* Desktop sidebar */}
+            <nav className="hidden lg:block space-y-1">
               {tabs.map((tab) => (
                 <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={cn("block w-full text-left px-3 py-2 text-sm rounded-md transition-colors", activeTab === tab.key ? "font-semibold text-black" : "text-gray-600 hover:text-black")}>
                   {tab.label}
@@ -103,8 +113,8 @@ function SettingsPageContent() {
           </div>
 
           {/* Content */}
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-8">Settings</h1>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl lg:text-3xl font-bold mb-6 lg:mb-8">Settings</h1>
 
             {activeTab === "details" && <MyDetailsTab user={user} onProfileUpdate={refetch} />}
             {activeTab === "subscriptions" && <SubscriptionsTab user={user} />}
@@ -232,15 +242,15 @@ function MyDetailsTab({ user, onProfileUpdate }: { user: UserData | null; onProf
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
       {/* Personal Details */}
       <div>
-        <h2 className="text-xl font-semibold mb-6">Personal Details</h2>
+        <h2 className="text-lg lg:text-xl font-semibold mb-4 lg:mb-6">Personal Details</h2>
 
         <div className="flex items-center gap-4 mb-6">
-          <div className="relative w-20 h-20 rounded-full bg-gray-200 overflow-hidden group cursor-pointer" onClick={handleAvatarClick}>
+          <div className="relative w-16 h-16 lg:w-20 lg:h-20 rounded-full bg-gray-200 overflow-hidden group cursor-pointer" onClick={handleAvatarClick}>
             {user?.avatar ? <Image src={user.avatar} alt="Profile" width={80} height={80} className="w-full h-full object-cover" /> : <Image src="/user-placeholder.jpg" alt="Profile" width={80} height={80} className="w-full h-full object-cover" />}
-            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">{isUploadingAvatar ? <Loader2 className="w-6 h-6 text-white animate-spin" /> : <Camera className="w-6 h-6 text-white" />}</div>
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">{isUploadingAvatar ? <Loader2 className="w-6 h-6 text-white animate-spin" /> : <Camera className="w-5 h-5 lg:w-6 lg:h-6 text-white" />}</div>
           </div>
           <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarChange} className="hidden" />
           <Button variant="outline" size="sm" onClick={handleAvatarClick} disabled={isUploadingAvatar}>
@@ -259,11 +269,19 @@ function MyDetailsTab({ user, onProfileUpdate }: { user: UserData | null; onProf
             <Input id="email" value={user?.email || ""} disabled className="mt-1 bg-gray-100 border-0 text-gray-500" />
           </div>
         </div>
+
+        {/* Mobile Update Profile Button */}
+        <div className="lg:hidden mt-6">
+          <Button onClick={handleUpdateProfile} disabled={isUpdatingProfile} className="bg-blue-500 hover:bg-blue-600 w-full">
+            {isUpdatingProfile ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+            Update Profile
+          </Button>
+        </div>
       </div>
 
       {/* Change Password */}
       <div>
-        <h2 className="text-xl font-semibold mb-6">Change Password</h2>
+        <h2 className="text-lg lg:text-xl font-semibold mb-4 lg:mb-6">Change Password</h2>
 
         <div className="space-y-4">
           <div>
@@ -288,8 +306,8 @@ function MyDetailsTab({ user, onProfileUpdate }: { user: UserData | null; onProf
         </div>
       </div>
 
-      {/* Update Profile Button */}
-      <div className="lg:col-span-2 flex justify-end">
+      {/* Desktop Update Profile Button */}
+      <div className="hidden lg:flex lg:col-span-2 justify-end">
         <Button onClick={handleUpdateProfile} disabled={isUpdatingProfile} className="bg-blue-500 hover:bg-blue-600">
           {isUpdatingProfile ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
           Update Profile
@@ -301,7 +319,7 @@ function MyDetailsTab({ user, onProfileUpdate }: { user: UserData | null; onProf
 
 // Subscriptions Tab Component
 function SubscriptionsTab({ user }: { user: UserData | null }) {
-  const { data: plans, isLoading } = useSubscriptionPlans();
+  const { data: plans, isLoading } = useActiveSubscriptionPlans();
   const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
 
   const currentPlan = user?.subscription;
@@ -366,7 +384,7 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
 
   return (
     <div>
-      {/* Current Plan */}
+      {/* Current Plan
       <h2 className="text-xl font-semibold mb-4">Current plan</h2>
       <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8 max-w-md">
         <div className="flex items-center justify-between mb-4">
@@ -391,18 +409,18 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
             Upgrade
           </Button>
         )}
-      </div>
+      </div> */}
 
       {/* Other Plans */}
       {otherPlans.length > 0 && (
         <>
-          <h2 className="text-xl font-semibold mb-4">Other Plans</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <h2 className="text-lg lg:text-xl font-semibold mb-4">Other Plans</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
             {otherPlans.map((plan) => (
-              <div key={plan.id} className="bg-white border border-gray-200 rounded-lg p-6">
+              <div key={plan.id} className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6">
                 <span className="inline-block bg-yellow-400 text-black text-xs font-semibold px-2 py-1 rounded mb-4">{getBillingLabel(plan.billingPeriod)}</span>
                 <h3 className="font-semibold mb-2">{plan.name}</h3>
-                <div className="text-4xl font-bold mb-4">${formatPrice(plan.price)}</div>
+                <div className="text-3xl lg:text-4xl font-bold mb-4">${formatPrice(plan.price)}</div>
                 <ul className="space-y-2 mb-6">
                   {(plan.features || []).map((feature: string, i: number) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
@@ -464,8 +482,8 @@ function ContactAdminTab({ user }: { user: UserData | null }) {
   return (
     <div className="max-w-2xl">
       {/* Contact Form */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-6">Send a Message</h2>
+      <div className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6 mb-4 lg:mb-6">
+        <h2 className="text-lg lg:text-xl font-semibold mb-4 lg:mb-6">Send a Message</h2>
 
         <div className="space-y-4">
           <div>
@@ -483,7 +501,7 @@ function ContactAdminTab({ user }: { user: UserData | null }) {
             <Textarea id="contactMessage" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="How can we help you?" rows={5} className="mt-1 bg-gray-50 border-gray-200" />
           </div>
 
-          <Button onClick={handleSendMessage} disabled={isSending} className="bg-blue-500 hover:bg-blue-600">
+          <Button onClick={handleSendMessage} disabled={isSending} className="bg-blue-500 hover:bg-blue-600 w-full">
             {isSending ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -497,82 +515,33 @@ function ContactAdminTab({ user }: { user: UserData | null }) {
       </div>
 
       {/* Contact Info */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6 mb-4 lg:mb-6">
         <h3 className="font-semibold mb-4">Contact Info</h3>
 
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <Phone className="w-5 h-5 text-gray-400" />
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-medium text-gray-900 mb-1">Perth Business Evaluators Pty Ltd</p>
+            <p className="text-sm text-gray-600">ABN: 51 622 231 832</p>
+            <p className="text-sm text-gray-600">Trading as: Intaleks</p>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <Mail className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-sm">Phone</p>
-              <p className="text-sm text-gray-600">+61 2 9000 1234</p>
+              <p className="font-medium text-sm text-gray-700">Email</p>
+              <a href="mailto:admin@intaleks.com" className="text-sm text-blue-600 hover:text-blue-700">
+                admin@intaleks.com
+              </a>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Mail className="w-5 h-5 text-gray-400" />
-            <div>
-              <p className="font-medium text-sm">Email</p>
-              <p className="text-sm text-gray-600">aleks@bizvaluer.com</p>
-            </div>
+          <div className="pt-3 border-t border-gray-200">
+            <p className="text-xs text-gray-500">Personal data is handled under the Australian Privacy Act 1988 (Cth). These Terms are governed by Western Australian law.</p>
           </div>
         </div>
       </div>
 
-      {/* Office Locations */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <h3 className="font-semibold mb-4">Visit Our Offices</h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h4 className="font-semibold text-sm mb-2">PERTH OFFICE</h4>
-            <p className="text-sm text-gray-600">
-              Level 25, 1 Spring Street,
-              <br />
-              Capital Square Tower 3,
-              <br />
-              Perth, 6000
-              <br />
-              (08) 6144 4723
-            </p>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-sm mb-2">SYDNEY OFFICE</h4>
-            <p className="text-sm text-gray-600">
-              Level 35, 100 Barangaroo
-              <br />
-              Ave. Sydney NSW 2000
-              <br />
-              (02) 8088 0798
-            </p>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-sm mb-2">MELBOURNE OFFICE</h4>
-            <p className="text-sm text-gray-600">
-              Level 27, 101 Collins
-              <br />
-              Street, Melbourne VIC
-              <br />
-              3000
-              <br />
-              (03) 7046 1243
-            </p>
-          </div>
-
-          <div>
-            <h4 className="font-semibold text-sm mb-2">BRISBANE OFFICE</h4>
-            <p className="text-sm text-gray-600">
-              Level 29, 97 Creek St,
-              <br />
-              Brisbane City QLD 4000
-              <br />
-              (07) 3535 1238
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Office Locations - Removed as not in original footer */}
     </div>
   );
 }

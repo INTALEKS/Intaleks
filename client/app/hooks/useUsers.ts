@@ -150,7 +150,7 @@ export function useChangeRole() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ userId, role }: { userId: string; role: "USER" | "ADMIN" }) => UsersApi.changeRole(userId, role),
+    mutationFn: ({ userId, role }: { userId: string; role: "USER" | "ADMIN" | "SUPER_ADMIN" }) => UsersApi.changeRole(userId, role),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: USER_KEYS.lists() });
       queryClient.invalidateQueries({ queryKey: USER_KEYS.detail(data.id) });

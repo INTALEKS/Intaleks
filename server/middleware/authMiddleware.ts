@@ -87,3 +87,37 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
     });
   }
 };
+
+/**
+ * Middleware to check if user has required role or higher
+ */
+export const requireRole = (requiredRole: UserRole) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      res.status(401).json({ error: "Unauthorized", message: "Authentication required" });
+      return;
+    }
+
+    const { hasRole } = require("../utils/roleHierarchy");
+
+    if (!hasRole(req.user.role, requiredRole)) {
+      res.status(403).json({
+        error: "Forbidden",
+        message: `This action requires ${requiredRole} role or higher`,
+      });
+      return;
+    }
+
+    next();
+  };
+};
+
+/**
+ * Middleware to check if user is admin or higher
+ */
+export const requireAdmin = requireRole(UserRole.ADMIN);
+
+/**
+ * Middleware to check if user is super admin
+ */
+export const requireSuperAdmin = requireRole(UserRole.SUPER_ADMIN);
