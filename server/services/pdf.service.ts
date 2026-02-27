@@ -25,8 +25,25 @@ export interface ValuationPDFData {
     values: Record<string, number>;
   }>;
   totalAddbacks: number;
+  /**
+   * Average EBIT across selected years (before add-backs)
+   */
   averageEbit: number;
+  /**
+   * Average Adjusted EBIT across selected years.
+   * Defined as: sum over selected years of (EBIT_year + Addbacks_year) ÷ number of years.
+   */
   adjustedEbit: number;
+  /**
+   * Per-year Adjusted EBIT values.
+   * adjustedEbitPerYear[yearLabel] = EBIT_year + Addbacks_year for that year.
+   */
+  adjustedEbitPerYear?: Record<string, number>;
+  /**
+   * Per-year total add-backs.
+   * totalAddbacksPerYear[yearLabel] = sum of all add-back items for that year.
+   */
+  totalAddbacksPerYear?: Record<string, number>;
   valuationMethod: "profit" | "asset" | "dcf";
   finalValuation: number;
 
@@ -42,6 +59,13 @@ export interface ValuationPDFData {
   questionnaireScore?: number;
   questionnaireCategory?: string;
   calculatedMultiple?: number;
+  /**
+   * Source of the valuation multiple ultimately used in the report.
+   * - \"questionnaire\": questionnaire-adjusted industry multiple
+   * - \"industry\": default industry multiple based on country/industry
+   * - \"custom\": user-entered custom multiple
+   */
+  multipleSource?: "questionnaire" | "industry" | "custom";
   questionnaireScores?: {
     ownerDependence: number;
     recurringRevenue: number;
@@ -176,9 +200,12 @@ export async function generateValuationPDF(data: ValuationPDFData): Promise<Buff
     totalAddbacks: data.totalAddbacks,
     averageEbit: data.averageEbit,
     adjustedEbit: data.adjustedEbit,
+    adjustedEbitPerYear: data.adjustedEbitPerYear,
+    totalAddbacksPerYear: data.totalAddbacksPerYear,
     valuationMethod: data.valuationMethod,
     finalValuation: data.finalValuation,
     calculatedMultiple: data.calculatedMultiple,
+    multipleSource: data.multipleSource,
 
     // Company info
     startedYear: data.startedYear,

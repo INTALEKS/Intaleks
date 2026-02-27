@@ -63,14 +63,23 @@ export function YearSelector({ selectedYears, onYearsChange }: YearSelectorProps
                   ))}
               </SelectContent>
             </Select>
-            <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveYear(year)} disabled={selectedYears.length <= 1} className="text-gray-400 hover:text-red-500">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => handleRemoveYear(year)}
+              disabled={selectedYears.length <= 1}
+              className="text-gray-400 hover:text-red-500"
+            >
               <X className="w-4 h-4" />
             </Button>
           </div>
         ))}
       </div>
 
-      <p className="text-xs text-gray-500">Select 1-5 financial years for your valuation analysis. Years must be unique.</p>
+      <p className="text-xs text-gray-500">
+        Select 1–5 financial years for your valuation. Average Adjusted EBIT always uses the years you have selected.
+      </p>
     </div>
   );
 }

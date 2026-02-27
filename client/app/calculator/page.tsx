@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Navbar, Footer } from "@/components/home";
 import { AccordionSection, MethodToggle, ValuationMethod, CountryIndustrySelector, FinancialDataTable, AddbacksTable, StepProgress, CompanyQuestionnaire, ValuationDocumentList, YearSelector, EarningCapacitySection, AddbacksExamplesSection, ValuationSummaryCard } from "@/components/calculator";
 import { AssetMethod } from "@/components/calculator/methods";
-import { calculateAverageEBIT, formatCurrency, FinancialYearData } from "@/lib/calculator-utils";
+import { calculateAverageAdjustedEBIT, calculateAverageEBIT, formatCurrency, FinancialYearData } from "@/lib/calculator-utils";
 import { downloadValuationPDF, ValuationReportData } from "@/lib/valuation-api";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useRouter } from "next/navigation";
@@ -253,11 +253,13 @@ export default function CalculatorPage() {
     return adjusted;
   }, [calculatedMetrics, financialYears, totalAddbacksByYear]);
 
-  // Calculate average Adjusted EBIT across all years
+  // Calculate average Adjusted EBIT across all years using the explicit formula:
+  // Average Adjusted EBIT = (Σ (EBIT_year + Addbacks_year)) / number of years
   const averageAdjustedEbit = useMemo(() => {
-    const adjustedEbitArray = financialYears.map((year) => adjustedEbitByYear[year] || 0);
-    return calculateAverageEBIT(adjustedEbitArray);
-  }, [adjustedEbitByYear, financialYears]);
+    const ebitValues = financialYears.map((year) => calculatedMetrics[year]?.ebit || 0);
+    const addbackValues = financialYears.map((year) => totalAddbacksByYear[year] || 0);
+    return calculateAverageAdjustedEBIT(ebitValues, addbackValues);
+  }, [calculatedMetrics, financialYears, totalAddbacksByYear]);
 
   // This is now just for display purposes - not used in calculation
   const displayMultiple = useMemo(() => {
@@ -412,6 +414,14 @@ export default function CalculatorPage() {
         logoMimeType = logoData.mimeType;
       }
 
+      // Determine multiple source for transparency in PDF
+      let multipleSource: ValuationReportData["multipleSource"] = "industry";
+      if (useQuestionnaireMultiple && calculatedMultiple) {
+        multipleSource = "questionnaire";
+      } else if (customMultiple && customMultiple.trim() !== "" && !Number.isNaN(parseFloat(customMultiple))) {
+        multipleSource = "custom";
+      }
+
       // Prepare data for PDF generation with extended fields (Requirements: 6.1)
       const reportData: ValuationReportData = {
         companyName: companyName || "Company Name",
@@ -428,6 +438,8 @@ export default function CalculatorPage() {
         totalAddbacks: financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0),
         averageEbit: financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length,
         adjustedEbit: averageAdjustedEbit,
+        adjustedEbitPerYear: Object.fromEntries(financialYears.map((year) => [year, adjustedEbitByYear[year] || 0])),
+        totalAddbacksPerYear: Object.fromEntries(financialYears.map((year) => [year, totalAddbacksByYear[year] || 0])),
         valuationMethod: selectedMethod,
         finalValuation,
         // Extended fields for multi-page PDF with cover page
@@ -445,6 +457,7 @@ export default function CalculatorPage() {
         questionnaireScore: totalScore,
         questionnaireCategory: multipleCategory,
         calculatedMultiple: useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0,
+        multipleSource,
         questionnaireScores: useQuestionnaireMultiple ? questionnaireScores : undefined,
       };
 

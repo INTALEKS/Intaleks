@@ -38,6 +38,21 @@ export const calculateAdjustedEBIT = (ebit: number, totalAddbacks: number): numb
   return ebit + totalAddbacks;
 };
 
+// Calculate Average Adjusted EBIT across years
+// Average Adjusted EBIT = (Σ (EBIT_year + Addbacks_year)) / number of years
+export const calculateAverageAdjustedEBIT = (ebitValues: number[], addbackValues: number[]): number => {
+  const length = Math.min(ebitValues.length, addbackValues.length);
+  if (length === 0) return 0;
+
+  const total = Array.from({ length }).reduce((sum, _, index) => {
+    const ebit = ebitValues[index] || 0;
+    const addbacks = addbackValues[index] || 0;
+    return sum + ebit + addbacks;
+  }, 0);
+
+  return total / length;
+};
+
 // Calculate Average EBIT across years
 export const calculateAverageEBIT = (ebitValues: number[]): number => {
   if (ebitValues.length === 0) return 0;

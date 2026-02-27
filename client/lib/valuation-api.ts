@@ -22,11 +22,19 @@ export interface ValuationReportData {
   averageEbit: number;
   adjustedEbit: number;
 
+  // Per-year derived values for clearer PDF presentation
+  // adjustedEbitPerYear[yearLabel] = EBIT_year + Addbacks_year for that year
+  adjustedEbitPerYear?: Record<string, number>;
+  // totalAddbacksPerYear[yearLabel] = sum of all add-backs for that year
+  totalAddbacksPerYear?: Record<string, number>;
+
   // Valuation Method
   valuationMethod: "asset" | "profit";
 
   // Valuation Multiple
   customMultiple?: string;
+  // Source of the valuation multiple used in the report
+  multipleSource?: "questionnaire" | "industry" | "custom";
 
   // Asset Method
   assets?: {

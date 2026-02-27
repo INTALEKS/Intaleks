@@ -57,9 +57,12 @@ interface RAVDAData {
   totalAddbacks: number;
   averageEbit: number;
   adjustedEbit: number;
+  adjustedEbitPerYear?: Record<string, number>;
+  totalAddbacksPerYear?: Record<string, number>;
   valuationMethod: "profit" | "asset" | "dcf";
   finalValuation: number;
   calculatedMultiple?: number;
+  multipleSource?: "questionnaire" | "industry" | "custom";
 
   // Company info
   startedYear?: string;
@@ -165,11 +168,15 @@ function drawHeader(doc: PDFKit.PDFDocument, data: RAVDAData, yPos: number): num
     .fontSize(20)
     .font("Helvetica-Bold")
     .fillColor("#374151")
-    .text("Risk & Value Driver Assessment", 50, yPos + 70, { width: 500, align: "center" });
+    .text("Business Valuation Report", 50, yPos + 70, { width: 500, align: "center" });
   yPos += 100;
 
-  doc.fontSize(32).font("Helvetica-Bold").fillColor(COLORS.primary).text("RAVDA Scorecard", 50, yPos, { width: 500, align: "center" });
-  yPos += 50;
+  doc
+    .fontSize(16)
+    .font("Helvetica-Bold")
+    .fillColor(COLORS.primary)
+    .text("Risk & Value Driver Assessment (RAVDA)", 50, yPos, { width: 500, align: "center" });
+  yPos += 40;
 
   return yPos;
 }
@@ -539,7 +546,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
   });
   yPos += headerHeight;
 
-  const metrics: Array<{ key: string; label: string; bold?: boolean; highlight?: boolean; calc?: (yearData: any) => number }> = [
+  const metrics: Array<{ key: string; label: string; bold?: boolean; highlight?: boolean; calc?: (yearData: any, year: string) => number }> = [
     { key: "sales", label: "Sales" },
     { key: "cogs", label: "COGS" },
     { key: "grossProfit", label: "Gross Profit", bold: true, calc: (v) => (v.sales || 0) - (v.cogs || 0) },
@@ -547,7 +554,41 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
     { key: "netProfitAndLoss", label: "Net Profit/Loss", bold: true, calc: (v) => (v.grossProfit ?? (v.sales || 0) - (v.cogs || 0)) - (v.operatingExpenses || 0) },
     { key: "interestExpense", label: "Interest Expense" },
     { key: "interestIncome", label: "Interest Income" },
-    { key: "ebit", label: "EBIT", bold: true, highlight: true, calc: (v) => (v.netProfitAndLoss ?? (v.grossProfit ?? (v.sales || 0) - (v.cogs || 0)) - (v.operatingExpenses || 0)) + (v.interestExpense || 0) - (v.interestIncome || 0) },
+    {
+      key: "ebit",
+      label: "EBIT",
+      bold: true,
+      highlight: true,
+      calc: (v) => (v.netProfitAndLoss ?? (v.grossProfit ?? (v.sales || 0) - (v.cogs || 0)) - (v.operatingExpenses || 0)) + (v.interestExpense || 0) - (v.interestIncome || 0),
+    },
+    {
+      key: "addbacksTotal",
+      label: "Addbacks",
+      calc: (_v, year) => {
+        if (data.totalAddbacksPerYear) {
+          return data.totalAddbacksPerYear[year] || 0;
+        }
+        return (data.addbacks || []).reduce((sum, a) => sum + (a.values[year] || 0), 0);
+      },
+    },
+    {
+      key: "adjustedEbit",
+      label: "Adjusted EBIT (EBIT + Addbacks)",
+      bold: true,
+      highlight: true,
+      calc: (v, year) => {
+        if (data.adjustedEbitPerYear && typeof data.adjustedEbitPerYear[year] === "number") {
+          return data.adjustedEbitPerYear[year];
+        }
+        const baseEbit =
+          v.netProfitAndLoss ??
+          (v.grossProfit ?? (v.sales || 0) - (v.cogs || 0)) - (v.operatingExpenses || 0) + (v.interestExpense || 0) - (v.interestIncome || 0);
+        const totalAddbacksForYear =
+          (data.totalAddbacksPerYear && data.totalAddbacksPerYear[year]) ||
+          (data.addbacks || []).reduce((sum, a) => sum + (a.values[year] || 0), 0);
+        return baseEbit + totalAddbacksForYear;
+      },
+    },
   ];
 
   metrics.forEach((metric) => {
@@ -564,7 +605,8 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
       const x = tableStartX + metricColWidth + index * yearColWidth;
       doc.rect(x, yPos, yearColWidth, rowHeight).fillAndStroke(bgColor, "#E5E7EB");
 
-      const value = data.financialData?.[year]?.[metric.key as keyof (typeof data.financialData)[string]] || 0;
+      const yearData = data.financialData?.[year] || {};
+      const value = metric.calc ? metric.calc(yearData, year) : (yearData as any)[metric.key] || 0;
       safeSingleLineText(doc, formatMoneyCompact(value), x + 4, yPos + 5, yearColWidth - 8, "right");
     });
 
@@ -654,9 +696,9 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData): voi
 
   if (data.valuationMethod === "profit") {
     const calcSteps = [
-      { label: "Average EBIT", value: data.averageEbit },
-      { label: "Total Addbacks", value: data.totalAddbacks },
-      { label: "Adjusted EBIT", value: data.adjustedEbit, highlight: true },
+      { label: "Average EBIT (before addbacks)", value: data.averageEbit },
+      { label: "Total Addbacks (all years)", value: data.totalAddbacks },
+      { label: "Average Adjusted EBIT", value: data.adjustedEbit, highlight: true },
       { label: "Valuation Multiple", value: data.calculatedMultiple || 4.0, isMultiple: true },
     ];
 
@@ -688,7 +730,16 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData): voi
       .text(formatCurrency(data.finalValuation), 60, yPos + 34, { width: 480, align: "right" });
     yPos += 92;
 
-    doc.fontSize(10).font("Helvetica-Oblique").fillColor(COLORS.gray).text("Formula: Adjusted EBIT × Valuation Multiple", 50, yPos, { width: 500, align: "center" });
+    doc
+      .fontSize(10)
+      .font("Helvetica-Oblique")
+      .fillColor(COLORS.gray)
+      .text(
+        "Formula: Average Adjusted EBIT × Valuation Multiple (Average Adjusted EBIT = sum of per-year (EBIT + addbacks) ÷ number of years)",
+        50,
+        yPos,
+        { width: 500, align: "center" },
+      );
   } else if (data.valuationMethod === "asset" && data.assets && data.liabilities) {
     doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Assets", 50, yPos);
     yPos += 18;
@@ -879,48 +930,149 @@ export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer
     });
     doc.on("error", reject);
 
-    // ===== PAGE 1: RAVDA SCORECARD =====
-    console.log("[PDF] Generating Page 1: RAVDA Scorecard");
+    // ===== PAGE 1: EXECUTIVE SUMMARY =====
+    console.log("[PDF] Generating Page 1: Executive Summary");
     let yPos = 50;
 
-    // Header
+    // Reuse header visuals (logo, title)
     yPos = drawHeader(doc, data, yPos);
 
-    // Intro text (left side)
-    const introStartY = yPos;
-    drawIntroText(doc, introStartY);
+    // Executive Summary content
+    doc
+      .fontSize(18)
+      .font("Helvetica-Bold")
+      .fillColor(COLORS.darkGray)
+      .text("Executive Summary", 50, yPos + 10);
+    yPos += 40;
 
-    // Score boxes (right side)
-    drawScoreBox(doc, data, 350, introStartY);
+    // Headline valuation block
+    doc.rect(50, yPos, 500, 80).fillAndStroke("#E0F2FE", "#93C5FD");
+    doc
+      .fontSize(11)
+      .font("Helvetica-Bold")
+      .fillColor("#0F172A")
+      .text("Estimated Business Value", 60, yPos + 14);
+    doc
+      .fontSize(28)
+      .font("Helvetica-Bold")
+      .fillColor(COLORS.primary)
+      .text(formatCurrency(data.finalValuation), 60, yPos + 34, { width: 480, align: "right" });
+    yPos += 96;
 
-    yPos = introStartY + 220;
+    // Key drivers row: Average Adjusted EBIT, Multiple, Method
+    const boxWidth = 160;
+    const boxHeight = 60;
+    const startX = 50;
+    const labels = [
+      {
+        title: "Average Adjusted EBIT",
+        value: formatCurrency(data.adjustedEbit),
+      },
+      {
+        title: "Valuation Multiple",
+        value:
+          data.calculatedMultiple !== undefined
+            ? `${data.calculatedMultiple.toFixed(2)}x`
+            : data.valuationMethod === "asset"
+              ? "N/A (Asset Method)"
+              : "N/A",
+      },
+      {
+        title: "Valuation Method",
+        value: data.valuationMethod === "profit" ? "Profit Multiple Method" : data.valuationMethod === "asset" ? "Asset-Based Method" : "DCF Method",
+      },
+    ];
 
-    // Driver Ratings (left) and Value Improvement Chart (right)
-    const chartStartY = yPos;
-    yPos = drawDriverRatings(doc, data, chartStartY);
-    drawValueImprovementChart(doc, data, 320, chartStartY);
+    labels.forEach((item, index) => {
+      const x = startX + index * (boxWidth + 10);
+      doc.rect(x, yPos, boxWidth, boxHeight).fillAndStroke("#F9FAFB", "#E5E7EB");
+      doc
+        .fontSize(9)
+        .font("Helvetica")
+        .fillColor(COLORS.gray)
+        .text(item.title, x + 8, yPos + 10, { width: boxWidth - 16 });
+      doc
+        .fontSize(11)
+        .font("Helvetica-Bold")
+        .fillColor(COLORS.darkGray)
+        .text(item.value, x + 8, yPos + 28, { width: boxWidth - 16 });
+    });
 
-    // Track Progress (left) and Next Steps (right)
-    const bottomStartY = yPos;
-    yPos = drawTrackProgress(doc, data, bottomStartY);
-    drawNextSteps(doc, data, 320, bottomStartY);
+    yPos += boxHeight + 30;
 
-    // Footer on page 1
-    doc.fontSize(8).font("Helvetica-Bold").fillColor(COLORS.primary).text("Intaleks", 50, 760);
-    doc.fontSize(8).font("Helvetica").fillColor(COLORS.gray).text("Business Valuation & Advisory", 50, 772);
+    // Short narrative paragraph
+    const narrative =
+      "This valuation estimate is generated from your financial performance, adjusted EBIT and selected valuation method. It is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
 
-    // ===== PAGE 2: FINANCIAL DATA =====
+    doc
+      .fontSize(9)
+      .font("Helvetica")
+      .fillColor(COLORS.darkGray)
+      .text(narrative, 50, yPos, { width: 500, align: "justify" });
+    yPos += 70;
+
+    // Mini risk & strength badges from RAVDA drivers
+    doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Risk & Strength Snapshot", 50, yPos);
+    yPos += 20;
+
+    const snapshotItems: string[] = [];
+    if (data.drivers.strong.length > 0) {
+      snapshotItems.push(`Strengths: ${data.drivers.strong.slice(0, 2).join(", ")}`);
+    }
+    if (data.drivers.weak.length > 0) {
+      snapshotItems.push(`Key Risks: ${data.drivers.weak.slice(0, 2).join(", ")}`);
+    }
+    if (snapshotItems.length === 0 && data.drivers.average.length > 0) {
+      snapshotItems.push(`Typical Areas: ${data.drivers.average.slice(0, 3).join(", ")}`);
+    }
+
+    snapshotItems.forEach((text, index) => {
+      const badgeY = yPos + index * 22;
+      doc.rect(50, badgeY, 500, 20).fillAndStroke("#EFF6FF", "#DBEAFE");
+      doc
+        .fontSize(9)
+        .font("Helvetica")
+        .fillColor(COLORS.darkGray)
+        .text(text, 60, badgeY + 6, { width: 480, ellipsis: true, lineBreak: false });
+    });
+
+    // ===== PAGE 2: COMPANY & FINANCIAL DATA =====
     if (data.financialYears && data.financialData) {
-      console.log("[PDF] Generating Page 2: Financial Data");
+      console.log("[PDF] Generating Page 2: Company & Financial Data");
       drawFinancialDataPage(doc, data);
     }
 
-    // ===== PAGE 3: VALUATION SUMMARY =====
-    console.log("[PDF] Generating Page 3: Valuation Summary");
+    // ===== PAGE 3: VALUATION SUMMARY & METHOD =====
+    console.log("[PDF] Generating Page 3: Valuation Summary & Method");
     drawValuationSummaryPage(doc, data);
 
-    // ===== PAGE 4: DISCLAIMER =====
-    console.log("[PDF] Generating Page 4: Disclaimer");
+    // ===== PAGE 4: RAVDA DETAIL =====
+    console.log("[PDF] Generating Page 4: RAVDA Detail");
+    doc.addPage();
+    let ravdaY = 50;
+    ravdaY = drawHeader(doc, data, ravdaY);
+    ravdaY += 10;
+    doc.fontSize(18).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Risk & Value Driver Assessment (RAVDA)", 50, ravdaY);
+    ravdaY += 32;
+    // Reuse existing RAVDA visuals on this dedicated page
+    const introStartY = ravdaY;
+    drawIntroText(doc, introStartY);
+    drawScoreBox(doc, data, 350, introStartY);
+    const chartStartY = introStartY + 120;
+    let afterDriversY = drawDriverRatings(doc, data, chartStartY);
+    drawValueImprovementChart(doc, data, 320, chartStartY);
+    const progressStartY = afterDriversY + 10;
+    const afterProgressY = drawTrackProgress(doc, data, progressStartY);
+    drawNextSteps(doc, data, 320, progressStartY);
+    // simple footer label
+    doc
+      .fontSize(8)
+      .font("Helvetica")
+      .fillColor(COLORS.gray)
+      .text("Section: RAVDA Risk & Value Drivers", 50, 780);
+
+    // ===== PAGE 5: DISCLAIMER =====
+    console.log("[PDF] Generating Page 5: Disclaimer");
     drawFooterDisclaimer(doc, 720);
 
     doc.end();
