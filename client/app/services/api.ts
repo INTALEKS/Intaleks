@@ -9,7 +9,7 @@ export interface RegisterData {
   name?: string;
 }
 
-export type UserRole = "USER" | "ADMIN";
+export type UserRole = "USER" | "ADMIN" | "SUPER_ADMIN";
 export type SubscriptionStatus = "NONE" | "ACTIVE" | "PAST_DUE" | "CANCELED" | "TRIALING" | "INCOMPLETE";
 export type BillingPeriod = "MONTHLY" | "YEARLY" | "ONE_TIME";
 
