@@ -1,7 +1,6 @@
 "use client";
 
 import { formatCurrency } from "@/lib/calculator-utils";
-import { Lock } from "lucide-react";
 
 interface ValuationSummaryCardProps {
   // Company Info
@@ -34,8 +33,23 @@ interface ValuationSummaryCardProps {
   hasActiveSubscription?: boolean;
 }
 
-export function ValuationSummaryCard({ companyName, country, industry, averageSales, averageCOGS, averageEbit, totalAddbacks, adjustedEbit, valuationMethod, valuationMultiple, finalValuation, totalAssets, totalLiabilities, questionnaireScore, questionnaireCategory, isAuthenticated = false, hasActiveSubscription = false }: ValuationSummaryCardProps) {
-  const showPaywall = !isAuthenticated || !hasActiveSubscription;
+export function ValuationSummaryCard({ companyName, country, industry, averageSales, averageCOGS, averageEbit, totalAddbacks, adjustedEbit, valuationMethod, valuationMultiple, finalValuation, totalAssets, totalLiabilities, questionnaireScore, questionnaireCategory }: ValuationSummaryCardProps) {
+  // Helper function to get color based on score
+  const getCategoryColor = (score?: number) => {
+    if (!score) return { bg: "bg-gray-100", text: "text-gray-800", border: "border-gray-200" };
+
+    if (score >= 40) {
+      return { bg: "bg-green-100", text: "text-green-800", border: "border-green-200" };
+    } else if (score >= 30) {
+      return { bg: "bg-yellow-100", text: "text-yellow-800", border: "border-yellow-200" };
+    } else if (score >= 20) {
+      return { bg: "bg-orange-100", text: "text-orange-800", border: "border-orange-200" };
+    } else {
+      return { bg: "bg-red-100", text: "text-red-800", border: "border-red-200" };
+    }
+  };
+
+  const categoryColors = getCategoryColor(questionnaireScore);
 
   return (
     <div className="bg-linear-to-br from-blue-50 to-white border-2 border-blue-200 rounded-xl p-3 sm:p-6 shadow-lg">
@@ -82,7 +96,7 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
             </div>
             <div className="text-right">
               <p className="text-xs sm:text-sm text-gray-600 mb-1">Rating</p>
-              <span className={`inline-block px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${questionnaireCategory === "Premium" ? "bg-green-100 text-green-800" : questionnaireCategory === "Standard" ? "bg-blue-100 text-blue-800" : questionnaireCategory === "Discounted" ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"}`}>{questionnaireCategory}</span>
+              <span className={`inline-block px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${categoryColors.bg} ${categoryColors.text}`}>{questionnaireCategory}</span>
             </div>
           </div>
         </div>
@@ -90,29 +104,18 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
 
       {/* Final Valuation - Highlighted */}
       <div className="bg-linear-to-r from-blue-600 to-blue-700 rounded-lg p-4 sm:p-6 text-white relative overflow-hidden">
-        {showPaywall && (
-          <div className="absolute inset-0 backdrop-blur-md bg-blue-900/30 flex items-center justify-center z-10">
-            <div className="text-center p-4">
-              <Lock className="w-12 h-12 mx-auto mb-3 text-white" />
-              <p className="text-white font-semibold text-lg mb-2">{!isAuthenticated ? "Sign Up Required" : "Subscription Required"}</p>
-              <p className="text-blue-100 text-sm">{!isAuthenticated ? "Create an account and subscribe to view your business valuation" : "Subscribe to view your business valuation"}</p>
-            </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-blue-100 text-xs sm:text-sm mb-1">Estimated Business Valuation</p>
+            <p className="text-2xl sm:text-4xl font-bold break-all">{formatCurrency(finalValuation)}</p>
           </div>
-        )}
-        <div className={showPaywall ? "blur-sm" : ""}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-100 text-xs sm:text-sm mb-1">Estimated Business Valuation</p>
-              <p className="text-2xl sm:text-4xl font-bold break-all">{formatCurrency(finalValuation)}</p>
-            </div>
-            <div className="text-4xl sm:text-6xl opacity-20">🏆</div>
-          </div>
-          <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-blue-500">
-            <p className="text-blue-100 text-xs">
-              Method: <span className="font-semibold capitalize">{valuationMethod} Method</span>
-              {valuationMethod === "profit" && valuationMultiple && <> • Multiple: {valuationMultiple.toFixed(2)}x</>}
-            </p>
-          </div>
+          <div className="text-4xl sm:text-6xl opacity-20">🏆</div>
+        </div>
+        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-blue-500">
+          <p className="text-blue-100 text-xs">
+            Method: <span className="font-semibold capitalize">{valuationMethod} Method</span>
+            {valuationMethod === "profit" && valuationMultiple && <> • Multiple: {valuationMultiple.toFixed(2)}x</>}
+          </p>
         </div>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { SectionHeader } from "./SectionHeader";
+import { Lock } from "lucide-react";
 
 interface FinancialMetric {
   key: string;
@@ -20,12 +21,21 @@ interface FinancialDataTableProps {
     label: string;
     values: Record<string, string | number>;
   };
+  disabled?: boolean;
 }
 
-export function FinancialDataTable({ title, metrics, years, values, onChange, calculatedRow }: FinancialDataTableProps) {
+export function FinancialDataTable({ title, metrics, years, values, onChange, calculatedRow, disabled = false }: FinancialDataTableProps) {
   return (
     <div className="mb-6">
-      <SectionHeader title={title} />
+      <div className="flex items-center justify-between">
+        <SectionHeader title={title} />
+        {disabled && (
+          <div className="flex items-center gap-2 text-gray-500 text-sm">
+            <Lock className="w-4 h-4" />
+            <span className="hidden sm:inline">Login required</span>
+          </div>
+        )}
+      </div>
       <div className="border border-t-0 rounded-b-md overflow-hidden overflow-x-auto">
         <table className="w-full min-w-[700px]">
           <thead>
@@ -49,7 +59,7 @@ export function FinancialDataTable({ title, metrics, years, values, onChange, ca
                       <div className="bg-blue-50 border border-blue-200 rounded-md px-3 py-2 text-sm font-semibold text-blue-700">${values[metric.key]?.[year] || "0"}</div>
                     ) : (
                       // Input field
-                      <Input type="number" value={values[metric.key]?.[year] || ""} onChange={(e) => onChange(metric.key, year, e.target.value)} placeholder={metric.placeholder || "Enter value"} className="bg-gray-50 border-gray-200" />
+                      <Input type="number" value={values[metric.key]?.[year] || ""} onChange={(e) => onChange(metric.key, year, e.target.value)} placeholder={metric.placeholder || "Enter value"} className="bg-gray-50 border-gray-200" disabled={disabled} />
                     )}
                   </td>
                 ))}

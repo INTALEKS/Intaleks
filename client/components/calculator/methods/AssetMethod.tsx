@@ -1,10 +1,13 @@
 "use client";
 
+import { Lock } from "lucide-react";
+
 interface AssetMethodProps {
   assets: Record<string, string | number>;
   liabilities: Record<string, string | number>;
   onAssetChange: (key: string, value: string) => void;
   onLiabilityChange: (key: string, value: string) => void;
+  disabled?: boolean;
 }
 
 const assetItems = [
@@ -22,18 +25,24 @@ const liabilityItems = [
   { key: "otherLiabilities", label: "Other Liabilities", placeholder: "5000" },
 ];
 
-export function AssetMethod({ assets, liabilities, onAssetChange, onLiabilityChange }: AssetMethodProps) {
+export function AssetMethod({ assets, liabilities, onAssetChange, onLiabilityChange, disabled = false }: AssetMethodProps) {
   const totalAssets = Object.values(assets).reduce<number>((sum, val) => sum + (parseFloat(String(val)) || 0), 0);
   const totalLiabilities = Object.values(liabilities).reduce<number>((sum, val) => sum + (parseFloat(String(val)) || 0), 0);
   const netValue = totalAssets - totalLiabilities;
 
-  const formatCurrency = (value: number) => `$${value.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  const formatCurrency = (value: number) => `${value.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Section Header */}
-      <div className="bg-blue-500 text-white px-3 sm:px-4 py-2 rounded-t-md">
+      <div className="bg-blue-500 text-white px-3 sm:px-4 py-2 rounded-t-md flex items-center justify-between">
         <h3 className="text-xs sm:text-sm font-semibold">ASSET BASED VALUATION METHOD</h3>
+        {disabled && (
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4" />
+            <span className="hidden sm:inline text-xs">Login required</span>
+          </div>
+        )}
       </div>
 
       <div className="space-y-4 sm:space-y-6 px-3 sm:px-4">
@@ -44,7 +53,7 @@ export function AssetMethod({ assets, liabilities, onAssetChange, onLiabilityCha
             {assetItems.map((item) => (
               <div key={item.key} className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                 <label className="text-xs sm:text-sm text-gray-700">{item.label}</label>
-                <input type="number" value={assets[item.key] || ""} onChange={(e) => onAssetChange(item.key, e.target.value)} placeholder={item.placeholder} className="border border-gray-300 rounded-md px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" />
+                <input type="number" value={assets[item.key] || ""} onChange={(e) => onAssetChange(item.key, e.target.value)} placeholder={item.placeholder} className="border border-gray-300 rounded-md px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" disabled={disabled} />
               </div>
             ))}
 
@@ -63,7 +72,7 @@ export function AssetMethod({ assets, liabilities, onAssetChange, onLiabilityCha
             {liabilityItems.map((item) => (
               <div key={item.key} className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                 <label className="text-xs sm:text-sm text-gray-700">{item.label}</label>
-                <input type="number" value={liabilities[item.key] || ""} onChange={(e) => onLiabilityChange(item.key, e.target.value)} placeholder={item.placeholder} className="border border-gray-300 rounded-md px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" />
+                <input type="number" value={liabilities[item.key] || ""} onChange={(e) => onLiabilityChange(item.key, e.target.value)} placeholder={item.placeholder} className="border border-gray-300 rounded-md px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" disabled={disabled} />
               </div>
             ))}
 

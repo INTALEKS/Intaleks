@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Plus, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,6 +18,7 @@ interface AddbacksTableProps {
   onAddbackChange: (id: string, field: "reason" | "values", value: string | Record<string, string>) => void;
   onAddAddback: () => void;
   totalValuesByYear: Record<string, string>;
+  disabled?: boolean;
 }
 
 // Predefined addback reasons organized by category
@@ -83,7 +84,7 @@ const ADDBACK_REASONS = [
   { value: "owner-multiple-roles", label: "Owner performing multiple roles" },
 ];
 
-export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAddAddback, totalValuesByYear }: AddbacksTableProps) {
+export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAddAddback, totalValuesByYear, disabled = false }: AddbacksTableProps) {
   const handleYearValueChange = (addbackId: string, year: string, value: string) => {
     const addback = addbacks.find((a) => a.id === addbackId);
     if (!addback) return;
@@ -94,7 +95,15 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
 
   return (
     <div className="mb-6">
-      <SectionHeader title="ADDBACKS/ADJUSTMENTS" />
+      <div className="flex items-center justify-between">
+        <SectionHeader title="ADDBACKS/ADJUSTMENTS" />
+        {disabled && (
+          <div className="flex items-center gap-2 text-gray-500 text-sm">
+            <Lock className="w-4 h-4" />
+            <span className="hidden sm:inline">Login required</span>
+          </div>
+        )}
+      </div>
 
       {/* Desktop Table View */}
       <div className="hidden md:block border border-t-0 rounded-b-md overflow-hidden">
@@ -113,7 +122,7 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
             {addbacks.map((addback) => (
               <tr key={addback.id} className="border-t">
                 <td className="p-3">
-                  <Select value={addback.reason} onValueChange={(value) => onAddbackChange(addback.id, "reason", value)}>
+                  <Select value={addback.reason} onValueChange={(value) => onAddbackChange(addback.id, "reason", value)} disabled={disabled}>
                     <SelectTrigger className="bg-gray-50 border-gray-200 w-full">
                       <SelectValue placeholder="Select addback reason" />
                     </SelectTrigger>
@@ -128,7 +137,7 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
                 </td>
                 {financialYears.map((year) => (
                   <td key={year} className="p-3">
-                    <Input type="number" value={addback.values[year] || ""} onChange={(e) => handleYearValueChange(addback.id, year, e.target.value)} placeholder="0" className="bg-gray-50 border-gray-200 text-center" />
+                    <Input type="number" value={addback.values[year] || ""} onChange={(e) => handleYearValueChange(addback.id, year, e.target.value)} placeholder="0" className="bg-gray-50 border-gray-200 text-center" disabled={disabled} />
                   </td>
                 ))}
               </tr>
@@ -144,7 +153,7 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
           </tbody>
         </table>
         <div className="p-3 flex justify-end border-t">
-          <Button variant="outline" size="sm" onClick={onAddAddback}>
+          <Button variant="outline" size="sm" onClick={onAddAddback} disabled={disabled}>
             <Plus className="w-4 h-4 mr-1" />
             ADD ADDBACK
           </Button>
@@ -158,7 +167,7 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
             <div key={addback.id} className="p-4 space-y-3 bg-white">
               <div>
                 <label className="text-xs font-medium text-gray-600 uppercase mb-1 block">Reason</label>
-                <Select value={addback.reason} onValueChange={(value) => onAddbackChange(addback.id, "reason", value)}>
+                <Select value={addback.reason} onValueChange={(value) => onAddbackChange(addback.id, "reason", value)} disabled={disabled}>
                   <SelectTrigger className="bg-gray-50 border-gray-200 w-full">
                     <SelectValue placeholder="Select addback reason" />
                   </SelectTrigger>
@@ -174,7 +183,7 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
               {financialYears.map((year) => (
                 <div key={year}>
                   <label className="text-xs font-medium text-gray-600 uppercase mb-1 block">{year}</label>
-                  <Input type="number" value={addback.values[year] || ""} onChange={(e) => handleYearValueChange(addback.id, year, e.target.value)} placeholder="0" className="bg-gray-50 border-gray-200" />
+                  <Input type="number" value={addback.values[year] || ""} onChange={(e) => handleYearValueChange(addback.id, year, e.target.value)} placeholder="0" className="bg-gray-50 border-gray-200" disabled={disabled} />
                 </div>
               ))}
             </div>
@@ -192,7 +201,7 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
           </div>
         </div>
         <div className="p-3 flex justify-end border-t bg-white">
-          <Button variant="outline" size="sm" onClick={onAddAddback}>
+          <Button variant="outline" size="sm" onClick={onAddAddback} disabled={disabled}>
             <Plus className="w-4 h-4 mr-1" />
             ADD ADDBACK
           </Button>

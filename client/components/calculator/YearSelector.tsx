@@ -7,9 +7,10 @@ import { Plus, X } from "lucide-react";
 interface YearSelectorProps {
   selectedYears: number[];
   onYearsChange: (years: number[]) => void;
+  disabled?: boolean;
 }
 
-export function YearSelector({ selectedYears, onYearsChange }: YearSelectorProps) {
+export function YearSelector({ selectedYears, onYearsChange, disabled = false }: YearSelectorProps) {
   const currentYear = new Date().getFullYear();
 
   // Generate available years (last 20 years, excluding current year)
@@ -39,7 +40,7 @@ export function YearSelector({ selectedYears, onYearsChange }: YearSelectorProps
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <label className="text-sm font-medium text-gray-700">Financial Years</label>
-        <Button type="button" variant="outline" size="sm" onClick={handleAddYear} disabled={selectedYears.length >= 5} className="text-xs">
+        <Button type="button" variant="outline" size="sm" onClick={handleAddYear} disabled={selectedYears.length >= 5 || disabled} className="text-xs">
           <Plus className="w-3 h-3 mr-1" />
           Add Year
         </Button>
@@ -49,7 +50,7 @@ export function YearSelector({ selectedYears, onYearsChange }: YearSelectorProps
         {selectedYears.map((year, index) => (
           <div key={year} className="flex items-center gap-2">
             <span className="text-sm text-gray-500 w-16">Year {index + 1}:</span>
-            <Select value={year.toString()} onValueChange={(value) => handleYearChange(year, parseInt(value))}>
+            <Select value={year.toString()} onValueChange={(value) => handleYearChange(year, parseInt(value))} disabled={disabled}>
               <SelectTrigger className="flex-1">
                 <SelectValue />
               </SelectTrigger>
@@ -63,23 +64,14 @@ export function YearSelector({ selectedYears, onYearsChange }: YearSelectorProps
                   ))}
               </SelectContent>
             </Select>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => handleRemoveYear(year)}
-              disabled={selectedYears.length <= 1}
-              className="text-gray-400 hover:text-red-500"
-            >
+            <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveYear(year)} disabled={selectedYears.length <= 1 || disabled} className="text-gray-400 hover:text-red-500">
               <X className="w-4 h-4" />
             </Button>
           </div>
         ))}
       </div>
 
-      <p className="text-xs text-gray-500">
-        Select 1–5 financial years for your valuation. Average Adjusted EBIT always uses the years you have selected.
-      </p>
+      <p className="text-xs text-gray-500">Select 1–5 financial years for your valuation. Average Adjusted EBIT always uses the years you have selected.</p>
     </div>
   );
 }

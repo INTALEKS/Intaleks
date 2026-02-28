@@ -295,13 +295,6 @@ export default function CalculatorPage() {
   };
 
   const handleCalculateMultiple = async () => {
-    // Check if user has active subscription
-    if (!hasActiveSubscription) {
-      toast.error("An active subscription is required to calculate your custom multiple");
-      router.push("/#pricing");
-      return;
-    }
-
     try {
       const result = await calculatePreviewMutation.mutateAsync({
         country,
@@ -655,19 +648,8 @@ export default function CalculatorPage() {
           }
         }
 
-        // For unauthenticated users, show terms dialog on first visit
-        if (!isAuthenticated) {
-          const hasSeenTerms = localStorage.getItem("intaleks_terms_seen");
-          if (!hasSeenTerms) {
-            setShowTermsDialog(true);
-          } else {
-            setTermsAccepted(true);
-          }
-          setHasCheckedTerms(true);
-          if (initialState) {
-            console.log("Calculator data restored from localStorage");
-          }
-        } else if (user) {
+        // Only check terms for authenticated users
+        if (isAuthenticated && user) {
           // For authenticated users, check database
           if (user.termsAccepted) {
             setTermsAccepted(true);
@@ -677,9 +659,16 @@ export default function CalculatorPage() {
               toast.success("Your previous data has been restored");
             }
           } else {
-            // User hasn't accepted terms in database
+            // User hasn't accepted terms in database - show modal
             setShowTermsDialog(true);
             setHasCheckedTerms(true);
+          }
+        } else {
+          // For unauthenticated users, no terms check needed
+          setTermsAccepted(true);
+          setHasCheckedTerms(true);
+          if (initialState) {
+            console.log("Calculator data restored from localStorage");
           }
         }
       } catch (error) {
@@ -739,7 +728,7 @@ export default function CalculatorPage() {
     }
 
     try {
-      // For authenticated users, save to database
+      // Only authenticated users need to accept terms
       if (isAuthenticated) {
         const response = await ApiClient.acceptTerms();
 
@@ -811,11 +800,6 @@ export default function CalculatorPage() {
             console.error("Failed to restore data after accepting terms:", restoreError);
           }
         }
-      } else {
-        // For unauthenticated users, just save to localStorage
-        localStorage.setItem("intaleks_terms_seen", "true");
-        setShowTermsDialog(false);
-        toast.success("You can now use the calculator!");
       }
     } catch (error) {
       console.error("Failed to accept terms:", error);
@@ -906,13 +890,34 @@ export default function CalculatorPage() {
         {/* STEP 3: Valuation Model Selection Only */}
         <AccordionSection title="Choose a valuation model" stepNumber={3} isOpen={openSections[3]} onToggle={() => toggleSection(3)}>
           <MethodToggle selectedMethod={selectedMethod} onMethodChange={setSelectedMethod} />
+
+          {/* Sign Up Banner for Unauthenticated Users */}
+          {!isAuthenticated && (
+            <div className="mt-6 bg-linear-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white text-center">
+              <div className="flex flex-col items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <h3 className="text-xl font-semibold mb-2">Sign Up Required</h3>
+                <p className="text-blue-100 mb-4 max-w-md">Create an account and subscribe to view your business valuation</p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button className="bg-white text-blue-600 hover:bg-blue-50" onClick={() => router.push("/login?returnUrl=/calculator")}>
+                    Log In
+                  </Button>
+                  <Button className="border-white text-white" onClick={() => router.push("/signup?returnUrl=/calculator")}>
+                    Sign Up
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </AccordionSection>
 
         {/* STEP 4: Financial Data + Selected Method Calculation */}
         <AccordionSection title="Financial Data (Please enter your financial data below)" stepNumber={4} isOpen={openSections[4]} onToggle={() => toggleSection(4)}>
           {selectedMethod === "profit" && (
             <>
-              <YearSelector selectedYears={selectedYears} onYearsChange={setSelectedYears} />
+              <YearSelector selectedYears={selectedYears} onYearsChange={setSelectedYears} disabled={!isAuthenticated} />
 
               <div className="mt-6">
                 <FinancialDataTable
@@ -925,11 +930,12 @@ export default function CalculatorPage() {
                     label: "EBIT CALCULATED",
                     values: ebitValues,
                   }}
+                  disabled={!isAuthenticated}
                 />
               </div>
 
               <div className="mt-6">
-                <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, formatCurrency(totalAddbacksByYear[year] || 0)]))} />
+                <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, formatCurrency(totalAddbacksByYear[year] || 0)]))} disabled={!isAuthenticated} />
               </div>
 
               {/* <div className="mt-6">
@@ -940,7 +946,7 @@ export default function CalculatorPage() {
 
           {selectedMethod === "asset" && (
             <div className="mt-6">
-              <AssetMethod assets={assets} liabilities={liabilities} onAssetChange={(key, value) => setAssets((prev) => ({ ...prev, [key]: value }))} onLiabilityChange={(key, value) => setLiabilities((prev) => ({ ...prev, [key]: value }))} />
+              <AssetMethod assets={assets} liabilities={liabilities} onAssetChange={(key, value) => setAssets((prev) => ({ ...prev, [key]: value }))} onLiabilityChange={(key, value) => setLiabilities((prev) => ({ ...prev, [key]: value }))} disabled={!isAuthenticated} />
             </div>
           )}
         </AccordionSection>
