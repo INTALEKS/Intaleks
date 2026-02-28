@@ -34,6 +34,8 @@ class EmailService {
   private initializeTransporter() {
     const emailUser = process.env.EMAIL_USER;
     const emailPassword = process.env.EMAIL_PASSWORD;
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = process.env.SMTP_PORT;
 
     if (!emailUser || !emailPassword) {
       console.warn("⚠️  Email credentials not configured. Email sending will be disabled.");
@@ -42,15 +44,40 @@ class EmailService {
     }
 
     try {
-      this.transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: emailUser,
-          pass: emailPassword,
-        },
-      });
-
-      console.log("✅ Email service initialized successfully");
+      // Use custom SMTP if provided, otherwise use Gmail
+      if (smtpHost && smtpPort) {
+        this.transporter = nodemailer.createTransport({
+          host: smtpHost,
+          port: parseInt(smtpPort),
+          secure: parseInt(smtpPort) === 465, // true for 465, false for other ports
+          auth: {
+            user: emailUser,
+            pass: emailPassword,
+          },
+          tls: {
+            rejectUnauthorized: false, // Allow self-signed certificates in production
+          },
+        });
+        console.log(`✅ Email service initialized with custom SMTP: ${smtpHost}:${smtpPort}`);
+      } else {
+        // Gmail configuration with longer timeout
+        this.transporter = nodemailer.createTransport({
+          host: "smtp.gmail.com",
+          port: 587,
+          secure: false, // true for 465, false for other ports like 587
+          auth: {
+            user: emailUser,
+            pass: emailPassword,
+          },
+          tls: {
+            rejectUnauthorized: false,
+          },
+          connectionTimeout: 10000, // 10 seconds
+          greetingTimeout: 10000,
+          socketTimeout: 10000,
+        });
+        console.log("✅ Email service initialized with Gmail SMTP");
+      }
     } catch (error) {
       console.error("❌ Failed to initialize email service:", error);
       this.transporter = null;
