@@ -37,16 +37,18 @@ exports.questionnaireRouter = void 0;
 const express_1 = require("express");
 const questionnaireController = __importStar(require("../controllers/questionnaire.controller"));
 const authMiddleware_1 = require("../middleware/authMiddleware");
+const roleHierarchy_1 = require("../utils/roleHierarchy");
+const rateLimiter_1 = require("../middleware/rateLimiter");
 /**
  * Admin authorization middleware
- * Ensures the authenticated user has ADMIN role
+ * Ensures the authenticated user has ADMIN or SUPER_ADMIN role
  */
 const requireAdmin = (req, res, next) => {
     if (!req.user) {
         res.status(401).json({ error: "Authentication required" });
         return;
     }
-    if (req.user.role !== "ADMIN") {
+    if (!(0, roleHierarchy_1.isAdminOrHigher)(req.user.role)) {
         res.status(403).json({
             error: "Access denied",
             message: "Admin privileges required",
@@ -61,4 +63,5 @@ exports.questionnaireRouter = router;
 router.post("/", authMiddleware_1.authenticateToken, authMiddleware_1.requireEmailVerified, questionnaireController.submitQuestionnaire);
 router.get("/", authMiddleware_1.authenticateToken, authMiddleware_1.requireEmailVerified, questionnaireController.getUserResponses);
 router.get("/:id", authMiddleware_1.authenticateToken, authMiddleware_1.requireEmailVerified, questionnaireController.getQuestionnaireResponse);
-router.post("/preview", questionnaireController.calculatePreview); // No auth for preview
+// Preview endpoint - rate limited but no auth required (for calculator preview)
+router.post("/preview", rateLimiter_1.rateLimitCalculation, questionnaireController.calculatePreview);

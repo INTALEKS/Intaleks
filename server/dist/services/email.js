@@ -4,32 +4,80 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const nodemailer_1 = __importDefault(require("nodemailer"));
+const resend_1 = require("resend");
 class EmailService {
     transporter = null;
+    resend = null;
     fromEmail;
     frontendUrl;
+    useResend = false;
     constructor() {
         this.fromEmail = process.env.EMAIL_USER || "noreply@intaleks.com";
         this.frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-        this.initializeTransporter();
+        this.initializeEmailService();
     }
-    initializeTransporter() {
+    initializeEmailService() {
+        const resendApiKey = process.env.RESEND_API_KEY;
+        // Prefer Resend if API key is available
+        if (resendApiKey) {
+            try {
+                this.resend = new resend_1.Resend(resendApiKey);
+                this.useResend = true;
+                // For Resend, use a verified domain email or onboarding@resend.dev for testing
+                this.fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
+                console.log("✅ Email service initialized with Resend");
+                return;
+            }
+            catch (error) {
+                console.error("❌ Failed to initialize Resend:", error);
+                this.resend = null;
+            }
+        }
+        // Fallback to SMTP (Gmail or custom)
         const emailUser = process.env.EMAIL_USER;
         const emailPassword = process.env.EMAIL_PASSWORD;
+        const smtpHost = process.env.SMTP_HOST;
+        const smtpPort = process.env.SMTP_PORT;
         if (!emailUser || !emailPassword) {
             console.warn("⚠️  Email credentials not configured. Email sending will be disabled.");
-            console.warn("⚠️  Set EMAIL_USER and EMAIL_PASSWORD in .env to enable email functionality.");
+            console.warn("⚠️  Set RESEND_API_KEY or EMAIL_USER and EMAIL_PASSWORD in .env to enable email functionality.");
             return;
         }
         try {
-            this.transporter = nodemailer_1.default.createTransport({
-                service: "gmail",
-                auth: {
-                    user: emailUser,
-                    pass: emailPassword,
-                },
-            });
-            console.log("✅ Email service initialized successfully");
+            // Use custom SMTP if provided, otherwise use Gmail
+            if (smtpHost && smtpPort) {
+                this.transporter = nodemailer_1.default.createTransport({
+                    host: smtpHost,
+                    port: parseInt(smtpPort),
+                    secure: parseInt(smtpPort) === 465,
+                    auth: {
+                        user: emailUser,
+                        pass: emailPassword,
+                    },
+                    tls: {
+                        rejectUnauthorized: false,
+                    },
+                });
+                console.log(`✅ Email service initialized with custom SMTP: ${smtpHost}:${smtpPort}`);
+            }
+            else {
+                this.transporter = nodemailer_1.default.createTransport({
+                    host: "smtp.gmail.com",
+                    port: 465,
+                    secure: true,
+                    auth: {
+                        user: emailUser,
+                        pass: emailPassword,
+                    },
+                    tls: {
+                        rejectUnauthorized: false,
+                    },
+                    connectionTimeout: 30000,
+                    greetingTimeout: 30000,
+                    socketTimeout: 30000,
+                });
+                console.log("✅ Email service initialized with Gmail SMTP (SSL port 465)");
+            }
         }
         catch (error) {
             console.error("❌ Failed to initialize email service:", error);
@@ -84,6 +132,35 @@ class EmailService {
     `;
     }
     async sendEmail(options) {
+        // Use Resend if available
+        if (this.useResend && this.resend) {
+            try {
+                const { data, error } = await this.resend.emails.send({
+                    from: `Intaleks <${this.fromEmail}>`,
+                    to: options.to,
+                    subject: options.subject,
+                    html: options.html,
+                    text: options.text,
+                });
+                if (error) {
+                    console.error("❌ Resend error:", error);
+                    return false;
+                }
+                console.log("✅ Email sent successfully via Resend:", data?.id);
+                return true;
+            }
+            catch (error) {
+                console.error("❌ Failed to send email via Resend:", error);
+                if (error instanceof Error) {
+                    console.error("Error details:", {
+                        message: error.message,
+                        name: error.name,
+                    });
+                }
+                return false;
+            }
+        }
+        // Fallback to SMTP
         if (!this.transporter) {
             console.error("Email service not configured. Cannot send email.");
             return false;
@@ -96,11 +173,17 @@ class EmailService {
                 text: options.text,
                 html: options.html,
             });
-            console.log("✅ Email sent successfully:", info.messageId);
+            console.log("✅ Email sent successfully via SMTP:", info.messageId);
             return true;
         }
         catch (error) {
-            console.error("❌ Failed to send email:", error);
+            console.error("❌ Failed to send email via SMTP:", error);
+            if (error instanceof Error) {
+                console.error("Error details:", {
+                    message: error.message,
+                    name: error.name,
+                });
+            }
             return false;
         }
     }
@@ -396,7 +479,7 @@ Trading as Intaleks
         });
     }
     isConfigured() {
-        return this.transporter !== null;
+        return this.useResend ? this.resend !== null : this.transporter !== null;
     }
 }
 exports.default = new EmailService();

@@ -1,0 +1,195 @@
+/**
+ * Server-side calculator service
+ * Recalculates all valuation metrics to prevent client-side manipulation
+ */
+
+interface FinancialYearData {
+  sales: number;
+  cogs: number;
+  operatingExpenses: number;
+  interestExpense: number;
+  interestIncome: number;
+}
+
+interface AddbackData {
+  reason: string;
+  values: Record<string, number>; // year -> amount
+}
+
+interface AssetData {
+  plantEquipment: number;
+  inventory: number;
+  vehicles: number;
+  goodwill: number;
+  otherIntangible: number;
+}
+
+interface LiabilityData {
+  loans: number;
+  annualLeave: number;
+  longServiceLeave: number;
+  otherLiabilities: number;
+}
+
+interface CalculationResult {
+  // Financial metrics per year
+  yearlyMetrics: Record<
+    string,
+    {
+      sales: number;
+      cogs: number;
+      grossProfit: number;
+      operatingExpenses: number;
+      netProfitAndLoss: number;
+      interestExpense: number;
+      interestIncome: number;
+      ebit: number;
+    }
+  >;
+
+  // Addbacks
+  totalAddbacksByYear: Record<string, number>;
+  totalAddbacks: number;
+
+  // Adjusted EBIT
+  adjustedEbitByYear: Record<string, number>;
+  averageAdjustedEbit: number;
+
+  // Final valuation
+  finalValuation: number;
+
+  // Asset method (if applicable)
+  totalAssets?: number;
+  totalLiabilities?: number;
+  netAssetValue?: number;
+}
+
+export class CalculatorService {
+  /**
+   * Calculate profit-based valuation
+   */
+  static calculateProfitValuation(financialData: Record<string, FinancialYearData>, addbacks: AddbackData[], multiple: number, years: string[]): CalculationResult {
+    // Calculate metrics for each year
+    const yearlyMetrics: Record<string, any> = {};
+
+    for (const year of years) {
+      const data = financialData[year];
+      if (!data) continue;
+
+      const sales = Number(data.sales) || 0;
+      const cogs = Number(data.cogs) || 0;
+      const operatingExpenses = Number(data.operatingExpenses) || 0;
+      const interestExpense = Number(data.interestExpense) || 0;
+      const interestIncome = Number(data.interestIncome) || 0;
+
+      const grossProfit = sales - cogs;
+      const netProfitAndLoss = grossProfit - operatingExpenses;
+      const ebit = netProfitAndLoss + interestExpense - interestIncome;
+
+      yearlyMetrics[year] = {
+        sales,
+        cogs,
+        grossProfit,
+        operatingExpenses,
+        netProfitAndLoss,
+        interestExpense,
+        interestIncome,
+        ebit,
+      };
+    }
+
+    // Calculate addbacks per year
+    const totalAddbacksByYear: Record<string, number> = {};
+    let totalAddbacks = 0;
+
+    for (const year of years) {
+      let yearTotal = 0;
+      for (const addback of addbacks) {
+        const value = Number(addback.values[year]) || 0;
+        yearTotal += value;
+      }
+      totalAddbacksByYear[year] = yearTotal;
+      totalAddbacks += yearTotal;
+    }
+
+    // Calculate adjusted EBIT per year
+    const adjustedEbitByYear: Record<string, number> = {};
+    let totalAdjustedEbit = 0;
+
+    for (const year of years) {
+      const ebit = yearlyMetrics[year]?.ebit || 0;
+      const addbacksForYear = totalAddbacksByYear[year] || 0;
+      const adjustedEbit = ebit + addbacksForYear;
+
+      adjustedEbitByYear[year] = adjustedEbit;
+      totalAdjustedEbit += adjustedEbit;
+    }
+
+    // Calculate average adjusted EBIT
+    const averageAdjustedEbit = years.length > 0 ? totalAdjustedEbit / years.length : 0;
+
+    // Calculate final valuation
+    const finalValuation = averageAdjustedEbit * multiple;
+
+    return {
+      yearlyMetrics,
+      totalAddbacksByYear,
+      totalAddbacks,
+      adjustedEbitByYear,
+      averageAdjustedEbit,
+      finalValuation,
+    };
+  }
+
+  /**
+   * Calculate asset-based valuation
+   */
+  static calculateAssetValuation(assets: AssetData, liabilities: LiabilityData): CalculationResult {
+    // Calculate total assets
+    const totalAssets = (Number(assets.plantEquipment) || 0) + (Number(assets.inventory) || 0) + (Number(assets.vehicles) || 0) + (Number(assets.goodwill) || 0) + (Number(assets.otherIntangible) || 0);
+
+    // Calculate total liabilities
+    const totalLiabilities = (Number(liabilities.loans) || 0) + (Number(liabilities.annualLeave) || 0) + (Number(liabilities.longServiceLeave) || 0) + (Number(liabilities.otherLiabilities) || 0);
+
+    // Calculate net asset value
+    const netAssetValue = totalAssets - totalLiabilities;
+
+    return {
+      yearlyMetrics: {},
+      totalAddbacksByYear: {},
+      totalAddbacks: 0,
+      adjustedEbitByYear: {},
+      averageAdjustedEbit: 0,
+      finalValuation: netAssetValue,
+      totalAssets,
+      totalLiabilities,
+      netAssetValue,
+    };
+  }
+
+  /**
+   * Validate and recalculate valuation
+   * This is the main entry point that should be used by controllers
+   */
+  static validateAndCalculate(method: "profit" | "asset", data: any): CalculationResult {
+    if (method === "profit") {
+      const { financialData, addbacks, multiple, years } = data;
+
+      if (!financialData || !Array.isArray(years) || !multiple) {
+        throw new Error("Invalid profit valuation data");
+      }
+
+      return this.calculateProfitValuation(financialData, addbacks || [], Number(multiple), years);
+    } else if (method === "asset") {
+      const { assets, liabilities } = data;
+
+      if (!assets || !liabilities) {
+        throw new Error("Invalid asset valuation data");
+      }
+
+      return this.calculateAssetValuation(assets, liabilities);
+    } else {
+      throw new Error("Invalid valuation method");
+    }
+  }
+}

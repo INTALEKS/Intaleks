@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.requireEmailVerified = exports.requireSuperAdmin = exports.requireAdmin = exports.requireRole = exports.authenticateToken = void 0;
+exports.requireActiveSubscription = exports.requireEmailVerified = exports.requireSuperAdmin = exports.requireAdmin = exports.requireRole = exports.authenticateToken = void 0;
 const cookieUtils_1 = require("../utils/cookieUtils");
 const auth_1 = require("../services/auth");
 const db_1 = require("../config/db");
@@ -116,3 +116,28 @@ const requireEmailVerified = (req, res, next) => {
     next();
 };
 exports.requireEmailVerified = requireEmailVerified;
+/**
+ * Middleware to check if user has an active subscription
+ * Use this on routes that require a paid subscription
+ */
+const requireActiveSubscription = (req, res, next) => {
+    if (!req.user) {
+        res.status(401).json({ error: "Unauthorized", message: "Authentication required" });
+        return;
+    }
+    // Admin users bypass subscription requirement
+    if (req.user.role === client_1.UserRole.ADMIN || req.user.role === client_1.UserRole.SUPER_ADMIN) {
+        next();
+        return;
+    }
+    if (req.user.subscriptionStatus !== client_1.SubscriptionStatus.ACTIVE) {
+        res.status(403).json({
+            error: "Active subscription required",
+            message: "This feature requires an active subscription. Please subscribe to continue.",
+            subscriptionStatus: req.user.subscriptionStatus,
+        });
+        return;
+    }
+    next();
+};
+exports.requireActiveSubscription = requireActiveSubscription;

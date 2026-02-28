@@ -56,6 +56,7 @@ const questionnaire_routes_1 = require("./routes/questionnaire.routes");
 const payment_routes_1 = __importStar(require("./routes/payment.routes"));
 const profile_routes_1 = __importDefault(require("./routes/profile.routes"));
 const contact_routes_1 = __importDefault(require("./routes/contact.routes"));
+const calculator_routes_1 = __importDefault(require("./routes/calculator.routes"));
 const startup_seed_1 = __importDefault(require("./scripts/startup-seed"));
 const errorHandler_1 = require("./middleware/errorHandler");
 dotenv_1.default.config();
@@ -112,6 +113,7 @@ app.use("/api/payments", payment_routes_1.default);
 app.use("/api/users", profile_routes_1.default);
 app.use("/api/contact", contact_routes_1.default);
 app.use("/api/upload", profile_routes_1.default); // For avatar uploads
+app.use("/api/calculator", calculator_routes_1.default); // Calculator with server-side validation
 // Test database connection
 app.get("/db-test", async (req, res) => {
     try {

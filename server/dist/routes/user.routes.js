@@ -3,11 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const user_controller_1 = require("../controllers/user.controller");
 const authMiddleware_1 = require("../middleware/authMiddleware");
-const client_1 = require("@prisma/client");
+const roleHierarchy_1 = require("../utils/roleHierarchy");
 const router = (0, express_1.Router)();
 /**
  * Admin authorization middleware
- * Ensures the authenticated user has ADMIN role
+ * Ensures the authenticated user has ADMIN or SUPER_ADMIN role
  */
 const requireAdmin = (req, res, next) => {
     if (!req.user) {
@@ -20,7 +20,7 @@ const requireAdmin = (req, res, next) => {
         });
         return;
     }
-    if (req.user.role !== client_1.UserRole.ADMIN) {
+    if (!(0, roleHierarchy_1.isAdminOrHigher)(req.user.role)) {
         res.status(403).json({
             success: false,
             error: {

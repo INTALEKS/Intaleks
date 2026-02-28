@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import * as questionnaireController from "../controllers/questionnaire.controller";
 import { authenticateToken, requireEmailVerified } from "../middleware/authMiddleware";
 import { isAdminOrHigher } from "../utils/roleHierarchy";
+import { rateLimitCalculation } from "../middleware/rateLimiter";
 
 /**
  * Admin authorization middleware
@@ -30,6 +31,8 @@ const router = Router();
 router.post("/", authenticateToken, requireEmailVerified, questionnaireController.submitQuestionnaire);
 router.get("/", authenticateToken, requireEmailVerified, questionnaireController.getUserResponses);
 router.get("/:id", authenticateToken, requireEmailVerified, questionnaireController.getQuestionnaireResponse);
-router.post("/preview", questionnaireController.calculatePreview); // No auth for preview
+
+// Preview endpoint - rate limited but no auth required (for calculator preview)
+router.post("/preview", rateLimitCalculation, questionnaireController.calculatePreview);
 
 export { router as questionnaireRouter };

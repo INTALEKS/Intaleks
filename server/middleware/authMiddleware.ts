@@ -153,3 +153,31 @@ export const requireEmailVerified = (req: Request, res: Response, next: NextFunc
 
   next();
 };
+
+/**
+ * Middleware to check if user has an active subscription
+ * Use this on routes that require a paid subscription
+ */
+export const requireActiveSubscription = (req: Request, res: Response, next: NextFunction): void => {
+  if (!req.user) {
+    res.status(401).json({ error: "Unauthorized", message: "Authentication required" });
+    return;
+  }
+
+  // Admin users bypass subscription requirement
+  if (req.user.role === UserRole.ADMIN || req.user.role === UserRole.SUPER_ADMIN) {
+    next();
+    return;
+  }
+
+  if (req.user.subscriptionStatus !== SubscriptionStatus.ACTIVE) {
+    res.status(403).json({
+      error: "Active subscription required",
+      message: "This feature requires an active subscription. Please subscribe to continue.",
+      subscriptionStatus: req.user.subscriptionStatus,
+    });
+    return;
+  }
+
+  next();
+};

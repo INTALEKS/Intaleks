@@ -4,7 +4,7 @@ exports.publicValuationMultiplesRouter = void 0;
 const express_1 = require("express");
 const valuationMultiples_controller_1 = require("../controllers/valuationMultiples.controller");
 const authMiddleware_1 = require("../middleware/authMiddleware");
-const client_1 = require("@prisma/client");
+const roleHierarchy_1 = require("../utils/roleHierarchy");
 /**
  * Admin authorization middleware
  */
@@ -13,7 +13,7 @@ const requireAdmin = (req, res, next) => {
         res.status(401).json({ error: "Authentication required" });
         return;
     }
-    if (req.user.role !== client_1.UserRole.ADMIN) {
+    if (!(0, roleHierarchy_1.isAdminOrHigher)(req.user.role)) {
         res.status(403).json({ error: "Admin access required" });
         return;
     }

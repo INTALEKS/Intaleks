@@ -91,13 +91,26 @@ export class AuthService {
     // Normalize email
     const normalizedEmail = email.toLowerCase().trim();
 
+    console.log("[DEBUG] Register attempt:", {
+      originalEmail: email,
+      normalizedEmail: normalizedEmail,
+      timestamp: new Date().toISOString(),
+    });
+
     try {
       // Check if user already exists
       const existingUser = await prisma.user.findUnique({
         where: { email: normalizedEmail },
       });
 
+      console.log("[DEBUG] Existing user check:", {
+        email: normalizedEmail,
+        found: !!existingUser,
+        userId: existingUser?.id,
+      });
+
       if (existingUser) {
+        console.log("[DEBUG] User already exists, returning conflict");
         return {
           success: false,
           message: "A user with this email already exists",

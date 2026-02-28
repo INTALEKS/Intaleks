@@ -51,6 +51,7 @@
     "multer": "^2.0.2",
     "nodemailer": "^6.9.8",
     "pdfkit": "^0.15.0",
+    "rate-limiter-flexible": "^9.1.1",
     "redis": "^4.6.12",
     "resend": "^6.9.3",
     "stripe": "^20.4.0",

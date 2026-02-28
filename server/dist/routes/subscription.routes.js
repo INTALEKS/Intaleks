@@ -4,9 +4,9 @@ exports.publicSubscriptionRouter = void 0;
 const express_1 = require("express");
 const subscription_controller_1 = require("../controllers/subscription.controller");
 const authMiddleware_1 = require("../middleware/authMiddleware");
-const client_1 = require("@prisma/client");
 const db_1 = require("../config/db");
 const stripe_sync_1 = require("../services/stripe-sync");
+const roleHierarchy_1 = require("../utils/roleHierarchy");
 const router = (0, express_1.Router)();
 /**
  * Public subscription routes (no authentication required)
@@ -16,7 +16,7 @@ exports.publicSubscriptionRouter = (0, express_1.Router)();
 exports.publicSubscriptionRouter.get("/plans", subscription_controller_1.SubscriptionController.getActivePlans);
 /**
  * Admin authorization middleware
- * Ensures the authenticated user has ADMIN role
+ * Ensures the authenticated user has ADMIN or SUPER_ADMIN role
  */
 const requireAdmin = (req, res, next) => {
     if (!req.user) {
@@ -29,7 +29,7 @@ const requireAdmin = (req, res, next) => {
         });
         return;
     }
-    if (req.user.role !== client_1.UserRole.ADMIN) {
+    if (!(0, roleHierarchy_1.isAdminOrHigher)(req.user.role)) {
         res.status(403).json({
             success: false,
             error: {

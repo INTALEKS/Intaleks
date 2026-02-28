@@ -16,6 +16,7 @@ import { ApiClient } from "@/app/services/api";
 import { ValuationQuestionnaire } from "@/components/calculator/ValuationQuestionnaire";
 import { useCalculatePreview } from "@/app/hooks/useQuestionnaire";
 import { useValuationMultiples } from "@/app/hooks/useValuationMultiples";
+import { useCalculateValuation } from "@/app/hooks/useCalculator";
 import type { QuestionnaireScores } from "@/lib/questionnaire-api";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -169,6 +170,10 @@ export default function CalculatorPage() {
     5: false,
   });
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showValuationReport, setShowValuationReport] = useState(false);
+  const [serverCalculatedValues, setServerCalculatedValues] = useState<any>(null);
+
+  const calculateValuationMutation = useCalculateValuation();
 
   // ============================================
   // CALCULATED VALUES
@@ -292,6 +297,85 @@ export default function CalculatorPage() {
 
   const toggleSection = (section: number) => {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const handleShowReport = async () => {
+    // Check authentication and subscription
+    if (!isAuthenticated) {
+      toast.error("Please log in to view the valuation report");
+      router.push("/login?returnUrl=/calculator");
+      return;
+    }
+
+    if (!hasActiveSubscription) {
+      toast.error("An active subscription is required to view valuation reports");
+      router.push("/#pricing");
+      return;
+    }
+
+    // Prepare data for server-side calculation
+    try {
+      let calculationData;
+
+      if (selectedMethod === "profit") {
+        // Convert financial data to proper format
+        const formattedFinancialData: Record<string, any> = {};
+        financialYears.forEach((year) => {
+          formattedFinancialData[year] = {
+            sales: parseFloat((financialData?.sales?.[year] as string) || "0"),
+            cogs: parseFloat((financialData?.cogs?.[year] as string) || "0"),
+            operatingExpenses: parseFloat((financialData?.operatingExpenses?.[year] as string) || "0"),
+            interestExpense: parseFloat((financialData?.interestExpense?.[year] as string) || "0"),
+            interestIncome: parseFloat((financialData?.interestIncome?.[year] as string) || "0"),
+          };
+        });
+
+        // Format addbacks
+        const formattedAddbacks = addbacks.map((addback) => ({
+          reason: addback.reason,
+          values: Object.fromEntries(Object.entries(addback.values).map(([year, value]) => [year, parseFloat(value as string) || 0])),
+        }));
+
+        calculationData = {
+          valuationMethod: "profit" as const,
+          financialData: formattedFinancialData,
+          addbacks: formattedAddbacks,
+          multiple: useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0,
+          years: financialYears,
+        };
+      } else {
+        // Asset method
+        calculationData = {
+          valuationMethod: "asset" as const,
+          assets: {
+            plantEquipment: parseFloat(assets.plantEquipment) || 0,
+            inventory: parseFloat(assets.inventory) || 0,
+            vehicles: parseFloat(assets.vehicles) || 0,
+            goodwill: parseFloat(assets.goodwill) || 0,
+            otherIntangible: parseFloat(assets.otherIntangible) || 0,
+          },
+          liabilities: {
+            loans: parseFloat(liabilities.loans) || 0,
+            annualLeave: parseFloat(liabilities.annualLeave) || 0,
+            longServiceLeave: parseFloat(liabilities.longServiceLeave) || 0,
+            otherLiabilities: parseFloat(liabilities.otherLiabilities) || 0,
+          },
+        };
+      }
+
+      // Call server to calculate
+      const result = await calculateValuationMutation.mutateAsync(calculationData);
+
+      // Store server-calculated values
+      setServerCalculatedValues(result);
+
+      // Show the report
+      setShowValuationReport(true);
+      toast.success("Valuation report loaded successfully");
+    } catch (error) {
+      console.error("Failed to calculate valuation:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to calculate valuation");
+    }
   };
 
   const handleCalculateMultiple = async () => {
@@ -517,6 +601,9 @@ export default function CalculatorPage() {
   const isStep4Complete = useMemo(() => {
     if (!isStep3Complete) return false;
 
+    // Require active subscription for step 4
+    if (!isAuthenticated || !hasActiveSubscription) return false;
+
     if (selectedMethod === "profit") {
       // For profit method, check if sales data exists for all years
       const hasSalesData = financialYears.every((year) => {
@@ -531,7 +618,7 @@ export default function CalculatorPage() {
     }
 
     return false;
-  }, [isStep3Complete, selectedMethod, financialData, financialYears, assets]);
+  }, [isStep3Complete, isAuthenticated, hasActiveSubscription, selectedMethod, financialData, financialYears, assets]);
 
   // Step 5 (Download) is complete when step 4 is done
   const isStep5Complete = isStep4Complete;
@@ -817,6 +904,7 @@ export default function CalculatorPage() {
           Advanced Business <span className="italic text-blue-500">Valuation</span> Engine
         </h1>
         <p className="text-gray-600 max-w-2xl mx-auto mb-6">Input basic information about your company and get professional Business valuation documents.</p>
+
         <Button className="bg-black hover:bg-gray-800" onClick={handleDownloadPDF} disabled={isDownloading || !canAttemptDownload}>
           {!canAttemptDownload ? (
             "Complete all steps to download"
@@ -916,8 +1004,8 @@ export default function CalculatorPage() {
         {/* STEP 4: Financial Data + Selected Method Calculation */}
         <AccordionSection title="Financial Data (Please enter your financial data below)" stepNumber={4} isOpen={openSections[4]} onToggle={() => toggleSection(4)}>
           <div className="relative">
-            {/* Overlay for unauthenticated users */}
-            {!isAuthenticated && (
+            {/* Overlay for users without active subscription */}
+            {(!isAuthenticated || !hasActiveSubscription) && (
               <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
                 <div className="text-center p-8">
                   <div className="w-20 h-20 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
@@ -925,15 +1013,30 @@ export default function CalculatorPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Login Required</h3>
-                  <p className="text-gray-600 mb-6 max-w-md">Please log in to enter your financial data and calculate your business valuation</p>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{!isAuthenticated ? "Login Required" : "Active Subscription Required"}</h3>
+                  <p className="text-gray-600 mb-6 max-w-md">{!isAuthenticated ? "Please log in and subscribe to enter your financial data and calculate your business valuation" : "An active subscription is required to enter financial data and generate valuations"}</p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push("/login?returnUrl=/calculator")}>
-                      Log In
-                    </Button>
-                    <Button variant="outline" onClick={() => router.push("/signup?returnUrl=/calculator")}>
-                      Sign Up
-                    </Button>
+                    {!isAuthenticated ? (
+                      <>
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push("/login?returnUrl=/calculator")}>
+                          Log In
+                        </Button>
+                        <Button variant="outline" onClick={() => router.push("/signup?returnUrl=/calculator")}>
+                          Sign Up
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push("/#pricing")}>
+                          View Pricing Plans
+                        </Button>
+                        {subscriptionStatus && subscriptionStatus !== "NONE" && (
+                          <Button variant="outline" onClick={() => router.push("/settings")}>
+                            Manage Subscription
+                          </Button>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -941,7 +1044,7 @@ export default function CalculatorPage() {
 
             {selectedMethod === "profit" && (
               <>
-                <YearSelector selectedYears={selectedYears} onYearsChange={setSelectedYears} disabled={!isAuthenticated} />
+                <YearSelector selectedYears={selectedYears} onYearsChange={setSelectedYears} disabled={!isAuthenticated || !hasActiveSubscription} />
 
                 <div className="mt-6">
                   <FinancialDataTable
@@ -954,12 +1057,12 @@ export default function CalculatorPage() {
                       label: "EBIT CALCULATED",
                       values: ebitValues,
                     }}
-                    disabled={!isAuthenticated}
+                    disabled={!isAuthenticated || !hasActiveSubscription}
                   />
                 </div>
 
                 <div className="mt-6">
-                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, formatCurrency(totalAddbacksByYear[year] || 0)]))} disabled={!isAuthenticated} />
+                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, formatCurrency(totalAddbacksByYear[year] || 0)]))} disabled={!isAuthenticated || !hasActiveSubscription} />
                 </div>
 
                 {/* <div className="mt-6">
@@ -970,7 +1073,7 @@ export default function CalculatorPage() {
 
             {selectedMethod === "asset" && (
               <div className="mt-6">
-                <AssetMethod assets={assets} liabilities={liabilities} onAssetChange={(key, value) => setAssets((prev) => ({ ...prev, [key]: value }))} onLiabilityChange={(key, value) => setLiabilities((prev) => ({ ...prev, [key]: value }))} disabled={!isAuthenticated} />
+                <AssetMethod assets={assets} liabilities={liabilities} onAssetChange={(key, value) => setAssets((prev) => ({ ...prev, [key]: value }))} onLiabilityChange={(key, value) => setLiabilities((prev) => ({ ...prev, [key]: value }))} disabled={!isAuthenticated || !hasActiveSubscription} />
               </div>
             )}
           </div>
@@ -980,7 +1083,7 @@ export default function CalculatorPage() {
         <AccordionSection title="Download Valuation Document (PDF)" stepNumber={5} isOpen={openSections[5]} onToggle={() => toggleSection(5)}>
           <div className="py-6 space-y-6">
             {/* Comprehensive Valuation Summary Card */}
-            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} totalAddbacks={financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0)} adjustedEbit={averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0} finalValuation={finalValuation} totalAssets={selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription} />
+            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={serverCalculatedValues?.averageSales ?? financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={serverCalculatedValues?.averageCOGS ?? financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={serverCalculatedValues?.averageEbit ?? financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} averageAddbacks={serverCalculatedValues?.averageAddbacks ?? financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0) / financialYears.length} adjustedEbit={serverCalculatedValues?.adjustedEbit ?? averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={serverCalculatedValues?.valuationMultiple ?? (useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0)} finalValuation={serverCalculatedValues?.finalValuation ?? finalValuation} totalAssets={serverCalculatedValues?.totalAssets ?? (selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined)} totalLiabilities={serverCalculatedValues?.totalLiabilities ?? (selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined)} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription} showReport={showValuationReport} onShowReport={handleShowReport} />
 
             <div className="text-center">
               {!isStep4Complete ? (

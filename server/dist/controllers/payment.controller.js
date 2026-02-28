@@ -4,6 +4,7 @@ exports.PaymentController = void 0;
 const payment_1 = require("../services/payment");
 const errors_1 = require("../errors");
 const paymentValidation_1 = require("../validation/paymentValidation");
+const roleHierarchy_1 = require("../utils/roleHierarchy");
 /**
  * Payment Controller
  * Handles all HTTP request/response logic for payment endpoints
@@ -273,7 +274,7 @@ class PaymentController {
                 });
                 return;
             }
-            if (req.user.role !== "ADMIN") {
+            if (!(0, roleHierarchy_1.isAdminOrHigher)(req.user.role)) {
                 res.status(403).json({
                     success: false,
                     error: {
@@ -343,7 +344,7 @@ class PaymentController {
                 });
                 return;
             }
-            if (req.user.role !== "ADMIN") {
+            if (!(0, roleHierarchy_1.isAdminOrHigher)(req.user.role)) {
                 res.status(403).json({
                     success: false,
                     error: {
@@ -388,7 +389,7 @@ class PaymentController {
                 });
                 return;
             }
-            if (req.user.role !== "ADMIN") {
+            if (!(0, roleHierarchy_1.isAdminOrHigher)(req.user.role)) {
                 res.status(403).json({
                     success: false,
                     error: {
@@ -469,7 +470,7 @@ class PaymentController {
                 });
                 return;
             }
-            if (req.user.role !== "ADMIN") {
+            if (!(0, roleHierarchy_1.isAdminOrHigher)(req.user.role)) {
                 res.status(403).json({
                     success: false,
                     error: {
