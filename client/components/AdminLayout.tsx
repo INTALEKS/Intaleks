@@ -13,13 +13,24 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   const isAdmin = isAdminOrHigher(user?.role);
 
+  // Debug logging
+  console.log("Admin Layout Debug:", {
+    isAuthentiating,
+    isAuthenticated,
+    userRole: user?.role,
+    isAdmin,
+    user: user ? { id: user.id, email: user.email, role: user.role } : null,
+  });
+
   // Handle redirect in useEffect to avoid render-time navigation
   useEffect(() => {
     if (!isAuthentiating) {
       if (!isAuthenticated) {
+        console.log("Not authenticated, redirecting to login");
         router.push("/auth/admin/login");
       } else if (!isAdmin) {
         // Redirect non-admin users to home page
+        console.log("Not admin, redirecting to home");
         router.push("/");
       }
     }
