@@ -3,6 +3,7 @@ import { getAllValuationMultiples, getValuationMultiple, createValuationMultiple
 import { authenticateToken } from "../middleware/authMiddleware";
 import { UserRole } from "@prisma/client";
 import { Request, Response, NextFunction } from "express";
+import { isAdminOrHigher } from "../utils/roleHierarchy";
 
 /**
  * Admin authorization middleware
@@ -13,7 +14,7 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction): void => 
     return;
   }
 
-  if (req.user.role !== UserRole.ADMIN) {
+  if (!isAdminOrHigher(req.user.role)) {
     res.status(403).json({ error: "Admin access required" });
     return;
   }

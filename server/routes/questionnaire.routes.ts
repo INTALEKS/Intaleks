@@ -1,10 +1,11 @@
 import { Router, Request, Response, NextFunction } from "express";
 import * as questionnaireController from "../controllers/questionnaire.controller";
 import { authenticateToken, requireEmailVerified } from "../middleware/authMiddleware";
+import { isAdminOrHigher } from "../utils/roleHierarchy";
 
 /**
  * Admin authorization middleware
- * Ensures the authenticated user has ADMIN role
+ * Ensures the authenticated user has ADMIN or SUPER_ADMIN role
  */
 const requireAdmin = (req: Request, res: Response, next: NextFunction): void => {
   if (!req.user) {
@@ -12,7 +13,7 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction): void => 
     return;
   }
 
-  if (req.user.role !== "ADMIN") {
+  if (!isAdminOrHigher(req.user.role)) {
     res.status(403).json({
       error: "Access denied",
       message: "Admin privileges required",

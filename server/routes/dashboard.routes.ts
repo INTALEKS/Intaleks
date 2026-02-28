@@ -2,12 +2,13 @@ import { Router, Request, Response, NextFunction } from "express";
 import { DashboardController } from "../controllers/dashboard.controller";
 import { authenticateToken } from "../middleware/authMiddleware";
 import { UserRole } from "@prisma/client";
+import { isAdminOrHigher } from "../utils/roleHierarchy";
 
 const router = Router();
 
 /**
  * Admin authorization middleware
- * Ensures the authenticated user has ADMIN role
+ * Ensures the authenticated user has ADMIN or SUPER_ADMIN role
  */
 const requireAdmin = (req: Request, res: Response, next: NextFunction): void => {
   if (!req.user) {
@@ -21,7 +22,7 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction): void => 
     return;
   }
 
-  if (req.user.role !== UserRole.ADMIN) {
+  if (!isAdminOrHigher(req.user.role)) {
     res.status(403).json({
       success: false,
       error: {

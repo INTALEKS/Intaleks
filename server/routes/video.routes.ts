@@ -4,6 +4,7 @@ import { VideoController } from "../controllers/video.controller";
 import { authenticateToken, requireEmailVerified } from "../middleware/authMiddleware";
 import { UserRole, SubscriptionStatus } from "@prisma/client";
 import { VIDEO_UPLOAD_MAX_SIZE, THUMBNAIL_UPLOAD_MAX_SIZE } from "../services/storage";
+import { isAdminOrHigher } from "../utils/roleHierarchy";
 
 const router = Router();
 
@@ -24,7 +25,7 @@ const requireSubscriptionOrAdmin = (req: Request, res: Response, next: NextFunct
   }
 
   // Admins can always access
-  if (req.user.role === UserRole.ADMIN) {
+  if (isAdminOrHigher(req.user.role)) {
     next();
     return;
   }
@@ -90,7 +91,7 @@ const thumbnailUpload = multer({
 
 /**
  * Admin authorization middleware
- * Ensures the authenticated user has ADMIN role
+ * Ensures the authenticated user has ADMIN or SUPER_ADMIN role
  */
 const requireAdmin = (req: Request, res: Response, next: NextFunction): void => {
   if (!req.user) {
@@ -104,7 +105,7 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction): void => 
     return;
   }
 
-  if (req.user.role !== UserRole.ADMIN) {
+  if (!isAdminOrHigher(req.user.role)) {
     res.status(403).json({
       success: false,
       error: {

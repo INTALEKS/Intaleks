@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { PaymentService } from "../services/payment";
 import { NotFoundError, StripeError, isStripeError } from "../errors";
 import { createCheckoutSchema, listPaymentsSchema, grantSubscriptionSchema, revokeSubscriptionSchema } from "../validation/paymentValidation";
+import { isAdminOrHigher } from "../utils/roleHierarchy";
 
 /**
  * Payment Controller
@@ -291,7 +292,7 @@ export class PaymentController {
         return;
       }
 
-      if (req.user.role !== "ADMIN") {
+      if (!isAdminOrHigher(req.user.role)) {
         res.status(403).json({
           success: false,
           error: {
@@ -367,7 +368,7 @@ export class PaymentController {
         return;
       }
 
-      if (req.user.role !== "ADMIN") {
+      if (!isAdminOrHigher(req.user.role)) {
         res.status(403).json({
           success: false,
           error: {
@@ -415,7 +416,7 @@ export class PaymentController {
         return;
       }
 
-      if (req.user.role !== "ADMIN") {
+      if (!isAdminOrHigher(req.user.role)) {
         res.status(403).json({
           success: false,
           error: {
@@ -504,7 +505,7 @@ export class PaymentController {
         return;
       }
 
-      if (req.user.role !== "ADMIN") {
+      if (!isAdminOrHigher(req.user.role)) {
         res.status(403).json({
           success: false,
           error: {
