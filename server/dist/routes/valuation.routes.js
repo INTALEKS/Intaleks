@@ -4,8 +4,9 @@ const express_1 = require("express");
 const authMiddleware_1 = require("../middleware/authMiddleware");
 const valuation_controller_1 = require("../controllers/valuation.controller");
 const router = (0, express_1.Router)();
-// All routes require authentication
+// All routes require authentication and email verification
 router.use(authMiddleware_1.authenticateToken);
+router.use(authMiddleware_1.requireEmailVerified);
 // Generate PDF report
 router.post("/generate-pdf", valuation_controller_1.generatePDF);
 // Create a new valuation document

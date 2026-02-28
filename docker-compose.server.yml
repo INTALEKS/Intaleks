@@ -1,0 +1,80 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: intaleks-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-intaleks}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-intaleks_dev_2024}
+      POSTGRES_DB: ${POSTGRES_DB:-intaleks_dev}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./server/prisma:/docker-entrypoint-initdb.d/prisma:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-intaleks}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - intaleks-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: intaleks-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - intaleks-network
+
+  # Server (Express API)
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: intaleks-server
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-5001}:5000"
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-intaleks}:${POSTGRES_PASSWORD:-intaleks_dev_2024}@postgres:5432/${POSTGRES_DB:-intaleks_dev}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_change_in_production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5001}
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - intaleks-network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  intaleks-network:
+    driver: bridge

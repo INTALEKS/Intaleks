@@ -190,6 +190,74 @@ Trading as Intaleks
     });
   }
 
+  async sendVerificationEmail(email: string, verificationToken: string, name?: string): Promise<boolean> {
+    const verifyUrl = `${this.frontendUrl}/auth/verify-email/confirm?token=${verificationToken}`;
+    const displayName = name || "there";
+
+    const content = `
+      <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 24px;">Verify Your Email Address</h2>
+      <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.5;">
+        Hi ${displayName},
+      </p>
+      <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.5;">
+        Thank you for signing up with Intaleks! To complete your registration and access all features, please verify your email address by clicking the button below.
+      </p>
+      
+      <!-- Button -->
+      <table role="presentation" style="margin: 30px 0;">
+        <tr>
+          <td style="border-radius: 6px; background-color: #3b82f6;">
+            <a href="${verifyUrl}" target="_blank" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px;">
+              Verify Email Address
+            </a>
+          </td>
+        </tr>
+      </table>
+      
+      <p style="margin: 20px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.5;">
+        Or copy and paste this link into your browser:
+      </p>
+      <p style="margin: 10px 0 0 0; color: #3b82f6; font-size: 14px; word-break: break-all;">
+        ${verifyUrl}
+      </p>
+      
+      <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
+        <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px; line-height: 1.5;">
+          <strong>This link will expire in 24 hours.</strong>
+        </p>
+        <p style="margin: 0; color: #6b7280; font-size: 14px; line-height: 1.5;">
+          If you didn't create an account with Intaleks, you can safely ignore this email.
+        </p>
+      </div>
+    `;
+
+    const text = `
+Verify Your Email Address
+
+Hi ${displayName},
+
+Thank you for signing up with Intaleks! To complete your registration and access all features, please verify your email address.
+
+Click the link below to verify your email:
+${verifyUrl}
+
+This link will expire in 24 hours.
+
+If you didn't create an account with Intaleks, you can safely ignore this email.
+
+---
+Perth Business Evaluators Pty Ltd (ABN: 51 622 231 832)
+Trading as Intaleks
+    `.trim();
+
+    return this.sendEmail({
+      to: email,
+      subject: "Verify Your Email - Intaleks",
+      html: this.getEmailTemplate(content),
+      text,
+    });
+  }
+
   async sendWelcomeEmail(data: WelcomeEmailData): Promise<boolean> {
     const { name, email } = data;
     const displayName = name || "there";

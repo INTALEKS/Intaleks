@@ -44,7 +44,7 @@ export const calculateAverageAdjustedEBIT = (ebitValues: number[], addbackValues
   const length = Math.min(ebitValues.length, addbackValues.length);
   if (length === 0) return 0;
 
-  const total = Array.from({ length }).reduce((sum, _, index) => {
+  const total = Array.from({ length }).reduce((sum: number, _, index) => {
     const ebit = ebitValues[index] || 0;
     const addbacks = addbackValues[index] || 0;
     return sum + ebit + addbacks;

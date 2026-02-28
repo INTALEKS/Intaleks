@@ -72,6 +72,7 @@ const requireSubscriptionOrAdmin = (req, res, next) => {
 // Public forum routes for subscribed users
 exports.publicForumRouter = (0, express_1.Router)();
 exports.publicForumRouter.use(authMiddleware_1.authenticateToken);
+exports.publicForumRouter.use(authMiddleware_1.requireEmailVerified);
 exports.publicForumRouter.use(requireSubscriptionOrAdmin);
 // GET /api/forum - List forum posts (for subscribed users)
 exports.publicForumRouter.get("/", forum_controller_1.ForumController.getForumPosts);

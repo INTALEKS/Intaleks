@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import multer from "multer";
-import { authenticateToken } from "../middleware/authMiddleware";
+import { authenticateToken, requireEmailVerified } from "../middleware/authMiddleware";
 import { prisma } from "../config/db";
 import { StorageService } from "../services/storage";
 import Joi from "joi";
@@ -30,7 +30,7 @@ const changePasswordSchema = Joi.object({
 /**
  * PATCH /api/users/profile - Update current user's profile
  */
-router.patch("/profile", authenticateToken, async (req: Request, res: Response) => {
+router.patch("/profile", authenticateToken, requireEmailVerified, async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -79,7 +79,7 @@ router.patch("/profile", authenticateToken, async (req: Request, res: Response) 
 /**
  * PATCH /api/users/password - Change current user's password
  */
-router.patch("/password", authenticateToken, async (req: Request, res: Response) => {
+router.patch("/password", authenticateToken, requireEmailVerified, async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -142,7 +142,7 @@ router.patch("/password", authenticateToken, async (req: Request, res: Response)
 /**
  * POST /api/users/avatar - Upload user avatar
  */
-router.post("/avatar", authenticateToken, upload.single("file"), async (req: Request, res: Response) => {
+router.post("/avatar", authenticateToken, requireEmailVerified, upload.single("file"), async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({
@@ -189,7 +189,7 @@ router.post("/avatar", authenticateToken, upload.single("file"), async (req: Req
 /**
  * POST /api/users/accept-terms - Accept terms and conditions
  */
-router.post("/accept-terms", authenticateToken, async (req: Request, res: Response) => {
+router.post("/accept-terms", authenticateToken, requireEmailVerified, async (req: Request, res: Response) => {
   try {
     if (!req.user) {
       return res.status(401).json({

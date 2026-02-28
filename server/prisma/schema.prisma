@@ -33,6 +33,12 @@ model User {
   termsAccepted        Boolean            @default(false) @map("terms_accepted")
   termsAcceptedAt      DateTime?          @map("terms_accepted_at")
 
+  // Email verification
+  emailVerified        Boolean            @default(false) @map("email_verified")
+  emailVerifiedAt      DateTime?          @map("email_verified_at")
+  verificationToken    String?            @unique @map("verification_token")
+  verificationTokenExpiry DateTime?       @map("verification_token_expiry")
+
   subscription      SubscriptionPlan?  @relation(fields: [subscriptionId], references: [id])
   eventParticipants EventParticipant[]
   forumPosts        ForumPost[]

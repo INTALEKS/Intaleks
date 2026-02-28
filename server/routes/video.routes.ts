@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import multer from "multer";
 import { VideoController } from "../controllers/video.controller";
-import { authenticateToken } from "../middleware/authMiddleware";
+import { authenticateToken, requireEmailVerified } from "../middleware/authMiddleware";
 import { UserRole, SubscriptionStatus } from "@prisma/client";
 import { VIDEO_UPLOAD_MAX_SIZE, THUMBNAIL_UPLOAD_MAX_SIZE } from "../services/storage";
 
@@ -54,6 +54,9 @@ export const publicVideoRouter = Router();
 
 // Apply authentication to public routes (users must be logged in)
 publicVideoRouter.use(authenticateToken);
+
+// Apply email verification check
+publicVideoRouter.use(requireEmailVerified);
 
 // Apply subscription check (must be subscribed or admin)
 publicVideoRouter.use(requireSubscriptionOrAdmin);

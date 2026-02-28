@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import { UploadController } from "../controllers/upload.controller";
-import { authenticateToken } from "../middleware/authMiddleware";
+import { authenticateToken, requireEmailVerified } from "../middleware/authMiddleware";
 
 const router = Router();
 
@@ -13,8 +13,9 @@ const upload = multer({
   },
 });
 
-// All upload routes require authentication
+// All upload routes require authentication and email verification
 router.use(authenticateToken);
+router.use(requireEmailVerified);
 
 // Get storage status
 router.get("/status", UploadController.getStatus);

@@ -655,8 +655,20 @@ export default function CalculatorPage() {
           }
         }
 
-        // Check if terms have been accepted (only for authenticated users)
-        if (isAuthenticated && user) {
+        // For unauthenticated users, show terms dialog on first visit
+        if (!isAuthenticated) {
+          const hasSeenTerms = localStorage.getItem("intaleks_terms_seen");
+          if (!hasSeenTerms) {
+            setShowTermsDialog(true);
+          } else {
+            setTermsAccepted(true);
+          }
+          setHasCheckedTerms(true);
+          if (initialState) {
+            console.log("Calculator data restored from localStorage");
+          }
+        } else if (user) {
+          // For authenticated users, check database
           if (user.termsAccepted) {
             setTermsAccepted(true);
             setHasCheckedTerms(true);
@@ -669,8 +681,6 @@ export default function CalculatorPage() {
             setShowTermsDialog(true);
             setHasCheckedTerms(true);
           }
-        } else {
-          setHasCheckedTerms(true);
         }
       } catch (error) {
         console.error("Failed to initialize calculator:", error);
@@ -696,23 +706,18 @@ export default function CalculatorPage() {
   };
 
   // ============================================
-  // AUTHENTICATION CHECK
+  // AUTHENTICATION CHECK - Allow unauthenticated access
   // ============================================
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthentiating && !isAuthenticated) {
-      toast.error("Please log in to access the calculator");
-      router.push("/login");
-    }
-  }, [isAuthentiating, isAuthenticated, router]);
+  // No redirect - allow everyone to access calculator
+  // Paywall will be shown when trying to view valuation results
 
   // ============================================
   // LOADING STATE
   // ============================================
 
-  // Show loading state while checking authentication or restoring data
-  if (isAuthentiating || !hasRestoredData || !hasCheckedTerms) {
+  // Show loading state while restoring data (no auth check needed)
+  if (!hasRestoredData || !hasCheckedTerms) {
     return (
       <div className="min-h-screen bg-linear-to-b from-blue-50 via-white to-white">
         <Navbar />
@@ -726,11 +731,6 @@ export default function CalculatorPage() {
     );
   }
 
-  // Don't render calculator if not authenticated
-  if (!isAuthenticated) {
-    return null;
-  }
-
   // Handle terms acceptance
   const handleAcceptTerms = async () => {
     if (!termsAccepted) {
@@ -739,80 +739,83 @@ export default function CalculatorPage() {
     }
 
     try {
-      // Save to database for authenticated users and wait for response
-      const response = await ApiClient.acceptTerms();
+      // For authenticated users, save to database
+      if (isAuthenticated) {
+        const response = await ApiClient.acceptTerms();
 
-      if (response.success) {
-        // Close dialog immediately
-        setShowTermsDialog(false);
+        if (response.success) {
+          setShowTermsDialog(false);
+          toast.success("Terms and conditions accepted successfully!");
+          await queryClient.refetchQueries({ queryKey: ["auth"] });
 
-        toast.success("Terms and conditions accepted successfully!");
+          // Restore saved data after accepting terms
+          try {
+            const savedState = localStorage.getItem(CALCULATOR_STORAGE_KEY);
+            if (savedState) {
+              const parsed: CalculatorState = JSON.parse(savedState);
 
-        // Wait for user data to refresh from server
-        await queryClient.refetchQueries({ queryKey: ["auth"] });
+              setCompanyName(parsed.companyName || "");
+              setStartedYear(parsed.startedYear || "");
+              setEmployees(parsed.employees || "");
+              setStage(parsed.stage || "startup");
+              setCountry(parsed.country || "australia");
+              setIndustry(parsed.industry || "retail");
+              setCustomMultiple(parsed.customMultiple || "3");
+              setQuestionnaireScores(
+                parsed.questionnaireScores || {
+                  ownerDependence: 0,
+                  recurringRevenue: 0,
+                  customerConcentration: 0,
+                  managementDepth: 0,
+                  growthRate: 0,
+                  competitiveAdvantage: 0,
+                  revenueDiversification: 0,
+                  systemsScalability: 0,
+                  marginStability: 0,
+                  externalRisk: 0,
+                },
+              );
+              setCalculatedMultiple(parsed.calculatedMultiple);
+              setMultipleCategory(parsed.multipleCategory);
+              setTotalScore(parsed.totalScore);
+              setUseQuestionnaireMultiple(parsed.useQuestionnaireMultiple || false);
+              setSelectedYears(parsed.selectedYears || [currentYear - 3, currentYear - 2, currentYear - 1]);
+              setFinancialData(parsed.financialData || {});
+              setAddbacks(
+                parsed.addbacks || [
+                  { id: "1", reason: "", values: {} },
+                  { id: "2", reason: "", values: {} },
+                  { id: "3", reason: "", values: {} },
+                ],
+              );
+              setSelectedMethod(parsed.selectedMethod || "profit");
+              setAssets(parsed.assets || {});
+              setLiabilities(parsed.liabilities || {});
 
-        // Restore saved data after accepting terms
-        try {
-          const savedState = localStorage.getItem(CALCULATOR_STORAGE_KEY);
-          if (savedState) {
-            const parsed: CalculatorState = JSON.parse(savedState);
-
-            setCompanyName(parsed.companyName || "");
-            setStartedYear(parsed.startedYear || "");
-            setEmployees(parsed.employees || "");
-            setStage(parsed.stage || "startup");
-            setCountry(parsed.country || "australia");
-            setIndustry(parsed.industry || "retail");
-            setCustomMultiple(parsed.customMultiple || "3");
-            setQuestionnaireScores(
-              parsed.questionnaireScores || {
-                ownerDependence: 0,
-                recurringRevenue: 0,
-                customerConcentration: 0,
-                managementDepth: 0,
-                growthRate: 0,
-                competitiveAdvantage: 0,
-                revenueDiversification: 0,
-                systemsScalability: 0,
-                marginStability: 0,
-                externalRisk: 0,
-              },
-            );
-            setCalculatedMultiple(parsed.calculatedMultiple);
-            setMultipleCategory(parsed.multipleCategory);
-            setTotalScore(parsed.totalScore);
-            setUseQuestionnaireMultiple(parsed.useQuestionnaireMultiple || false);
-            setSelectedYears(parsed.selectedYears || [currentYear - 3, currentYear - 2, currentYear - 1]);
-            setFinancialData(parsed.financialData || {});
-            setAddbacks(
-              parsed.addbacks || [
-                { id: "1", reason: "", values: {} },
-                { id: "2", reason: "", values: {} },
-                { id: "3", reason: "", values: {} },
-              ],
-            );
-            setSelectedMethod(parsed.selectedMethod || "profit");
-            setAssets(parsed.assets || {});
-            setLiabilities(parsed.liabilities || {});
-
-            // Restore logo from base64
-            if (parsed.companyLogoData && parsed.companyLogoName && parsed.companyLogoType) {
-              try {
-                const response = await fetch(parsed.companyLogoData);
-                const blob = await response.blob();
-                const file = new File([blob], parsed.companyLogoName, { type: parsed.companyLogoType });
-                setCompanyLogo(file);
-              } catch (logoError) {
-                console.error("Failed to restore logo:", logoError);
+              // Restore logo from base64
+              if (parsed.companyLogoData && parsed.companyLogoName && parsed.companyLogoType) {
+                try {
+                  const response = await fetch(parsed.companyLogoData);
+                  const blob = await response.blob();
+                  const file = new File([blob], parsed.companyLogoName, { type: parsed.companyLogoType });
+                  setCompanyLogo(file);
+                } catch (logoError) {
+                  console.error("Failed to restore logo:", logoError);
+                }
               }
-            }
 
-            console.log("Calculator data restored after accepting terms");
-            toast.success("Your previous data has been restored");
+              console.log("Calculator data restored after accepting terms");
+              toast.success("Your previous data has been restored");
+            }
+          } catch (restoreError) {
+            console.error("Failed to restore data after accepting terms:", restoreError);
           }
-        } catch (restoreError) {
-          console.error("Failed to restore data after accepting terms:", restoreError);
         }
+      } else {
+        // For unauthenticated users, just save to localStorage
+        localStorage.setItem("intaleks_terms_seen", "true");
+        setShowTermsDialog(false);
+        toast.success("You can now use the calculator!");
       }
     } catch (error) {
       console.error("Failed to accept terms:", error);
@@ -946,7 +949,7 @@ export default function CalculatorPage() {
         <AccordionSection title="Download Valuation Document (PDF)" stepNumber={5} isOpen={openSections[5]} onToggle={() => toggleSection(5)}>
           <div className="py-6 space-y-6">
             {/* Comprehensive Valuation Summary Card */}
-            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} totalAddbacks={financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0)} adjustedEbit={averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0} finalValuation={finalValuation} totalAssets={selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} />
+            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} totalAddbacks={financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0)} adjustedEbit={averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0} finalValuation={finalValuation} totalAssets={selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription} />
 
             <div className="text-center">
               {!isStep4Complete ? (

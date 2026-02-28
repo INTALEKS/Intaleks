@@ -1,11 +1,12 @@
 import { Router } from "express";
-import { authenticateToken } from "../middleware/authMiddleware";
+import { authenticateToken, requireEmailVerified } from "../middleware/authMiddleware";
 import { createValuationDocument, getUserValuationDocuments, getValuationDocumentById, deleteValuationDocument, generatePDF } from "../controllers/valuation.controller";
 
 const router = Router();
 
-// All routes require authentication
+// All routes require authentication and email verification
 router.use(authenticateToken);
+router.use(requireEmailVerified);
 
 // Generate PDF report
 router.post("/generate-pdf", generatePDF);

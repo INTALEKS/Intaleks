@@ -11,8 +11,9 @@ const authMiddleware_1 = require("../middleware/authMiddleware");
  * Requirements: 2.1, 5.2, 6.1
  */
 const router = (0, express_1.Router)();
-// Apply authentication to all payment routes
+// Apply authentication and email verification to all payment routes
 router.use(authMiddleware_1.authenticateToken);
+router.use(authMiddleware_1.requireEmailVerified);
 // POST /api/payments/checkout - Create checkout session
 // Requirements: 2.1
 router.post("/checkout", payment_controller_1.PaymentController.createCheckout);

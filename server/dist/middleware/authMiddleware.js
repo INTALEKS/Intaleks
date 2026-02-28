@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.requireSuperAdmin = exports.requireAdmin = exports.requireRole = exports.authenticateToken = void 0;
+exports.requireEmailVerified = exports.requireSuperAdmin = exports.requireAdmin = exports.requireRole = exports.authenticateToken = void 0;
 const cookieUtils_1 = require("../utils/cookieUtils");
 const auth_1 = require("../services/auth");
 const db_1 = require("../config/db");
@@ -39,6 +39,9 @@ const authenticateToken = async (req, res, next) => {
                 name: true,
                 role: true,
                 subscriptionStatus: true,
+                emailVerified: true,
+                termsAccepted: true,
+                termsAcceptedAt: true,
                 createdAt: true,
                 updatedAt: true,
             },
@@ -88,3 +91,28 @@ exports.requireAdmin = (0, exports.requireRole)(client_1.UserRole.ADMIN);
  * Middleware to check if user is super admin
  */
 exports.requireSuperAdmin = (0, exports.requireRole)(client_1.UserRole.SUPER_ADMIN);
+/**
+ * Middleware to check if user has verified their email
+ * Use this on routes that require email verification
+ */
+const requireEmailVerified = (req, res, next) => {
+    if (!req.user) {
+        res.status(401).json({ error: "Unauthorized", message: "Authentication required" });
+        return;
+    }
+    // Admin users bypass email verification requirement
+    if (req.user.role === client_1.UserRole.ADMIN || req.user.role === client_1.UserRole.SUPER_ADMIN) {
+        next();
+        return;
+    }
+    if (!req.user.emailVerified) {
+        res.status(403).json({
+            error: "Email verification required",
+            message: "Please verify your email address to access this feature. Check your inbox for the verification link.",
+            emailVerified: false,
+        });
+        return;
+    }
+    next();
+};
+exports.requireEmailVerified = requireEmailVerified;

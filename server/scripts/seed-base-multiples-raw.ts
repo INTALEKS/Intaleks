@@ -1,6 +1,7 @@
 /**
  * Seed script for base valuation multiples using raw SQL
  * This bypasses Prisma Client cache issues
+ * Also seeds subscription plans
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -228,6 +229,48 @@ async function main() {
     const countryMultiples = baseMultiples.filter((m) => m.country === country);
     const industries = [...new Set(countryMultiples.map((m) => m.industry))];
     console.log(`  ${country}: ${industries.length} industries × ${scoreRanges.length} ranges = ${countryMultiples.length} records`);
+  }
+
+  // Seed subscription plan
+  console.log("\n🌱 Seeding subscription plan...");
+
+  // Delete Free plan if exists
+  const freePlan = await prisma.subscriptionPlan.findUnique({
+    where: { name: "Free" },
+  });
+  if (freePlan) {
+    await prisma.subscriptionPlan.delete({
+      where: { name: "Free" },
+    });
+    console.log("✅ Removed Free plan");
+  }
+
+  // Upsert One-Off plan
+  const planData = {
+    price: 39900, // AUD $399.00 in cents
+    billingPeriod: "ONE_TIME" as const,
+    features: ["Worldwide Industry Multiples (US, Canada, UK, Australia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking"],
+    active: true,
+  };
+
+  const existingPlan = await prisma.subscriptionPlan.findUnique({
+    where: { name: "One-Off" },
+  });
+
+  if (existingPlan) {
+    await prisma.subscriptionPlan.update({
+      where: { name: "One-Off" },
+      data: planData,
+    });
+    console.log("✅ One-Off subscription plan updated to AUD $399");
+  } else {
+    await prisma.subscriptionPlan.create({
+      data: {
+        name: "One-Off",
+        ...planData,
+      },
+    });
+    console.log("✅ One-Off subscription plan created at AUD $399");
   }
 }
 

@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt, { SignOptions } from "jsonwebtoken";
+import crypto from "crypto";
 
 import { prisma } from "../config/db";
 import { SubscriptionStatus, UserRole, UserStatus } from "@prisma/client";
@@ -16,11 +17,13 @@ export interface LoginResponse {
   success: boolean;
   message?: string;
   token?: string;
+  emailVerified?: boolean;
   user?: {
     id: string;
     email: string;
     name: string | null;
     role: UserRole;
+    emailVerified?: boolean;
   };
 }
 
@@ -42,6 +45,7 @@ export interface RegisterResponse {
     subscriptionStatus: SubscriptionStatus;
     termsAccepted: boolean;
     termsAcceptedAt: Date | null;
+    emailVerified?: boolean;
   };
 }
 
@@ -103,6 +107,10 @@ export class AuthService {
       // Hash password with bcrypt (Requirement 1.5)
       const hashedPassword = await bcrypt.hash(password, this.SALT_ROUNDS);
 
+      // Generate verification token
+      const verificationToken = crypto.randomBytes(32).toString("hex");
+      const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
       // Create user with USER role and ACTIVE status (Requirement 1.1)
       const user = await prisma.user.create({
         data: {
@@ -112,31 +120,20 @@ export class AuthService {
           role: UserRole.USER,
           status: UserStatus.ACTIVE,
           subscriptionStatus: SubscriptionStatus.NONE,
+          emailVerified: false,
+          verificationToken,
+          verificationTokenExpiry,
         },
       });
 
-      // Send welcome email (non-blocking)
-      emailService
-        .sendWelcomeEmail({
-          name: user.name || "",
-          email: user.email,
-        })
-        .catch((error) => {
-          console.error("Failed to send welcome email:", error);
-          // Don't fail registration if email fails
-        });
-
-      // Generate JWT token (Requirement 1.6)
-      const tokenPayload: TokenPayload = {
-        userId: user.id,
-        email: user.email,
-        role: user.role,
-      };
-      const token = this.generateToken(tokenPayload);
+      // Send verification email (non-blocking)
+      emailService.sendVerificationEmail(user.email, verificationToken, user.name || undefined).catch((error) => {
+        console.error("Failed to send verification email:", error);
+        // Don't fail registration if email fails
+      });
 
       return {
         success: true,
-        token,
         user: {
           id: user.id,
           email: user.email,
@@ -145,7 +142,9 @@ export class AuthService {
           subscriptionStatus: user.subscriptionStatus,
           termsAccepted: user.termsAccepted,
           termsAcceptedAt: user.termsAcceptedAt,
+          emailVerified: user.emailVerified,
         },
+        message: "Registration successful. Please check your email to verify your account before logging in.",
       };
     } catch (error) {
       console.error("Registration error:", error);
@@ -410,6 +409,15 @@ export class AuthService {
         return { success: false, message: "Invalid email or password" };
       }
 
+      // Check if email is verified
+      if (!user.emailVerified) {
+        return {
+          success: false,
+          message: "Please verify your email address before logging in. Check your inbox for the verification link.",
+          emailVerified: false,
+        };
+      }
+
       // Generate JWT token
       const tokenPayload: TokenPayload = { userId: user.id, email: user.email, role: user.role };
       const token = this.generateToken(tokenPayload);
@@ -417,13 +425,145 @@ export class AuthService {
       return {
         success: true,
         token,
-        user: { id: user.id, email: user.email, name: user.name, role: user.role },
+        user: { id: user.id, email: user.email, name: user.name, role: user.role, emailVerified: user.emailVerified },
       };
     } catch (error) {
       console.error("Login error:", error);
       return {
         success: false,
         message: "An error occurred during login",
+      };
+    }
+  }
+
+  /**
+   * Verify email with token
+   */
+  static async verifyEmail(token: string): Promise<{ success: boolean; message: string }> {
+    try {
+      // Find user with this verification token OR already verified user with matching token history
+      const user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { verificationToken: token },
+            {
+              AND: [
+                { emailVerified: true },
+                { verificationToken: null },
+                // Token was recently cleared (within last hour)
+                { emailVerifiedAt: { gte: new Date(Date.now() - 60 * 60 * 1000) } },
+              ],
+            },
+          ],
+        },
+      });
+
+      if (!user) {
+        return {
+          success: false,
+          message: "Invalid or expired verification token",
+        };
+      }
+
+      // Check if already verified (idempotent - return success)
+      if (user.emailVerified && user.verificationToken === null) {
+        return {
+          success: true,
+          message: "Email already verified",
+        };
+      }
+
+      // Check if token is expired
+      if (user.verificationTokenExpiry && user.verificationTokenExpiry < new Date()) {
+        return {
+          success: false,
+          message: "Verification token has expired. Please request a new one.",
+        };
+      }
+
+      // Update user as verified
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          emailVerified: true,
+          emailVerifiedAt: new Date(),
+          verificationToken: null,
+          verificationTokenExpiry: null,
+        },
+      });
+
+      // Send welcome email after verification
+      emailService
+        .sendWelcomeEmail({
+          name: user.name || "",
+          email: user.email,
+        })
+        .catch((error) => {
+          console.error("Failed to send welcome email:", error);
+        });
+
+      return {
+        success: true,
+        message: "Email verified successfully!",
+      };
+    } catch (error) {
+      console.error("Email verification error:", error);
+      return {
+        success: false,
+        message: "An error occurred during email verification",
+      };
+    }
+  }
+
+  /**
+   * Resend verification email
+   */
+  static async resendVerificationEmail(email: string): Promise<{ success: boolean; message: string }> {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+      });
+
+      if (!user) {
+        return {
+          success: false,
+          message: "User not found",
+        };
+      }
+
+      if (user.emailVerified) {
+        return {
+          success: false,
+          message: "Email already verified",
+        };
+      }
+
+      // Generate new verification token
+      const verificationToken = crypto.randomBytes(32).toString("hex");
+      const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          verificationToken,
+          verificationTokenExpiry,
+        },
+      });
+
+      // Send verification email
+      await emailService.sendVerificationEmail(user.email, verificationToken, user.name || undefined);
+
+      return {
+        success: true,
+        message: "Verification email sent successfully",
+      };
+    } catch (error) {
+      console.error("Resend verification email error:", error);
+      return {
+        success: false,
+        message: "Failed to resend verification email",
       };
     }
   }

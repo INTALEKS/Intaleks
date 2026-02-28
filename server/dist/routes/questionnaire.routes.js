@@ -57,8 +57,8 @@ const requireAdmin = (req, res, next) => {
 };
 const router = (0, express_1.Router)();
 exports.questionnaireRouter = router;
-// Public routes (authenticated users)
-router.post("/", authMiddleware_1.authenticateToken, questionnaireController.submitQuestionnaire);
-router.get("/", authMiddleware_1.authenticateToken, questionnaireController.getUserResponses);
-router.get("/:id", authMiddleware_1.authenticateToken, questionnaireController.getQuestionnaireResponse);
+// Public routes (authenticated users with verified email)
+router.post("/", authMiddleware_1.authenticateToken, authMiddleware_1.requireEmailVerified, questionnaireController.submitQuestionnaire);
+router.get("/", authMiddleware_1.authenticateToken, authMiddleware_1.requireEmailVerified, questionnaireController.getUserResponses);
+router.get("/:id", authMiddleware_1.authenticateToken, authMiddleware_1.requireEmailVerified, questionnaireController.getQuestionnaireResponse);
 router.post("/preview", questionnaireController.calculatePreview); // No auth for preview

@@ -21,11 +21,11 @@ export function HowItWorks({ steps }: HowItWorksProps) {
             <div key={step.number} className="bg-gray-100 rounded-2xl p-5 flex flex-col justify-between min-h-[200px]">
               <div className="flex justify-between items-start">
                 <span className="text-3xl font-bold text-gray-800">{String(step.number).padStart(2, "0")}</span>
-                {/* {step.icon && (
+                {step.icon && (
                   <div className="w-14 h-14 shrink-0">
                     <Image src={step.icon} alt={step.title} width={56} height={56} className="object-contain" />
                   </div>
-                )} */}
+                )}
               </div>
               <div className="mt-auto">
                 <h3 className="font-semibold text-gray-900 mb-1">{step.title}</h3>

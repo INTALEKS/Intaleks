@@ -56,8 +56,7 @@ const questionnaire_routes_1 = require("./routes/questionnaire.routes");
 const payment_routes_1 = __importStar(require("./routes/payment.routes"));
 const profile_routes_1 = __importDefault(require("./routes/profile.routes"));
 const contact_routes_1 = __importDefault(require("./routes/contact.routes"));
-const ensure_admin_1 = require("./scripts/ensure-admin");
-const seed_subscription_plan_1 = require("./scripts/seed-subscription-plan");
+const startup_seed_1 = __importDefault(require("./scripts/startup-seed"));
 const errorHandler_1 = require("./middleware/errorHandler");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -134,9 +133,8 @@ process.on("SIGINT", async () => {
 });
 app.listen(PORT, "0.0.0.0", async () => {
     console.log(`🚀 Server running on port ${PORT}`);
-    // Ensure admin user exists on startup
-    await (0, ensure_admin_1.ensureAdminExists)();
-    // Seed subscription plan on startup
-    await (0, seed_subscription_plan_1.seedSubscriptionPlan)();
-    // Note: Valuation multiples are seeded via npm run db:seed:prod during deployment
+    // Auto-seed database on startup (only seeds missing data)
+    if (process.env.NODE_ENV === "development") {
+        await (0, startup_seed_1.default)();
+    }
 });

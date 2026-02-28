@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { ForumController } from "../controllers/forum.controller";
-import { authenticateToken } from "../middleware/authMiddleware";
+import { authenticateToken, requireEmailVerified } from "../middleware/authMiddleware";
 import { UserRole, SubscriptionStatus } from "@prisma/client";
 
 const router = Router();
@@ -79,6 +79,7 @@ const requireSubscriptionOrAdmin = (req: Request, res: Response, next: NextFunct
 // Public forum routes for subscribed users
 export const publicForumRouter = Router();
 publicForumRouter.use(authenticateToken);
+publicForumRouter.use(requireEmailVerified);
 publicForumRouter.use(requireSubscriptionOrAdmin);
 
 // GET /api/forum - List forum posts (for subscribed users)

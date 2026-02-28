@@ -18,8 +18,7 @@ import { questionnaireRouter } from "./routes/questionnaire.routes";
 import paymentRoutes, { webhookRouter } from "./routes/payment.routes";
 import profileRoutes from "./routes/profile.routes";
 import contactRoutes from "./routes/contact.routes";
-import { ensureAdminExists } from "./scripts/ensure-admin";
-import { seedSubscriptionPlan } from "./scripts/seed-subscription-plan";
+import startupSeed from "./scripts/startup-seed";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
 dotenv.config();
@@ -112,11 +111,8 @@ process.on("SIGINT", async () => {
 app.listen(PORT, "0.0.0.0", async () => {
   console.log(`🚀 Server running on port ${PORT}`);
 
-  // Ensure admin user exists on startup
-  await ensureAdminExists();
-
-  // Seed subscription plan on startup
-  await seedSubscriptionPlan();
-
-  // Note: Valuation multiples are seeded via npm run db:seed:prod during deployment
+  // Auto-seed database on startup (only seeds missing data)
+  if (process.env.NODE_ENV === "development") {
+    await startupSeed();
+  }
 });

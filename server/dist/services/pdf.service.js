@@ -99,9 +99,12 @@ async function generateValuationPDF(data) {
         totalAddbacks: data.totalAddbacks,
         averageEbit: data.averageEbit,
         adjustedEbit: data.adjustedEbit,
+        adjustedEbitPerYear: data.adjustedEbitPerYear,
+        totalAddbacksPerYear: data.totalAddbacksPerYear,
         valuationMethod: data.valuationMethod,
         finalValuation: data.finalValuation,
         calculatedMultiple: data.calculatedMultiple,
+        multipleSource: data.multipleSource,
         // Company info
         startedYear: data.startedYear,
         employees: data.employees,

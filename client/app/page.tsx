@@ -50,19 +50,19 @@ const howItWorksSteps = [
     number: 1,
     title: "Company Details",
     description: "Enter your company name, select your country and industry to get started.",
-    icon: "/questionnaire.png",
+    icon: "/details.png",
   },
   {
     number: 2,
     title: "Business Questionnaire",
     description: "Answer 10 key questions about your business quality and operations.",
-    icon: "/questionnaire.png",
+    icon: "/questionaire.png",
   },
   {
     number: 3,
     title: "Method Selection",
     description: "Choose from multiple valuation methods (Asset method, Profit method, DCF method)",
-    icon: "/financial-data.png",
+    icon: "/block.png",
   },
   {
     number: 4,

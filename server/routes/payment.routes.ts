@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from "express";
 import { PaymentController } from "../controllers/payment.controller";
 import { WebhookService } from "../services/webhook";
 import { isStripeError } from "../errors";
-import { authenticateToken } from "../middleware/authMiddleware";
+import { authenticateToken, requireEmailVerified } from "../middleware/authMiddleware";
 
 /**
  * Payment routes for authenticated users
@@ -10,8 +10,9 @@ import { authenticateToken } from "../middleware/authMiddleware";
  */
 const router = Router();
 
-// Apply authentication to all payment routes
+// Apply authentication and email verification to all payment routes
 router.use(authenticateToken);
+router.use(requireEmailVerified);
 
 // POST /api/payments/checkout - Create checkout session
 // Requirements: 2.1

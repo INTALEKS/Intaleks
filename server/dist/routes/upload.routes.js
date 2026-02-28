@@ -15,8 +15,9 @@ const upload = (0, multer_1.default)({
         fileSize: 500 * 1024 * 1024, // 500MB max (for videos)
     },
 });
-// All upload routes require authentication
+// All upload routes require authentication and email verification
 router.use(authMiddleware_1.authenticateToken);
+router.use(authMiddleware_1.requireEmailVerified);
 // Get storage status
 router.get("/status", upload_controller_1.UploadController.getStatus);
 // Delete a file from storage

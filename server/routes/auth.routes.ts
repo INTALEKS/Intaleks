@@ -34,14 +34,10 @@ router.post("/register", validateRequest(registerSchema), async (req: Request, r
       });
     }
 
-    // Set HTTP-only cookie with JWT token (Requirement 1.7)
-    if (result.token) {
-      CookieUtils.setAuthToken(res, result.token);
-    }
-
+    // Don't set auth cookie - user must verify email first
     return res.status(201).json({
       success: true,
-      message: "Registration successful",
+      message: result.message || "Registration successful. Please check your email to verify your account.",
       user: result.user,
     });
   } catch (error: any) {
@@ -252,6 +248,84 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
       success: false,
       error: "Failed to retrieve profile",
       message: "An error occurred while retrieving profile",
+    });
+  }
+});
+
+/**
+ * POST /api/auth/verify-email - Verify email with token
+ */
+router.post("/verify-email", async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        error: "Validation error",
+        message: "Verification token is required",
+      });
+    }
+
+    const result = await AuthService.verifyEmail(token);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: "Verification failed",
+        message: result.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error: any) {
+    console.error("Email verification error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Verification failed",
+      message: "An error occurred during email verification",
+    });
+  }
+});
+
+/**
+ * POST /api/auth/resend-verification - Resend verification email
+ */
+router.post("/resend-verification", async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: "Validation error",
+        message: "Email is required",
+      });
+    }
+
+    const result = await AuthService.resendVerificationEmail(email);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: "Failed to resend verification email",
+        message: result.message,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error: any) {
+    console.error("Resend verification error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to resend verification email",
+      message: "An error occurred while resending verification email",
     });
   }
 });

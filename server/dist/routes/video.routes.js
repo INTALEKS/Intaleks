@@ -53,6 +53,8 @@ const requireSubscriptionOrAdmin = (req, res, next) => {
 exports.publicVideoRouter = (0, express_1.Router)();
 // Apply authentication to public routes (users must be logged in)
 exports.publicVideoRouter.use(authMiddleware_1.authenticateToken);
+// Apply email verification check
+exports.publicVideoRouter.use(authMiddleware_1.requireEmailVerified);
 // Apply subscription check (must be subscribed or admin)
 exports.publicVideoRouter.use(requireSubscriptionOrAdmin);
 // GET /api/videos - List videos (for subscribed users)

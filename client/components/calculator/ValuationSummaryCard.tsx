@@ -31,9 +31,12 @@ interface ValuationSummaryCardProps {
 
   // Auth state
   isAuthenticated?: boolean;
+  hasActiveSubscription?: boolean;
 }
 
-export function ValuationSummaryCard({ companyName, country, industry, averageSales, averageCOGS, averageEbit, totalAddbacks, adjustedEbit, valuationMethod, valuationMultiple, finalValuation, totalAssets, totalLiabilities, questionnaireScore, questionnaireCategory, isAuthenticated = false }: ValuationSummaryCardProps) {
+export function ValuationSummaryCard({ companyName, country, industry, averageSales, averageCOGS, averageEbit, totalAddbacks, adjustedEbit, valuationMethod, valuationMultiple, finalValuation, totalAssets, totalLiabilities, questionnaireScore, questionnaireCategory, isAuthenticated = false, hasActiveSubscription = false }: ValuationSummaryCardProps) {
+  const showPaywall = !isAuthenticated || !hasActiveSubscription;
+
   return (
     <div className="bg-linear-to-br from-blue-50 to-white border-2 border-blue-200 rounded-xl p-3 sm:p-6 shadow-lg">
       {/* Header */}
@@ -87,16 +90,16 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
 
       {/* Final Valuation - Highlighted */}
       <div className="bg-linear-to-r from-blue-600 to-blue-700 rounded-lg p-4 sm:p-6 text-white relative overflow-hidden">
-        {!isAuthenticated && (
+        {showPaywall && (
           <div className="absolute inset-0 backdrop-blur-md bg-blue-900/30 flex items-center justify-center z-10">
             <div className="text-center p-4">
               <Lock className="w-12 h-12 mx-auto mb-3 text-white" />
-              <p className="text-white font-semibold text-lg mb-2">Login Required</p>
-              <p className="text-blue-100 text-sm">Sign in to view your business valuation</p>
+              <p className="text-white font-semibold text-lg mb-2">{!isAuthenticated ? "Sign Up Required" : "Subscription Required"}</p>
+              <p className="text-blue-100 text-sm">{!isAuthenticated ? "Create an account and subscribe to view your business valuation" : "Subscribe to view your business valuation"}</p>
             </div>
           </div>
         )}
-        <div className={!isAuthenticated ? "blur-sm" : ""}>
+        <div className={showPaywall ? "blur-sm" : ""}>
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-xs sm:text-sm mb-1">Estimated Business Valuation</p>

@@ -13,6 +13,7 @@ export interface AuthenticatedUser {
   subscriptionStatus: SubscriptionStatus;
   termsAccepted: boolean;
   termsAcceptedAt: Date | null;
+  emailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,6 +67,9 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         name: true,
         role: true,
         subscriptionStatus: true,
+        emailVerified: true,
+        termsAccepted: true,
+        termsAcceptedAt: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -121,3 +125,31 @@ export const requireAdmin = requireRole(UserRole.ADMIN);
  * Middleware to check if user is super admin
  */
 export const requireSuperAdmin = requireRole(UserRole.SUPER_ADMIN);
+
+/**
+ * Middleware to check if user has verified their email
+ * Use this on routes that require email verification
+ */
+export const requireEmailVerified = (req: Request, res: Response, next: NextFunction): void => {
+  if (!req.user) {
+    res.status(401).json({ error: "Unauthorized", message: "Authentication required" });
+    return;
+  }
+
+  // Admin users bypass email verification requirement
+  if (req.user.role === UserRole.ADMIN || req.user.role === UserRole.SUPER_ADMIN) {
+    next();
+    return;
+  }
+
+  if (!req.user.emailVerified) {
+    res.status(403).json({
+      error: "Email verification required",
+      message: "Please verify your email address to access this feature. Check your inbox for the verification link.",
+      emailVerified: false,
+    });
+    return;
+  }
+
+  next();
+};

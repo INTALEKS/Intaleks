@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from "express";
 import * as questionnaireController from "../controllers/questionnaire.controller";
-import { authenticateToken } from "../middleware/authMiddleware";
+import { authenticateToken, requireEmailVerified } from "../middleware/authMiddleware";
 
 /**
  * Admin authorization middleware
@@ -25,10 +25,10 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction): void => 
 
 const router = Router();
 
-// Public routes (authenticated users)
-router.post("/", authenticateToken, questionnaireController.submitQuestionnaire);
-router.get("/", authenticateToken, questionnaireController.getUserResponses);
-router.get("/:id", authenticateToken, questionnaireController.getQuestionnaireResponse);
+// Public routes (authenticated users with verified email)
+router.post("/", authenticateToken, requireEmailVerified, questionnaireController.submitQuestionnaire);
+router.get("/", authenticateToken, requireEmailVerified, questionnaireController.getUserResponses);
+router.get("/:id", authenticateToken, requireEmailVerified, questionnaireController.getQuestionnaireResponse);
 router.post("/preview", questionnaireController.calculatePreview); // No auth for preview
 
 export { router as questionnaireRouter };

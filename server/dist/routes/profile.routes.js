@@ -30,7 +30,7 @@ const changePasswordSchema = joi_1.default.object({
 /**
  * PATCH /api/users/profile - Update current user's profile
  */
-router.patch("/profile", authMiddleware_1.authenticateToken, async (req, res) => {
+router.patch("/profile", authMiddleware_1.authenticateToken, authMiddleware_1.requireEmailVerified, async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({
@@ -76,7 +76,7 @@ router.patch("/profile", authMiddleware_1.authenticateToken, async (req, res) =>
 /**
  * PATCH /api/users/password - Change current user's password
  */
-router.patch("/password", authMiddleware_1.authenticateToken, async (req, res) => {
+router.patch("/password", authMiddleware_1.authenticateToken, authMiddleware_1.requireEmailVerified, async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({
@@ -132,7 +132,7 @@ router.patch("/password", authMiddleware_1.authenticateToken, async (req, res) =
 /**
  * POST /api/users/avatar - Upload user avatar
  */
-router.post("/avatar", authMiddleware_1.authenticateToken, upload.single("file"), async (req, res) => {
+router.post("/avatar", authMiddleware_1.authenticateToken, authMiddleware_1.requireEmailVerified, upload.single("file"), async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({
@@ -175,7 +175,7 @@ router.post("/avatar", authMiddleware_1.authenticateToken, upload.single("file")
 /**
  * POST /api/users/accept-terms - Accept terms and conditions
  */
-router.post("/accept-terms", authMiddleware_1.authenticateToken, async (req, res) => {
+router.post("/accept-terms", authMiddleware_1.authenticateToken, authMiddleware_1.requireEmailVerified, async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({

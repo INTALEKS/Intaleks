@@ -49,14 +49,10 @@ export function useAuth(returnUrl: string = "/") {
     mutationFn: async (data: RegisterData) => {
       return await ApiClient.register(data.email, data.password, data.name);
     },
-    onSuccess: (data) => {
-      // Update the user query with the response data
-      queryClient.setQueryData(AUTH_KEYS.user, data);
-      // Invalidate and refetch the auth query to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: AUTH_KEYS.user });
-      toast.success("Registration successful");
-      // Redirect to return URL or home page (Requirement 7.5)
-      router.replace(returnUrl);
+    onSuccess: (data, variables) => {
+      toast.success("Registration successful! Please check your email.");
+      // Redirect to verify email page with email parameter
+      router.replace(`/auth/verify-email?email=${encodeURIComponent(variables.email)}`);
     },
     onError: (error: Error) => {
       toast.error(error.message || "Registration failed");
