@@ -2,10 +2,14 @@
 /**
  * Seed script for base valuation multiples using raw SQL
  * This bypasses Prisma Client cache issues
- * Also seeds subscription plans
+ * Also seeds subscription plans and sets up Stripe integration
  */
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
+const stripe_1 = __importDefault(require("stripe"));
 const prisma = new client_1.PrismaClient();
 // Base multiples from the provided table with score ranges
 const baseMultiples = [
@@ -235,21 +239,73 @@ async function main() {
     const existingPlan = await prisma.subscriptionPlan.findUnique({
         where: { name: "One-Off" },
     });
+    let plan;
     if (existingPlan) {
-        await prisma.subscriptionPlan.update({
+        plan = await prisma.subscriptionPlan.update({
             where: { name: "One-Off" },
             data: planData,
         });
         console.log("✅ One-Off subscription plan updated to AUD $399");
     }
     else {
-        await prisma.subscriptionPlan.create({
+        plan = await prisma.subscriptionPlan.create({
             data: {
                 name: "One-Off",
                 ...planData,
             },
         });
         console.log("✅ One-Off subscription plan created at AUD $399");
+    }
+    // Set up Stripe product and price if Stripe is configured
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    if (stripeSecretKey && !plan.stripePriceId) {
+        console.log("\n🔧 Setting up Stripe integration...");
+        try {
+            const stripe = new stripe_1.default(stripeSecretKey, {
+                apiVersion: "2026-02-25.clover",
+            });
+            // Create Stripe product
+            const product = await stripe.products.create({
+                name: "Business Valuation - One-Off",
+                description: "Complete business valuation with worldwide industry multiples, professional PDF report, and comprehensive assessment tools",
+                metadata: {
+                    planId: plan.id,
+                    planName: plan.name,
+                },
+            });
+            console.log(`✅ Created Stripe product: ${product.id}`);
+            // Create Stripe price (one-time payment)
+            const price = await stripe.prices.create({
+                product: product.id,
+                unit_amount: plan.price,
+                currency: "aud",
+                metadata: {
+                    planId: plan.id,
+                    planName: plan.name,
+                },
+            });
+            console.log(`✅ Created Stripe price: ${price.id} (AUD $${(price.unit_amount / 100).toFixed(2)})`);
+            // Update plan with Stripe IDs
+            await prisma.subscriptionPlan.update({
+                where: { id: plan.id },
+                data: {
+                    stripeProductId: product.id,
+                    stripePriceId: price.id,
+                },
+            });
+            console.log("✅ Linked Stripe price to subscription plan");
+        }
+        catch (error) {
+            console.error("⚠️  Failed to set up Stripe integration:", error instanceof Error ? error.message : error);
+            console.log("   You can set this up later by running: npm run setup-stripe");
+        }
+    }
+    else if (!stripeSecretKey) {
+        console.log("⚠️  STRIPE_SECRET_KEY not set - skipping Stripe integration");
+        console.log("   Set STRIPE_SECRET_KEY and redeploy to enable payments");
+    }
+    else if (plan.stripePriceId) {
+        console.log(`✅ Stripe already configured (Price ID: ${plan.stripePriceId})`);
     }
 }
 main()

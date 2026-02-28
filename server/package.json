@@ -30,6 +30,7 @@
     "db:reset-multiples": "tsx scripts/reset-valuation-multiples.ts",
     "create-admin": "tsx scripts/create-admin.ts",
     "create-admin-interactive": "tsx scripts/create-admin-interactive.ts",
+    "setup-stripe": "tsx scripts/setup-stripe-product.ts",
     "render:build": "npm install && npm run build && npm run db:generate",
     "render:start": "npm run db:migrate:prod && npm start"
   },
