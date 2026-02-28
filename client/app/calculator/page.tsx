@@ -915,40 +915,65 @@ export default function CalculatorPage() {
 
         {/* STEP 4: Financial Data + Selected Method Calculation */}
         <AccordionSection title="Financial Data (Please enter your financial data below)" stepNumber={4} isOpen={openSections[4]} onToggle={() => toggleSection(4)}>
-          {selectedMethod === "profit" && (
-            <>
-              <YearSelector selectedYears={selectedYears} onYearsChange={setSelectedYears} disabled={!isAuthenticated} />
-
-              <div className="mt-6">
-                <FinancialDataTable
-                  title="ACCOUNTING PROFIT AND LOSS"
-                  metrics={financialMetrics}
-                  years={financialYears}
-                  values={displayFinancialData}
-                  onChange={handleFinancialDataChange}
-                  calculatedRow={{
-                    label: "EBIT CALCULATED",
-                    values: ebitValues,
-                  }}
-                  disabled={!isAuthenticated}
-                />
+          <div className="relative">
+            {/* Overlay for unauthenticated users */}
+            {!isAuthenticated && (
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+                <div className="text-center p-8">
+                  <div className="w-20 h-20 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Login Required</h3>
+                  <p className="text-gray-600 mb-6 max-w-md">Please log in to enter your financial data and calculate your business valuation</p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push("/login?returnUrl=/calculator")}>
+                      Log In
+                    </Button>
+                    <Button variant="outline" onClick={() => router.push("/signup?returnUrl=/calculator")}>
+                      Sign Up
+                    </Button>
+                  </div>
+                </div>
               </div>
+            )}
 
+            {selectedMethod === "profit" && (
+              <>
+                <YearSelector selectedYears={selectedYears} onYearsChange={setSelectedYears} disabled={!isAuthenticated} />
+
+                <div className="mt-6">
+                  <FinancialDataTable
+                    title="ACCOUNTING PROFIT AND LOSS"
+                    metrics={financialMetrics}
+                    years={financialYears}
+                    values={displayFinancialData}
+                    onChange={handleFinancialDataChange}
+                    calculatedRow={{
+                      label: "EBIT CALCULATED",
+                      values: ebitValues,
+                    }}
+                    disabled={!isAuthenticated}
+                  />
+                </div>
+
+                <div className="mt-6">
+                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, formatCurrency(totalAddbacksByYear[year] || 0)]))} disabled={!isAuthenticated} />
+                </div>
+
+                {/* <div className="mt-6">
+                  <ProfitMethod averageEbit={averageEbit} totalAddbacks={totalAddbacks} capitalizationRate={capitalizationRate} onCapitalizationRateChange={setCapitalizationRate} />
+                </div> */}
+              </>
+            )}
+
+            {selectedMethod === "asset" && (
               <div className="mt-6">
-                <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, formatCurrency(totalAddbacksByYear[year] || 0)]))} disabled={!isAuthenticated} />
+                <AssetMethod assets={assets} liabilities={liabilities} onAssetChange={(key, value) => setAssets((prev) => ({ ...prev, [key]: value }))} onLiabilityChange={(key, value) => setLiabilities((prev) => ({ ...prev, [key]: value }))} disabled={!isAuthenticated} />
               </div>
-
-              {/* <div className="mt-6">
-                <ProfitMethod averageEbit={averageEbit} totalAddbacks={totalAddbacks} capitalizationRate={capitalizationRate} onCapitalizationRateChange={setCapitalizationRate} />
-              </div> */}
-            </>
-          )}
-
-          {selectedMethod === "asset" && (
-            <div className="mt-6">
-              <AssetMethod assets={assets} liabilities={liabilities} onAssetChange={(key, value) => setAssets((prev) => ({ ...prev, [key]: value }))} onLiabilityChange={(key, value) => setLiabilities((prev) => ({ ...prev, [key]: value }))} disabled={!isAuthenticated} />
-            </div>
-          )}
+            )}
+          </div>
         </AccordionSection>
 
         {/* STEP 5: Download */}

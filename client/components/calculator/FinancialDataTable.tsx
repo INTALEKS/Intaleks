@@ -27,7 +27,7 @@ interface FinancialDataTableProps {
 export function FinancialDataTable({ title, metrics, years, values, onChange, calculatedRow, disabled = false }: FinancialDataTableProps) {
   return (
     <div className="mb-6">
-      <div className="flex items-center justify-between">
+      <div className="bg-blue-500 flex items-center justify-between">
         <SectionHeader title={title} />
         {disabled && (
           <div className="flex items-center gap-2 text-gray-500 text-sm">
