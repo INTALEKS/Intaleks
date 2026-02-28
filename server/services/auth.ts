@@ -157,7 +157,7 @@ export class AuthService {
           termsAcceptedAt: user.termsAcceptedAt,
           emailVerified: user.emailVerified,
         },
-        message: "Registration successful. Please check your email to verify your account before logging in.",
+        message: "Registration successful. A verification email has been sent to your inbox.",
       };
     } catch (error) {
       console.error("Registration error:", error);
@@ -420,15 +420,6 @@ export class AuthService {
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         return { success: false, message: "Invalid email or password" };
-      }
-
-      // Check if email is verified
-      if (!user.emailVerified) {
-        return {
-          success: false,
-          message: "Please verify your email address before logging in. Check your inbox for the verification link.",
-          emailVerified: false,
-        };
       }
 
       // Generate JWT token
