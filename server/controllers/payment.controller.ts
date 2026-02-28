@@ -85,6 +85,12 @@ export class PaymentController {
       }
 
       if (isStripeError(error)) {
+        console.error("Stripe error details:", {
+          code: error.code,
+          statusCode: error.statusCode,
+          message: error.message,
+          userMessage: error.userMessage,
+        });
         res.status(error.statusCode).json({
           success: false,
           error: {
@@ -96,6 +102,11 @@ export class PaymentController {
       }
 
       console.error("Create checkout error:", error);
+      console.error("Error details:", {
+        name: error instanceof Error ? error.name : "Unknown",
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       res.status(500).json({
         success: false,
         error: {
