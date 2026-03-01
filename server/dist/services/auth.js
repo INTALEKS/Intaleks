@@ -235,10 +235,12 @@ class AuthService {
      */
     static async resetPasswordWithToken(token, newPassword) {
         try {
+            console.log("[DEBUG] Reset password attempt:", { token: token.substring(0, 10) + "...", passwordLength: newPassword.length });
             // Find valid token
             const resetToken = await db_1.prisma.passwordResetToken.findUnique({
                 where: { token },
             });
+            console.log("[DEBUG] Token lookup result:", { found: !!resetToken, email: resetToken?.email });
             if (!resetToken) {
                 return {
                     success: false,
@@ -247,6 +249,7 @@ class AuthService {
             }
             // Check if token is expired
             if (resetToken.expiresAt < new Date()) {
+                console.log("[DEBUG] Token expired:", { expiresAt: resetToken.expiresAt, now: new Date() });
                 return {
                     success: false,
                     message: "Reset token has expired. Please request a new one.",
@@ -254,6 +257,7 @@ class AuthService {
             }
             // Check if token was already used
             if (resetToken.used) {
+                console.log("[DEBUG] Token already used");
                 return {
                     success: false,
                     message: "This reset token has already been used.",
@@ -272,6 +276,7 @@ class AuthService {
                     data: { used: true },
                 }),
             ]);
+            console.log("[DEBUG] Password reset successful for:", resetToken.email);
             return {
                 success: true,
                 message: "Password has been reset successfully.",

@@ -84,11 +84,9 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
                 {industry} • {country}
               </p>
             </div>
-            {!showReport && (
-              <button onClick={onShowReport} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-colors shadow-md hover:shadow-lg">
-                Show Report
-              </button>
-            )}
+            <button onClick={onShowReport} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm transition-colors shadow-md hover:shadow-lg">
+              {showReport ? "Update Report" : "Show Report"}
+            </button>
           </div>
         </div>
 

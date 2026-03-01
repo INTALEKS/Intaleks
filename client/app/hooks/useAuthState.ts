@@ -16,6 +16,14 @@ export const useAuthState = () => {
     retry: false, // Don't retry on auth failures
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchInterval: (data) => {
+      // If user is logged in but email not verified, poll every 10 seconds
+      // This helps when user verifies email on another device
+      if (data?.user && !data.user.emailVerified) {
+        return 10000; // 10 seconds
+      }
+      return false; // Don't poll otherwise
+    },
   });
 
   const user = getUserProfile.data?.user || null;

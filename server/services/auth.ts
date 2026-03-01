@@ -326,10 +326,14 @@ export class AuthService {
    */
   static async resetPasswordWithToken(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
     try {
+      console.log("[DEBUG] Reset password attempt:", { token: token.substring(0, 10) + "...", passwordLength: newPassword.length });
+
       // Find valid token
       const resetToken = await prisma.passwordResetToken.findUnique({
         where: { token },
       });
+
+      console.log("[DEBUG] Token lookup result:", { found: !!resetToken, email: resetToken?.email });
 
       if (!resetToken) {
         return {
@@ -340,6 +344,7 @@ export class AuthService {
 
       // Check if token is expired
       if (resetToken.expiresAt < new Date()) {
+        console.log("[DEBUG] Token expired:", { expiresAt: resetToken.expiresAt, now: new Date() });
         return {
           success: false,
           message: "Reset token has expired. Please request a new one.",
@@ -348,6 +353,7 @@ export class AuthService {
 
       // Check if token was already used
       if (resetToken.used) {
+        console.log("[DEBUG] Token already used");
         return {
           success: false,
           message: "This reset token has already been used.",
@@ -368,6 +374,8 @@ export class AuthService {
           data: { used: true },
         }),
       ]);
+
+      console.log("[DEBUG] Password reset successful for:", resetToken.email);
 
       return {
         success: true,

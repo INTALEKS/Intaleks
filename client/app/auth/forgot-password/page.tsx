@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { ArrowLeft, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ForgotPasswordPage() {
-  const router = useRouter();
+  // const router = useRouter();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 via-blue-50 to-cyan-100 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-sky-200 via-blue-50 to-cyan-100 p-4">
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
             <div className="text-center">
@@ -59,12 +59,12 @@ export default function ForgotPasswordPage() {
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">Check your email</h1>
               <p className="text-gray-600">
-                We've sent a password reset link to <strong>{email}</strong>
+                We&apos;ve sent a password reset link to <strong>{email}</strong>
               </p>
             </div>
 
             <div className="space-y-4">
-              <p className="text-sm text-gray-600 text-center">Didn't receive the email? Check your spam folder or try again.</p>
+              <p className="text-sm text-gray-600 text-center">Didn&apos;t receive the email? Check your spam folder or try again.</p>
 
               <Button
                 variant="outline"
@@ -91,14 +91,14 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-200 via-blue-50 to-cyan-100 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-sky-200 via-blue-50 to-cyan-100 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/">
             <Image src="/intaleks.png" alt="Intaleks" width={180} height={40} className="mx-auto mb-6" />
           </Link>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Reset your password</h1>
-          <p className="text-gray-600">Enter your email address and we'll send you a link to reset your password</p>
+          <p className="text-gray-600">Enter your email address and we&apos;ll send you a link to reset your password</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
@@ -129,7 +129,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         <p className="text-center text-sm text-gray-600 mt-6">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/signup" className="text-blue-500 hover:text-blue-600 font-medium">
             Sign up
           </Link>
