@@ -132,6 +132,13 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
       return res.status(400).json({ error: "Missing required fields: companyName, valuationMethod" });
     }
 
+    const normalizedYears = [
+      ...(Array.isArray(data.years) ? data.years : []),
+      ...(Array.isArray(data.financialYears) ? data.financialYears : []),
+    ]
+      .map((year) => (typeof year === "string" ? year.trim() : ""))
+      .filter((year) => year.length > 0);
+
     // SERVER-SIDE RECALCULATION - Prevent client manipulation
     let recalculatedResult: ReturnType<typeof CalculatorService.validateAndCalculate>;
     let finalValuation: number;
@@ -139,18 +146,20 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
     try {
       if (data.valuationMethod === "profit") {
         // Validate required fields for profit method
-        if (!data.financialData || !data.years || !data.calculatedMultiple) {
+        if (!data.financialData || normalizedYears.length === 0 || !data.calculatedMultiple) {
           return res.status(400).json({
             error: "Missing required fields for profit method: financialData, years, calculatedMultiple",
           });
         }
+
+        const yearsForCalculation = normalizedYears.length > 0 ? normalizedYears : Object.keys(data.financialData || {});
 
         // Recalculate on server to prevent manipulation
         recalculatedResult = CalculatorService.validateAndCalculate("profit", {
           financialData: data.financialData,
           addbacks: data.addbacks || [],
           multiple: data.calculatedMultiple,
-          years: data.years,
+          years: yearsForCalculation,
         });
 
         finalValuation = recalculatedResult.finalValuation;
@@ -169,9 +178,9 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
         data.adjustedEbitPerYear = recalculatedResult.adjustedEbitByYear;
         data.totalAddbacksPerYear = recalculatedResult.totalAddbacksByYear;
         // Calculate average EBIT (before addbacks)
-        data.averageEbit = data.years.reduce((sum, year) => sum + (recalculatedResult.yearlyMetrics[year]?.ebit || 0), 0) / data.years.length;
+        data.averageEbit = yearsForCalculation.reduce((sum, year) => sum + (recalculatedResult.yearlyMetrics[year]?.ebit || 0), 0) / yearsForCalculation.length;
         // Ensure financialYears is set for PDF generation
-        data.financialYears = data.years;
+        data.financialYears = yearsForCalculation;
 
         console.log("[PDF] After recalculation:", {
           financialYears: data.financialYears,
