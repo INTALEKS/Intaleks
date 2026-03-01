@@ -124,10 +124,14 @@ function getRatingColor(rating: string): string {
 }
 
 function safeSingleLineText(doc: PDFKit.PDFDocument, text: string, x: number, y: number, width: number, align: PDFKit.Mixins.TextOptions["align"] = "left"): void {
-  doc.text(text, x, y, {
+  const safeText = typeof text === "string" ? text : String(text ?? "");
+
+  doc.text(safeText, x, y, {
     width,
     align,
-    lineBreak: false,
+    // Keep text constrained to a single row while avoiding right-aligned
+    // rendering issues seen with `lineBreak: false` in some PDF viewers.
+    height: 12,
     ellipsis: true,
   });
 }
