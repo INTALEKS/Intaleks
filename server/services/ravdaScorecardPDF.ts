@@ -134,12 +134,53 @@ function safeSingleLineText(doc: PDFKit.PDFDocument, text: string, x: number, y:
 
 function formatMoneyCompact(value: number): string {
   const safeValue = Number.isFinite(value) ? value : 0;
-  return `$${(safeValue / 1000).toFixed(0)}k`;
+  const absValue = Math.abs(safeValue);
+
+  // For values less than 1000, show the actual number
+  if (absValue < 1000) {
+    return safeValue.toFixed(0);
+  }
+
+  // For values 1000 and above, show in thousands with 'k'
+  const inThousands = safeValue / 1000;
+
+  // If it's a whole number of thousands, don't show decimals
+  if (Math.abs(inThousands % 1) < 0.01) {
+    return `${inThousands.toFixed(0)}k`;
+  }
+
+  // Otherwise show one decimal place
+  return `${inThousands.toFixed(1)}k`;
 }
 
 function formatCurrency(value: number): string {
   const safeValue = Number.isFinite(value) ? value : 0;
   return `$${safeValue.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+}
+/**
+ * Format financial table values - always shows in thousands with 'k' suffix
+ * Used for large financial statements where consistency is important
+ */
+function formatFinancialTableValue(value: number): string {
+  const safeValue = Number.isFinite(value) ? value : 0;
+  const inThousands = safeValue / 1000;
+
+  // Always show in thousands format for consistency in tables
+  if (Math.abs(inThousands) < 0.1 && safeValue !== 0) {
+    // For very small values, show with one decimal
+    return `${inThousands.toFixed(1)}k`;
+  }
+
+  return `${inThousands.toFixed(0)}k`;
+}
+
+/**
+ * Format exact numbers without abbreviation
+ * Used when precision is important or values are small
+ */
+function formatExactNumber(value: number): string {
+  const safeValue = Number.isFinite(value) ? value : 0;
+  return safeValue.toFixed(0);
 }
 
 function drawHeader(doc: PDFKit.PDFDocument, data: RAVDAData, yPos: number): number {
@@ -171,11 +212,7 @@ function drawHeader(doc: PDFKit.PDFDocument, data: RAVDAData, yPos: number): num
     .text("Business Valuation Report", 50, yPos + 70, { width: 500, align: "center" });
   yPos += 100;
 
-  doc
-    .fontSize(16)
-    .font("Helvetica-Bold")
-    .fillColor(COLORS.primary)
-    .text("Risk & Value Driver Assessment (RAVDA)", 50, yPos, { width: 500, align: "center" });
+  doc.fontSize(16).font("Helvetica-Bold").fillColor(COLORS.primary).text("Risk & Value Driver Assessment (RAVDA)", 50, yPos, { width: 500, align: "center" });
   yPos += 40;
 
   return yPos;
@@ -508,6 +545,12 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
     financialYears: data.financialYears?.length || 0,
     visibleYearCount,
     addbacks: data.addbacks?.length || 0,
+    financialDataSample: data.financialData
+      ? Object.keys(data.financialData).map((year) => ({
+          year,
+          data: data.financialData![year],
+        }))
+      : [],
   });
 
   doc.fontSize(20).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Financial Analysis", PAGE.margin, yPos);
@@ -580,12 +623,8 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
         if (data.adjustedEbitPerYear && typeof data.adjustedEbitPerYear[year] === "number") {
           return data.adjustedEbitPerYear[year];
         }
-        const baseEbit =
-          v.netProfitAndLoss ??
-          (v.grossProfit ?? (v.sales || 0) - (v.cogs || 0)) - (v.operatingExpenses || 0) + (v.interestExpense || 0) - (v.interestIncome || 0);
-        const totalAddbacksForYear =
-          (data.totalAddbacksPerYear && data.totalAddbacksPerYear[year]) ||
-          (data.addbacks || []).reduce((sum, a) => sum + (a.values[year] || 0), 0);
+        const baseEbit = v.netProfitAndLoss ?? (v.grossProfit ?? (v.sales || 0) - (v.cogs || 0)) - (v.operatingExpenses || 0) + (v.interestExpense || 0) - (v.interestIncome || 0);
+        const totalAddbacksForYear = (data.totalAddbacksPerYear && data.totalAddbacksPerYear[year]) || (data.addbacks || []).reduce((sum, a) => sum + (a.values[year] || 0), 0);
         return baseEbit + totalAddbacksForYear;
       },
     },
@@ -607,6 +646,18 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData): void {
 
       const yearData = data.financialData?.[year] || {};
       const value = metric.calc ? metric.calc(yearData, year) : (yearData as any)[metric.key] || 0;
+
+      // Debug logging for first metric only to avoid spam
+      if (metric.key === "sales" && index === 0) {
+        console.log("[PDF] Rendering value:", {
+          metric: metric.key,
+          year,
+          yearData,
+          value,
+          hasCalc: !!metric.calc,
+        });
+      }
+
       safeSingleLineText(doc, formatMoneyCompact(value), x + 4, yPos + 5, yearColWidth - 8, "right");
     });
 
@@ -730,16 +781,7 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData): voi
       .text(formatCurrency(data.finalValuation), 60, yPos + 34, { width: 480, align: "right" });
     yPos += 92;
 
-    doc
-      .fontSize(10)
-      .font("Helvetica-Oblique")
-      .fillColor(COLORS.gray)
-      .text(
-        "Formula: Average Adjusted EBIT × Valuation Multiple (Average Adjusted EBIT = sum of per-year (EBIT + addbacks) ÷ number of years)",
-        50,
-        yPos,
-        { width: 500, align: "center" },
-      );
+    doc.fontSize(10).font("Helvetica-Oblique").fillColor(COLORS.gray).text("Formula: Average Adjusted EBIT × Valuation Multiple (Average Adjusted EBIT = sum of per-year (EBIT + addbacks) ÷ number of years)", 50, yPos, { width: 500, align: "center" });
   } else if (data.valuationMethod === "asset" && data.assets && data.liabilities) {
     doc.fontSize(11).font("Helvetica-Bold").fillColor(COLORS.darkGray).text("Assets", 50, yPos);
     yPos += 18;
@@ -970,12 +1012,7 @@ export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer
       },
       {
         title: "Valuation Multiple",
-        value:
-          data.calculatedMultiple !== undefined
-            ? `${data.calculatedMultiple.toFixed(2)}x`
-            : data.valuationMethod === "asset"
-              ? "N/A (Asset Method)"
-              : "N/A",
+        value: data.calculatedMultiple !== undefined ? `${data.calculatedMultiple.toFixed(2)}x` : data.valuationMethod === "asset" ? "N/A (Asset Method)" : "N/A",
       },
       {
         title: "Valuation Method",
@@ -1001,14 +1038,9 @@ export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer
     yPos += boxHeight + 30;
 
     // Short narrative paragraph
-    const narrative =
-      "This valuation estimate is generated from your financial performance, adjusted EBIT and selected valuation method. It is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
+    const narrative = "This valuation estimate is generated from your financial performance, adjusted EBIT and selected valuation method. It is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
 
-    doc
-      .fontSize(9)
-      .font("Helvetica")
-      .fillColor(COLORS.darkGray)
-      .text(narrative, 50, yPos, { width: 500, align: "justify" });
+    doc.fontSize(9).font("Helvetica").fillColor(COLORS.darkGray).text(narrative, 50, yPos, { width: 500, align: "justify" });
     yPos += 70;
 
     // Mini risk & strength badges from RAVDA drivers
@@ -1065,11 +1097,7 @@ export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer
     const afterProgressY = drawTrackProgress(doc, data, progressStartY);
     drawNextSteps(doc, data, 320, progressStartY);
     // simple footer label
-    doc
-      .fontSize(8)
-      .font("Helvetica")
-      .fillColor(COLORS.gray)
-      .text("Section: RAVDA Risk & Value Drivers", 50, 780);
+    doc.fontSize(8).font("Helvetica").fillColor(COLORS.gray).text("Section: RAVDA Risk & Value Drivers", 50, 780);
 
     // ===== PAGE 5: DISCLAIMER =====
     console.log("[PDF] Generating Page 5: Disclaimer");

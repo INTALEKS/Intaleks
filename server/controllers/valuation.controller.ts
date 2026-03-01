@@ -118,12 +118,22 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
       industry?: string;
     };
 
+    // Debug logging
+    console.log("[PDF] Received data:", {
+      companyName: data.companyName,
+      valuationMethod: data.valuationMethod,
+      financialYears: data.financialYears,
+      years: data.years,
+      hasFinancialData: !!data.financialData,
+      financialDataKeys: data.financialData ? Object.keys(data.financialData) : [],
+    });
+
     if (!data.companyName || !data.valuationMethod) {
       return res.status(400).json({ error: "Missing required fields: companyName, valuationMethod" });
     }
 
     // SERVER-SIDE RECALCULATION - Prevent client manipulation
-    let recalculatedResult;
+    let recalculatedResult: ReturnType<typeof CalculatorService.validateAndCalculate>;
     let finalValuation: number;
 
     try {
@@ -154,6 +164,21 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
         data.finalValuation = finalValuation;
         data.adjustedEbit = recalculatedResult.averageAdjustedEbit;
         data.profitValuation = finalValuation;
+        // Use server-recalculated financial data for PDF
+        data.financialData = recalculatedResult.yearlyMetrics;
+        data.adjustedEbitPerYear = recalculatedResult.adjustedEbitByYear;
+        data.totalAddbacksPerYear = recalculatedResult.totalAddbacksByYear;
+        // Calculate average EBIT (before addbacks)
+        data.averageEbit = data.years.reduce((sum, year) => sum + (recalculatedResult.yearlyMetrics[year]?.ebit || 0), 0) / data.years.length;
+        // Ensure financialYears is set for PDF generation
+        data.financialYears = data.years;
+
+        console.log("[PDF] After recalculation:", {
+          financialYears: data.financialYears,
+          yearlyMetricsKeys: Object.keys(recalculatedResult.yearlyMetrics),
+          sampleYear: data.financialYears[0],
+          sampleData: recalculatedResult.yearlyMetrics[data.financialYears[0]],
+        });
       } else if (data.valuationMethod === "asset") {
         // Validate required fields for asset method
         if (!data.assets || !data.liabilities) {
