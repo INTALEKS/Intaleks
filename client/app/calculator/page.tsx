@@ -506,6 +506,7 @@ export default function CalculatorPage() {
         industry,
         customMultiple,
         financialYears,
+        years: financialYears, // Server expects 'years' field
         financialData: calculatedMetrics,
         addbacks: addbacks.map((a) => ({
           id: a.id,

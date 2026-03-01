@@ -16,6 +16,7 @@ export interface ValuationReportData {
 
   // Financial Data
   financialYears: string[];
+  years?: string[]; // Server expects 'years' field for validation
   financialData: Record<string, FinancialYearData>;
   addbacks: Addback[];
   totalAddbacks: number;

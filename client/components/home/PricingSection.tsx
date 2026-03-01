@@ -8,7 +8,7 @@ import { ApiClient, type SubscriptionPlan } from "@/app/services/api";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useCreateCheckout } from "@/app/hooks/usePayments";
 import { toast } from "sonner";
-import { getUserPricing, type CurrencyInfo } from "@/lib/currency-utils";
+import { usePricing } from "@/app/hooks/usePricing";
 
 /**
  * PricingSection Component
@@ -21,37 +21,11 @@ export function PricingSection() {
   const [error, setError] = useState<string | null>(null);
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
 
-  // Currency state
-  const [userCurrency, setUserCurrency] = useState<CurrencyInfo | null>(null);
-  const [convertedPrice, setConvertedPrice] = useState<number | null>(null);
-  const [priceLoading, setPriceLoading] = useState(true);
-
   const { isAuthenticated, isAuthentiating, hasActiveSubscription, subscription } = useAuthState();
   const createCheckout = useCreateCheckout();
 
-  // Fetch user's currency and converted price
-  useEffect(() => {
-    async function fetchUserPricing() {
-      try {
-        console.log("🌍 Starting currency detection...");
-        const pricing = await getUserPricing();
-        console.log("💰 Pricing result:", pricing);
-        console.log("Currency:", pricing.currency.code, pricing.currency.name);
-        console.log("Amount:", pricing.amount);
-        console.log("Formatted:", pricing.formatted);
-        setUserCurrency(pricing.currency);
-        setConvertedPrice(pricing.amount);
-      } catch (error) {
-        console.error("❌ Failed to fetch user pricing:", error);
-        // Fallback to AUD
-        setUserCurrency({ code: "AUD", symbol: "A$", name: "Australian Dollar" });
-        setConvertedPrice(399);
-      } finally {
-        setPriceLoading(false);
-      }
-    }
-    fetchUserPricing();
-  }, []);
+  // Use pricing hook with 24-hour cache
+  const { pricing, loading: priceLoading } = usePricing();
 
   useEffect(() => {
     async function fetchPlans() {
@@ -73,10 +47,10 @@ export function PricingSection() {
 
   const formatPrice = (price: number): string => {
     // If we have converted price and currency, use it
-    if (convertedPrice && userCurrency && !priceLoading) {
+    if (pricing && !priceLoading) {
       // Format with thousand separators
-      const formattedAmount = convertedPrice.toLocaleString("en-US");
-      return `${userCurrency.symbol}${formattedAmount}`;
+      const formattedAmount = pricing.amount.toLocaleString("en-US");
+      return `${pricing.currency.symbol}${formattedAmount}`;
     }
 
     // Fallback to AUD
@@ -200,11 +174,11 @@ export function PricingSection() {
         <p className="text-gray-600 text-center mb-4 max-w-2xl mx-auto">Choose the plan that fits your business valuation needs</p>
 
         {/* Currency indicator */}
-        {userCurrency && userCurrency.code !== "AUD" && (
+        {pricing && pricing.currency.code !== "AUD" && (
           <div className="flex items-center justify-center gap-2 mb-8 text-sm text-gray-600">
             <Globe className="w-4 h-4" />
             <span>
-              Prices shown in {userCurrency.name} ({userCurrency.code})
+              Prices shown in {pricing.currency.name} ({pricing.currency.code})
             </span>
             <span className="text-gray-400">• Converted from A$399 AUD</span>
           </div>
@@ -229,7 +203,7 @@ export function PricingSection() {
                     <span className="text-6xl font-bold text-gray-900">{price}</span>
                     <span className="text-gray-500 ml-2 text-lg">{isFree ? "/lifetime" : plan.billingPeriod === "ONE_TIME" ? "/one-time" : plan.billingPeriod === "YEARLY" ? "/year" : "/month"}</span>
                   </div>
-                  {userCurrency && userCurrency.code !== "AUD" && !isFree && <p className="text-sm text-gray-500">≈ A$399 AUD</p>}
+                  {pricing && pricing.currency.code !== "AUD" && !isFree && <p className="text-sm text-gray-500">≈ A$399 AUD</p>}
                 </div>
 
                 {/* Features */}

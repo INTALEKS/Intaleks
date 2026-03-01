@@ -68,6 +68,76 @@ const DEFAULT_CURRENCY: CurrencyInfo = { code: "AUD", symbol: "A$", name: "Austr
 // Base price in AUD cents
 const BASE_PRICE_AUD = 39900; // $399 AUD
 
+// Cache configuration
+const PRICING_CACHE_KEY = "intaleks_user_pricing_cache";
+const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+interface PricingCache {
+  data: {
+    amount: number;
+    currency: CurrencyInfo;
+    formatted: string;
+  };
+  timestamp: number;
+}
+
+/**
+ * Get cached pricing data if valid
+ */
+function getCachedPricing(): PricingCache["data"] | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const cached = localStorage.getItem(PRICING_CACHE_KEY);
+    if (!cached) return null;
+
+    const parsedCache: PricingCache = JSON.parse(cached);
+    const now = Date.now();
+
+    // Check if cache is still valid (within 24 hours)
+    if (now - parsedCache.timestamp < CACHE_DURATION_MS) {
+      console.log("✅ Using cached pricing data");
+      return parsedCache.data;
+    }
+
+    // Cache expired, remove it
+    console.log("⏰ Pricing cache expired, fetching fresh data");
+    localStorage.removeItem(PRICING_CACHE_KEY);
+    return null;
+  } catch (error) {
+    console.error("Failed to read pricing cache:", error);
+    localStorage.removeItem(PRICING_CACHE_KEY);
+    return null;
+  }
+}
+
+/**
+ * Save pricing data to cache
+ */
+function setCachedPricing(data: PricingCache["data"]): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    const cache: PricingCache = {
+      data,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(PRICING_CACHE_KEY, JSON.stringify(cache));
+    console.log("💾 Pricing data cached for 24 hours");
+  } catch (error) {
+    console.error("Failed to cache pricing data:", error);
+  }
+}
+
+/**
+ * Clear pricing cache (useful for testing or manual refresh)
+ */
+export function clearPricingCache(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(PRICING_CACHE_KEY);
+  console.log("🗑️ Pricing cache cleared");
+}
+
 /**
  * Get user's country code from IP using a free geolocation service
  */
@@ -212,6 +282,12 @@ export function formatPrice(amount: number, currency: CurrencyInfo): string {
  * Get user's currency and converted price
  */
 export async function getUserPricing(): Promise<{ amount: number; currency: CurrencyInfo; formatted: string }> {
+  // Check cache first
+  const cachedPricing = getCachedPricing();
+  if (cachedPricing) {
+    return cachedPricing;
+  }
+
   try {
     console.log("📍 Getting user country code...");
     // Get user's country
@@ -220,11 +296,13 @@ export async function getUserPricing(): Promise<{ amount: number; currency: Curr
     if (!countryCode) {
       console.log("⚠️ No country code detected, falling back to AUD");
       // Fallback to default (AUD)
-      return {
+      const fallbackData = {
         amount: BASE_PRICE_AUD / 100,
         currency: DEFAULT_CURRENCY,
         formatted: formatPrice(BASE_PRICE_AUD / 100, DEFAULT_CURRENCY),
       };
+      setCachedPricing(fallbackData);
+      return fallbackData;
     }
 
     console.log("✅ Country code detected:", countryCode);
@@ -236,11 +314,13 @@ export async function getUserPricing(): Promise<{ amount: number; currency: Curr
     // If already AUD, no conversion needed
     if (currency.code === "AUD") {
       console.log("ℹ️ Currency is AUD, no conversion needed");
-      return {
+      const audData = {
         amount: BASE_PRICE_AUD / 100,
         currency,
         formatted: formatPrice(BASE_PRICE_AUD / 100, currency),
       };
+      setCachedPricing(audData);
+      return audData;
     }
 
     console.log("🔄 Converting AUD to", currency.code);
@@ -250,26 +330,32 @@ export async function getUserPricing(): Promise<{ amount: number; currency: Curr
     if (!converted) {
       console.log("⚠️ Conversion failed, falling back to AUD");
       // Fallback to AUD if conversion fails
-      return {
+      const fallbackData = {
         amount: BASE_PRICE_AUD / 100,
         currency: DEFAULT_CURRENCY,
         formatted: formatPrice(BASE_PRICE_AUD / 100, DEFAULT_CURRENCY),
       };
+      setCachedPricing(fallbackData);
+      return fallbackData;
     }
 
     console.log("✅ Conversion successful:", converted);
-    return {
+    const pricingData = {
       amount: converted.amount,
       currency: converted.currency,
       formatted: formatPrice(converted.amount, converted.currency),
     };
+    setCachedPricing(pricingData);
+    return pricingData;
   } catch (error) {
     console.error("❌ Failed to get user pricing:", error);
     // Fallback to default
-    return {
+    const fallbackData = {
       amount: BASE_PRICE_AUD / 100,
       currency: DEFAULT_CURRENCY,
       formatted: formatPrice(BASE_PRICE_AUD / 100, DEFAULT_CURRENCY),
     };
+    setCachedPricing(fallbackData);
+    return fallbackData;
   }
 }
