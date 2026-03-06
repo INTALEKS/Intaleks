@@ -13,7 +13,7 @@ const navigateLinks = [
 const premiumLinks = [
   { label: "Calculator", href: "/calculator" },
   { label: "Forum", href: "/forum" },
-  { label: "Videos", href: "/videos" },
+  // { label: "Videos", href: "/videos" },
 ];
 
 const startLinks = [

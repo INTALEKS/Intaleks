@@ -786,7 +786,7 @@ function drawProfitSummaryPage(doc, data, fonts) {
         doc.image(trophyPath, panelX + panelW - 52, panelY + 20, { width: 40 });
     }
     // risk snapshot
-    doc.font(fonts.bold).fontSize(10).fillColor("#111827").text("Risk & Strength Snapshot", PAGE.marginX, 510, { lineBreak: false });
+    doc.font(fonts.bold).fontSize(12).fillColor("#111827").text("Risk & Strength Snapshot", PAGE.marginX, 510, { lineBreak: false });
     const snapshot = ["Owner Dependence", "Recurring Revenue", "Customer Concentration"];
     const badgePathCandidates = [path_1.default.join(__dirname, "../assets/verify-badge.png"), path_1.default.join(__dirname, "../../assets/verify-badge.png")];
     const badgePath = badgePathCandidates.find((candidate) => fs_1.default.existsSync(candidate));
@@ -797,7 +797,7 @@ function drawProfitSummaryPage(doc, data, fonts) {
         }
         doc
             .font(fonts.regular)
-            .fontSize(14)
+            .fontSize(10)
             .fillColor("#111827")
             .text(label, PAGE.marginX + 28, bulletY, { lineBreak: false });
         bulletY += 24;
@@ -951,7 +951,7 @@ function drawDisclaimerPage(doc, data, fonts) {
     doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
     drawIntaleksLogo(doc);
     let y = 96;
-    doc.font(fonts.bold).fontSize(24).fillColor("#1F2937").text("BUSINESS VALUATION DISCLAIMER", 0, y, {
+    doc.font(fonts.bold).fontSize(20).fillColor("#1F2937").text("BUSINESS VALUATION DISCLAIMER", 0, y, {
         width: PAGE.width,
         align: "center",
         lineBreak: false,
@@ -959,11 +959,11 @@ function drawDisclaimerPage(doc, data, fonts) {
     y += 34;
     doc
         .font(fonts.regular)
-        .fontSize(12.5)
+        .fontSize(10)
         .fillColor("#FF0000")
         .text("DISCLAIMER - GUIDANCE ONLY (NOT LEGAL, FINANCIAL, OR PROFESSIONAL ADVICE)", PAGE.marginX, y, {
         width: PAGE.width - PAGE.marginX * 2,
-        align: "left",
+        align: "center",
         lineBreak: false,
     });
     y += 30;

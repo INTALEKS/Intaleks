@@ -194,6 +194,8 @@ router.get("/me", authMiddleware_1.authenticateToken, async (req, res) => {
                 lastName: true,
                 avatar: true,
                 role: true,
+                emailVerified: true,
+                emailVerifiedAt: true,
                 subscriptionStatus: true,
                 currentPeriodEnd: true,
                 termsAccepted: true,

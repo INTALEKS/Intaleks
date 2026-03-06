@@ -214,6 +214,8 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
         lastName: true,
         avatar: true,
         role: true,
+        emailVerified: true,
+        emailVerifiedAt: true,
         subscriptionStatus: true,
         currentPeriodEnd: true,
         termsAccepted: true,

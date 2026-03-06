@@ -29,7 +29,7 @@ function VerifyEmailConfirmContent() {
       hasVerifiedRef.current = true;
 
       try {
-        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5001/api";
+        const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4545/api";
 
         const response = await fetch(`${apiBaseUrl}/auth/verify-email`, {
           method: "POST",

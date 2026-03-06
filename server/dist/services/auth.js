@@ -359,33 +359,15 @@ class AuthService {
      */
     static async verifyEmail(token) {
         try {
-            // Find user with this verification token OR already verified user with matching token history
-            const user = await db_1.prisma.user.findFirst({
-                where: {
-                    OR: [
-                        { verificationToken: token },
-                        {
-                            AND: [
-                                { emailVerified: true },
-                                { verificationToken: null },
-                                // Token was recently cleared (within last hour)
-                                { emailVerifiedAt: { gte: new Date(Date.now() - 60 * 60 * 1000) } },
-                            ],
-                        },
-                    ],
-                },
+            const normalizedToken = token.trim();
+            // Verify strictly by token to avoid matching unrelated recently verified users.
+            const user = await db_1.prisma.user.findUnique({
+                where: { verificationToken: normalizedToken },
             });
             if (!user) {
                 return {
                     success: false,
                     message: "Invalid or expired verification token",
-                };
-            }
-            // Check if already verified (idempotent - return success)
-            if (user.emailVerified && user.verificationToken === null) {
-                return {
-                    success: true,
-                    message: "Email already verified",
                 };
             }
             // Check if token is expired
