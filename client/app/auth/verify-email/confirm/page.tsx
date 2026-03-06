@@ -9,12 +9,24 @@ function VerifyEmailConfirmContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get("token");
+  const returnUrlFromQuery = searchParams.get("returnUrl");
 
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
   const hasVerifiedRef = useRef(false);
 
   useEffect(() => {
+    const getPostVerifyLoginUrl = () => {
+      const storedReturnUrl = typeof window !== "undefined" ? localStorage.getItem("postVerifyReturnUrl") : null;
+      const resolvedReturnUrl = returnUrlFromQuery || storedReturnUrl;
+
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("postVerifyReturnUrl");
+      }
+
+      return resolvedReturnUrl ? `/login?returnUrl=${encodeURIComponent(resolvedReturnUrl)}` : "/login";
+    };
+
     const verifyEmail = async () => {
       if (!token) {
         setStatus("error");
@@ -47,7 +59,7 @@ function VerifyEmailConfirmContent() {
           setMessage(data.message || "Email verified successfully!");
           // Redirect to login after 3 seconds
           setTimeout(() => {
-            router.push("/login");
+            router.push(getPostVerifyLoginUrl());
           }, 3000);
         } else {
           // Check if it's an "already verified" message (treat as success)
@@ -55,7 +67,7 @@ function VerifyEmailConfirmContent() {
             setStatus("success");
             setMessage("Your email is already verified. You can now log in.");
             setTimeout(() => {
-              router.push("/login");
+              router.push(getPostVerifyLoginUrl());
             }, 3000);
           } else {
             setStatus("error");
@@ -71,7 +83,7 @@ function VerifyEmailConfirmContent() {
 
     verifyEmail();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, returnUrlFromQuery]);
 
   return (
     <AuthFormLayout title="Email Verification">
@@ -108,7 +120,17 @@ function VerifyEmailConfirmContent() {
         {/* Action buttons */}
         {status === "success" && (
           <div className="w-full space-y-3">
-            <button onClick={() => router.push("/login")} className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-lg">
+            <button
+              onClick={() => {
+                const storedReturnUrl = typeof window !== "undefined" ? localStorage.getItem("postVerifyReturnUrl") : null;
+                const resolvedReturnUrl = returnUrlFromQuery || storedReturnUrl;
+                if (typeof window !== "undefined") {
+                  localStorage.removeItem("postVerifyReturnUrl");
+                }
+                router.push(resolvedReturnUrl ? `/login?returnUrl=${encodeURIComponent(resolvedReturnUrl)}` : "/login");
+              }}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-lg"
+            >
               Continue to Login
             </button>
             <p className="text-sm text-gray-500">Redirecting automatically in 3 seconds...</p>

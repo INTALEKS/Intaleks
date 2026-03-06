@@ -51,8 +51,16 @@ export function useAuth(returnUrl: string = "/") {
     },
     onSuccess: (data, variables) => {
       toast.success("Registration successful! Please check your email.");
+      if (typeof window !== "undefined" && returnUrl && returnUrl !== "/") {
+        localStorage.setItem("postVerifyReturnUrl", returnUrl);
+      }
       // Redirect to verify email page with email parameter
-      router.replace(`/auth/verify-email?email=${encodeURIComponent(variables.email)}`);
+      const verifyUrl = new URL("/auth/verify-email", window.location.origin);
+      verifyUrl.searchParams.set("email", variables.email);
+      if (returnUrl && returnUrl !== "/") {
+        verifyUrl.searchParams.set("returnUrl", returnUrl);
+      }
+      router.replace(`${verifyUrl.pathname}${verifyUrl.search}`);
     },
     onError: (error: Error) => {
       toast.error(error.message || "Registration failed");
