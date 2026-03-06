@@ -422,7 +422,7 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
       {/* Other Plans */}
       {otherPlans.length > 0 && (
         <>
-          <h2 className="text-lg lg:text-xl font-semibold mb-4">Other Plans</h2>
+          {/* <h2 className="text-lg lg:text-xl font-semibold mb-4">Other Plans</h2> */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
             {otherPlans.map((plan) => (
               <div key={plan.id} className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6">
