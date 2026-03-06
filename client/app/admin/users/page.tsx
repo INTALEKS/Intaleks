@@ -399,7 +399,9 @@ export default function UsersPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete User</DialogTitle>
-            <DialogDescription>Are you sure you want to delete {selectedUser ? `${selectedUser.firstName} ${selectedUser.lastName}` : selectedUser?.email}? This action cannot be undone.</DialogDescription>
+            <DialogDescription>
+              Are you sure you want to delete {`${selectedUser?.firstName ?? ""} ${selectedUser?.lastName ?? ""}`.trim() || selectedUser?.email}? This action cannot be undone.
+            </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
@@ -418,7 +420,9 @@ export default function UsersPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Grant Subscription Access</DialogTitle>
-            <DialogDescription>Manually grant subscription access to {selectedUser?.name || selectedUser?.email}. This will bypass payment and immediately activate the subscription.</DialogDescription>
+            <DialogDescription>
+              Manually grant subscription access to {`${selectedUser?.firstName ?? ""} ${selectedUser?.lastName ?? ""}`.trim() || selectedUser?.email}. This will bypass payment and immediately activate the subscription.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
             {selectedUser?.subscription && (
@@ -467,7 +471,9 @@ export default function UsersPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Revoke Subscription Access</DialogTitle>
-            <DialogDescription>Are you sure you want to revoke subscription access for {selectedUser?.name || selectedUser?.email}? This will immediately remove their access to premium features.</DialogDescription>
+            <DialogDescription>
+              Are you sure you want to revoke subscription access for {`${selectedUser?.firstName ?? ""} ${selectedUser?.lastName ?? ""}`.trim() || selectedUser?.email}. This will immediately remove their access to premium features.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
             {selectedUser?.subscription && (
@@ -509,7 +515,9 @@ export default function UsersPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Change User Role</DialogTitle>
-            <DialogDescription>Change the role for {selectedUser?.name || selectedUser?.email}. This will affect their permissions and access level.</DialogDescription>
+            <DialogDescription>
+              Change the role for {`${selectedUser?.firstName ?? ""} ${selectedUser?.lastName ?? ""}`.trim() || selectedUser?.email}. This will affect their permissions and access level.
+            </DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-4">
             <div className="p-3 bg-muted rounded-md">

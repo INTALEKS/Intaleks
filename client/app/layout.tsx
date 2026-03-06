@@ -1,13 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "./providers/QueryProvider";
 import { Toaster } from "@/components/ui/sonner";
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: {
@@ -108,11 +102,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }} />
       </head>
-      <body className={`${inter.variable} font-inter antialiased`}>
+      <body className="font-inter antialiased">
         <QueryProvider>{children}</QueryProvider>
         <Toaster position="top-right" />
       </body>

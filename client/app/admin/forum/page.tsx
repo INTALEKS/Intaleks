@@ -281,7 +281,8 @@ export default function ForumPage() {
         {mode === "create" && (
           <PostCreationPanel
             adminUser={{
-              name: user?.name || null,
+              firstName: user?.firstName || user?.name?.split(" ")[0] || "Admin",
+              lastName: user?.lastName || user?.name?.split(" ").slice(1).join(" ") || "User",
               email: user?.email || "admin@example.com",
               avatar: undefined,
             }}

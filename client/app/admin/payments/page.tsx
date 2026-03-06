@@ -199,7 +199,7 @@ export default function AdminPaymentsPage() {
                   <TableCell>{formatPaymentDate(payment.createdAt)}</TableCell>
                   <TableCell>
                     <div>
-                      <p className="font-medium">{payment.user?.name || "—"}</p>
+                      <p className="font-medium">{payment.user ? `${payment.user.firstName} ${payment.user.lastName}`.trim() : "—"}</p>
                       <p className="text-sm text-muted-foreground">{payment.user?.email}</p>
                     </div>
                   </TableCell>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { LayoutGrid, List, Loader2, Play, Clock, Eye, Crown, ArrowLeft, Info, Volume2, VolumeX, Maximize2, Pause } from "lucide-react";
@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/general-ui/PageHeader";
 import { FeatureCards } from "@/components/general-ui/FeatureCards";
 import { usePublicVideos } from "@/app/hooks/useVideos";
 import { useAuthState } from "@/app/hooks/useAuthState";
+import { useCreateCheckout } from "@/app/hooks/useSubscriptions";
 import { isAdminOrHigher } from "@/lib/role-utils";
 import { formatDuration, formatViews } from "@/lib/video-utils";
 import { useIncrementVideoViews } from "@/app/hooks/useVideos";

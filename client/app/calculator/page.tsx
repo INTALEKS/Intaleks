@@ -123,6 +123,10 @@ export default function CalculatorPage() {
 
   // Helper function to get initial state from localStorage with expiration check
   const getInitialState = () => {
+    if (typeof window === "undefined") {
+      return null;
+    }
+
     try {
       const savedState = localStorage.getItem(CALCULATOR_STORAGE_KEY);
       const savedTimestamp = localStorage.getItem(CALCULATOR_TIMESTAMP_KEY);
@@ -152,8 +156,10 @@ export default function CalculatorPage() {
     } catch (error) {
       console.error("Failed to parse saved state:", error);
       // Clear corrupted data
-      localStorage.removeItem(CALCULATOR_STORAGE_KEY);
-      localStorage.removeItem(CALCULATOR_TIMESTAMP_KEY);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(CALCULATOR_STORAGE_KEY);
+        localStorage.removeItem(CALCULATOR_TIMESTAMP_KEY);
+      }
     }
     return null;
   };
