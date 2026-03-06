@@ -23,9 +23,9 @@ class UserService {
         const where = {
             deletedAt: null, // Exclude soft-deleted users by default
         };
-        // Search filter on name or email
+        // Search filter on firstName, lastName or email
         if (search) {
-            where.OR = [{ name: { contains: search, mode: "insensitive" } }, { email: { contains: search, mode: "insensitive" } }];
+            where.OR = [{ firstName: { contains: search, mode: "insensitive" } }, { lastName: { contains: search, mode: "insensitive" } }, { email: { contains: search, mode: "insensitive" } }];
         }
         // Subscription plan ID filter
         if (subscriptionPlanId) {
@@ -126,7 +126,8 @@ class UserService {
             data: {
                 email: data.email.toLowerCase().trim(),
                 password: hashedPassword,
-                name: data.name || null,
+                firstName: data.firstName || null,
+                lastName: data.lastName || null,
                 role: data.role || "USER",
                 status: data.status || client_1.UserStatus.ACTIVE,
                 planType: data.planType || null,
@@ -164,8 +165,10 @@ class UserService {
         const updateData = {};
         if (data.email !== undefined)
             updateData.email = data.email.toLowerCase().trim();
-        if (data.name !== undefined)
-            updateData.name = data.name;
+        if (data.firstName !== undefined)
+            updateData.firstName = data.firstName;
+        if (data.lastName !== undefined)
+            updateData.lastName = data.lastName;
         if (data.role !== undefined)
             updateData.role = data.role;
         if (data.status !== undefined)
@@ -298,7 +301,8 @@ class UserService {
             select: {
                 id: true,
                 email: true,
-                name: true,
+                firstName: true,
+                lastName: true,
                 role: true,
                 status: true,
                 planType: true,
@@ -511,7 +515,8 @@ class UserService {
             select: {
                 id: true,
                 email: true,
-                name: true,
+                firstName: true,
+                lastName: true,
                 termsAccepted: true,
                 termsAcceptedAt: true,
             },
@@ -536,7 +541,8 @@ class UserService {
             select: {
                 id: true,
                 email: true,
-                name: true,
+                firstName: true,
+                lastName: true,
                 role: true,
                 status: true,
                 subscriptionStatus: true,

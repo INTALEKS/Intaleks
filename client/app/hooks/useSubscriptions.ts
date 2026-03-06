@@ -112,3 +112,16 @@ export function useDeactivateSubscriptionPlan() {
     },
   });
 }
+
+export function useCreateCheckout() {
+  return useMutation({
+    mutationFn: ({ planId, successUrl, cancelUrl }: { planId: string; successUrl?: string; cancelUrl?: string }) => SubscriptionsApi.createCheckout(planId, successUrl, cancelUrl),
+    onSuccess: (data) => {
+      // Redirect to Stripe checkout
+      window.location.href = data.url;
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to start checkout");
+    },
+  });
+}

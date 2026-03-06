@@ -70,25 +70,42 @@ async function startupSeed() {
             });
         }
         // Check and seed admin user
-        const adminExists = await prisma.user.findFirst({
-            where: { role: client_1.UserRole.ADMIN },
+        const email = process.env.ADMIN_EMAIL || "admin@intaleks.com";
+        const password = process.env.ADMIN_PASSWORD || "Admin123!";
+        const firstName = process.env.ADMIN_FIRST_NAME || "Admin";
+        const lastName = process.env.ADMIN_LAST_NAME || "User";
+        // Check if this specific admin email already exists
+        const existingUser = await prisma.user.findUnique({
+            where: { email },
         });
-        if (!adminExists) {
-            const email = process.env.ADMIN_EMAIL || "admin@intaleks.com";
-            const password = process.env.ADMIN_PASSWORD || "Admin123!";
-            const name = process.env.ADMIN_NAME || "Admin User";
-            const hashedPassword = await bcrypt_1.default.hash(password, 10);
-            await prisma.user.create({
-                data: {
-                    email,
-                    password: hashedPassword,
-                    name,
-                    role: client_1.UserRole.ADMIN,
-                    termsAccepted: true,
-                    termsAcceptedAt: new Date(),
-                },
+        if (!existingUser) {
+            // Check if any admin exists
+            const adminExists = await prisma.user.findFirst({
+                where: { role: client_1.UserRole.ADMIN },
             });
-            console.log(`🔐 Created admin user: ${email}`);
+            if (!adminExists) {
+                const hashedPassword = await bcrypt_1.default.hash(password, 10);
+                await prisma.user.create({
+                    data: {
+                        email,
+                        password: hashedPassword,
+                        firstName,
+                        lastName,
+                        role: client_1.UserRole.ADMIN,
+                        termsAccepted: true,
+                        termsAcceptedAt: new Date(),
+                    },
+                });
+                console.log(`🔐 Created admin user: ${email}`);
+            }
+        }
+        else if (existingUser.role !== client_1.UserRole.ADMIN) {
+            // If user exists but is not admin, upgrade them
+            await prisma.user.update({
+                where: { email },
+                data: { role: client_1.UserRole.ADMIN },
+            });
+            console.log(`🔐 Upgraded existing user to admin: ${email}`);
         }
     }
     catch (error) {
@@ -98,8 +115,5 @@ async function startupSeed() {
         await prisma.$disconnect();
     }
 }
-// Run if in development mode
-if (process.env.NODE_ENV === "development") {
-    startupSeed();
-}
+// Export for manual execution
 exports.default = startupSeed;

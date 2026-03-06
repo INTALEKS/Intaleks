@@ -175,4 +175,20 @@ export class SubscriptionsApi {
     }
     return data.data;
   }
+
+  // Create checkout session
+  static async createCheckout(planId: string, successUrl?: string, cancelUrl?: string): Promise<{ sessionId: string; url: string }> {
+    const response = await fetch(`${BASE_URL}/payments/checkout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ planId, successUrl, cancelUrl }),
+    });
+
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data?.error?.message || "Failed to create checkout session");
+    }
+    return data.data;
+  }
 }

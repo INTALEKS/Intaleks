@@ -23,10 +23,10 @@ const startLinks = [
 ];
 
 const socialLinks = [
-  { icon: "facebook", href: "https://facebook.com", label: "Facebook" },
+  // { icon: "facebook", href: "https://facebook.com", label: "Facebook" },
   { icon: "linkedin", href: "https://linkedin.com", label: "LinkedIn" },
   { icon: "instagram", href: "https://instagram.com", label: "Instagram" },
-  { icon: "x", href: "https://x.com", label: "X" },
+  // { icon: "x", href: "https://x.com", label: "X" },
 ];
 
 export function Footer() {
@@ -45,11 +45,18 @@ export function Footer() {
             </p>
 
             {/* Contact Email */}
-            <p className="text-gray-600 text-sm mb-6">
+            <p className="text-gray-600 text-sm mb-2">
               <a href="mailto:admin@intaleks.com" className="hover:text-gray-900 transition-colors">
                 admin@intaleks.com
               </a>
             </p>
+
+            {/* Business Address */}
+            <address className="text-gray-600 text-sm mb-6 not-italic">
+              <a href="https://maps.app.goo.gl/t2BXpv3n3SVscVgw5" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900 transition-colors">
+                Level 25,1 Spring Street, Capital Square Tower 3, Perth, 6000
+              </a>
+            </address>
 
             {/* Social Icons */}
             <div className="flex gap-4">

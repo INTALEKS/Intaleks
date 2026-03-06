@@ -33,8 +33,15 @@ exports.createUserSchema = joi_1.default.object({
         "string.empty": "Password is required",
         "any.required": "Password is required",
     }),
-    name: joi_1.default.string().max(255).allow(null, "").messages({
-        "string.max": "Name must not exceed 255 characters",
+    firstName: joi_1.default.string().max(255).required().messages({
+        "string.max": "First name must not exceed 255 characters",
+        "string.empty": "First name is required",
+        "any.required": "First name is required",
+    }),
+    lastName: joi_1.default.string().max(255).required().messages({
+        "string.max": "Last name must not exceed 255 characters",
+        "string.empty": "Last name is required",
+        "any.required": "Last name is required",
     }),
     role: joi_1.default.string()
         .valid(...USER_ROLE_VALUES)
@@ -71,8 +78,11 @@ exports.updateUserSchema = joi_1.default.object({
     password: joi_1.default.string().min(8).messages({
         "string.min": "Password must be at least 8 characters",
     }),
-    name: joi_1.default.string().max(255).allow(null, "").messages({
-        "string.max": "Name must not exceed 255 characters",
+    firstName: joi_1.default.string().max(255).messages({
+        "string.max": "First name must not exceed 255 characters",
+    }),
+    lastName: joi_1.default.string().max(255).messages({
+        "string.max": "Last name must not exceed 255 characters",
     }),
     role: joi_1.default.string()
         .valid(...USER_ROLE_VALUES)

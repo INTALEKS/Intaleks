@@ -47,7 +47,7 @@ export function useAuth(returnUrl: string = "/") {
   const registerMutation = useMutation({
     mutationKey: AUTH_KEYS.register,
     mutationFn: async (data: RegisterData) => {
-      return await ApiClient.register(data.email, data.password, data.name);
+      return await ApiClient.register(data.email, data.password, data.firstName, data.lastName);
     },
     onSuccess: (data, variables) => {
       toast.success("Registration successful! Please check your email.");

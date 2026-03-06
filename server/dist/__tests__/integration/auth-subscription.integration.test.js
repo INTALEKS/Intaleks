@@ -23,7 +23,8 @@ const client_1 = require("@prisma/client");
 // Test data
 const testUserEmail = `test-${Date.now()}@example.com`;
 const testUserPassword = "TestPassword123!";
-const testUserName = "Test User";
+const testUserFirstName = "Test";
+const testUserLastName = "User";
 (0, vitest_1.describe)("User Authentication & Subscription Integration", () => {
     let testUserId = null;
     let testPlanId = null;
@@ -55,7 +56,8 @@ const testUserName = "Test User";
             const validInput = {
                 email: testUserEmail,
                 password: testUserPassword,
-                name: testUserName,
+                firstName: testUserFirstName,
+                lastName: testUserLastName,
             };
             const { error: validError } = authValidation_1.registerSchema.validate(validInput);
             (0, vitest_1.expect)(validError).toBeUndefined();
@@ -78,13 +80,15 @@ const testUserName = "Test User";
             const result = await auth_1.AuthService.registerUser({
                 email: testUserEmail,
                 password: testUserPassword,
-                name: testUserName,
+                firstName: testUserFirstName,
+                lastName: testUserLastName,
             });
             (0, vitest_1.expect)(result.success).toBe(true);
             (0, vitest_1.expect)(result.token).toBeDefined();
             (0, vitest_1.expect)(result.user).toBeDefined();
             (0, vitest_1.expect)(result.user?.email).toBe(testUserEmail.toLowerCase());
-            (0, vitest_1.expect)(result.user?.name).toBe(testUserName);
+            (0, vitest_1.expect)(result.user?.firstName).toBe(testUserFirstName);
+            (0, vitest_1.expect)(result.user?.lastName).toBe(testUserLastName);
             (0, vitest_1.expect)(result.user?.role).toBe(client_1.UserRole.USER);
             (0, vitest_1.expect)(result.user?.subscriptionStatus).toBe(client_1.SubscriptionStatus.NONE);
             // Store user ID for cleanup

@@ -10,7 +10,9 @@ interface EmailOptions {
 }
 
 interface WelcomeEmailData {
-  name: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string; // Keep for backward compatibility
   email: string;
 }
 
@@ -274,9 +276,9 @@ Trading as Intaleks
     });
   }
 
-  async sendVerificationEmail(email: string, verificationToken: string, name?: string): Promise<boolean> {
+  async sendVerificationEmail(email: string, verificationToken: string, firstName?: string, lastName?: string): Promise<boolean> {
     const verifyUrl = `${this.frontendUrl}/auth/verify-email/confirm?token=${verificationToken}`;
-    const displayName = name || "there";
+    const displayName = firstName ? `${firstName}${lastName ? " " + lastName : ""}` : "there";
 
     const content = `
       <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 24px;">Verify Your Email Address</h2>
@@ -343,8 +345,8 @@ Trading as Intaleks
   }
 
   async sendWelcomeEmail(data: WelcomeEmailData): Promise<boolean> {
-    const { name, email } = data;
-    const displayName = name || "there";
+    const { firstName, lastName, name, email } = data;
+    const displayName = firstName ? `${firstName}${lastName ? " " + lastName : ""}` : name || "there";
     const loginUrl = `${this.frontendUrl}/login`;
     const calculatorUrl = `${this.frontendUrl}/calculator`;
 

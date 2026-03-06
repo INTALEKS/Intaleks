@@ -18,7 +18,8 @@ const upload = multer({
 
 // Validation schemas
 const updateProfileSchema = Joi.object({
-  name: Joi.string().min(1).max(100).required(),
+  firstName: Joi.string().min(1).max(100).required(),
+  lastName: Joi.string().min(1).max(100).required(),
   avatar: Joi.string().uri().optional(),
 });
 
@@ -50,13 +51,15 @@ router.patch("/profile", authenticateToken, requireEmailVerified, async (req: Re
     const user = await prisma.user.update({
       where: { id: req.user.id },
       data: {
-        name: value.name,
+        firstName: value.firstName,
+        lastName: value.lastName,
         ...(value.avatar && { avatar: value.avatar }),
       },
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         role: true,
         avatar: true,
       },
@@ -207,7 +210,8 @@ router.post("/accept-terms", authenticateToken, requireEmailVerified, async (req
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         termsAccepted: true,
         termsAcceptedAt: true,
       },

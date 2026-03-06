@@ -8,7 +8,8 @@ import { UserRole, SubscriptionStatus } from "@prisma/client";
 export interface AuthenticatedUser {
   id: string;
   email: string;
-  name: string | null;
+  firstName: string;
+  lastName: string;
   role: UserRole;
   subscriptionStatus: SubscriptionStatus;
   termsAccepted: boolean;
@@ -64,7 +65,8 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         role: true,
         subscriptionStatus: true,
         emailVerified: true,

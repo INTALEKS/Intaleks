@@ -198,7 +198,7 @@ export default function Home() {
 
       <AboutFounder />
 
-      <Newsletter />
+      {/* <Newsletter /> */}
 
       <Footer />
     </div>

@@ -268,7 +268,8 @@ async function seedDefaultAdmin() {
 
   const email = process.env.ADMIN_EMAIL || "admin@intaleks.com";
   const password = process.env.ADMIN_PASSWORD || "Admin123!";
-  const name = process.env.ADMIN_NAME || "Admin User";
+  const firstName = process.env.ADMIN_FIRST_NAME || "Admin";
+  const lastName = process.env.ADMIN_LAST_NAME || "User";
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -276,7 +277,8 @@ async function seedDefaultAdmin() {
     data: {
       email,
       password: hashedPassword,
-      name,
+      firstName,
+      lastName,
       role: UserRole.ADMIN,
       termsAccepted: true,
       termsAcceptedAt: new Date(),

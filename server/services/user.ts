@@ -36,7 +36,8 @@ export interface PaginatedUsers {
 export interface CreateUserInput {
   email: string;
   password: string;
-  name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
   role?: "USER" | "ADMIN";
   status?: UserStatus;
   planType?: PlanType | null;
@@ -45,7 +46,8 @@ export interface CreateUserInput {
 export interface UpdateUserInput {
   email?: string;
   password?: string;
-  name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
   role?: "USER" | "ADMIN";
   status?: UserStatus;
   planType?: PlanType | null;
@@ -82,9 +84,9 @@ export class UserService {
       deletedAt: null, // Exclude soft-deleted users by default
     };
 
-    // Search filter on name or email
+    // Search filter on firstName, lastName or email
     if (search) {
-      where.OR = [{ name: { contains: search, mode: "insensitive" } }, { email: { contains: search, mode: "insensitive" } }];
+      where.OR = [{ firstName: { contains: search, mode: "insensitive" } }, { lastName: { contains: search, mode: "insensitive" } }, { email: { contains: search, mode: "insensitive" } }];
     }
 
     // Subscription plan ID filter
@@ -199,7 +201,8 @@ export class UserService {
       data: {
         email: data.email.toLowerCase().trim(),
         password: hashedPassword,
-        name: data.name || null,
+        firstName: data.firstName || null,
+        lastName: data.lastName || null,
         role: data.role || "USER",
         status: data.status || UserStatus.ACTIVE,
         planType: data.planType || null,
@@ -243,7 +246,8 @@ export class UserService {
     const updateData: Prisma.UserUpdateInput = {};
 
     if (data.email !== undefined) updateData.email = data.email.toLowerCase().trim();
-    if (data.name !== undefined) updateData.name = data.name;
+    if (data.firstName !== undefined) updateData.firstName = data.firstName;
+    if (data.lastName !== undefined) updateData.lastName = data.lastName;
     if (data.role !== undefined) updateData.role = data.role;
     if (data.status !== undefined) updateData.status = data.status;
     if (data.planType !== undefined) updateData.planType = data.planType;
@@ -395,7 +399,8 @@ export class UserService {
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         role: true,
         status: true,
         planType: true,
@@ -633,7 +638,8 @@ export class UserService {
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         termsAccepted: true,
         termsAcceptedAt: true,
       },
@@ -662,7 +668,8 @@ export class UserService {
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         role: true,
         status: true,
         subscriptionStatus: true,

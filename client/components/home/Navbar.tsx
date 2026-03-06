@@ -12,7 +12,7 @@ import { useAuthState } from "@/app/hooks/useAuthState";
 import { useAuth } from "@/app/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 
 interface NavLink {
   href: string;
@@ -30,15 +30,15 @@ type NavItem = NavLink | NavDropdown;
 const navLinks: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/calculator", label: "Calculator" },
-  {
-    label: "Learning",
-    dropdown: [
-      { href: "/videos", label: "Videos" },
-      // { href: "/articles", label: "Articles" },
-    ],
-  },
-  { href: "/?scrollTo=pricing", label: "Pricing", isAnchor: true },
-  { href: "/?scrollTo=about", label: "About", isAnchor: true },
+  // {
+  //   label: "Learning",
+  //   dropdown: [
+  //     { href: "/videos", label: "Videos" },
+  //     // { href: "/articles", label: "Articles" },
+  //   ],
+  // },
+  { href: "/#pricing", label: "Pricing", isAnchor: true },
+  { href: "/#about", label: "About", isAnchor: true },
   { href: "/forum", label: "Forum" },
 ];
 
@@ -58,20 +58,23 @@ export function Navbar() {
   };
 
   // Handle anchor link click - navigate to home and scroll to section
-  const handleAnchorClick = (e: React.MouseEvent, sectionId: string) => {
+  const handleAnchorClick = (e: React.MouseEvent, href: string) => {
     e.preventDefault();
+    const hash = href.split("#")[1];
+    if (!hash) return;
+
     if (pathname === "/") {
-      const section = document.getElementById(sectionId);
+      const section = document.getElementById(hash);
       if (section) {
         section.scrollIntoView({ behavior: "smooth" });
       }
     } else {
-      router.push(`/?scrollTo=${sectionId}`);
+      router.push(href);
     }
   };
 
-  // Get display name (name or email) - Requirement 9.2
-  const displayName = user?.name || user?.email || "User";
+  // Get display name (firstName lastName or email) - Requirement 9.2
+  const displayName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.email || "User";
 
   return (
     <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
@@ -88,6 +91,9 @@ export function Navbar() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-[300px] p-0">
+            <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+            <SheetDescription className="sr-only">Access navigation links and user account options</SheetDescription>
+
             {/* Logo Header */}
             <div className="px-6 py-6 border-b">
               <Link href="/" onClick={() => setMobileMenuOpen(false)}>
@@ -113,7 +119,7 @@ export function Navbar() {
                   <button
                     key={link.href}
                     onClick={(e) => {
-                      handleAnchorClick(e, new URL(link.href, "http://x").searchParams.get("scrollTo") || "");
+                      handleAnchorClick(e, link.href);
                       setMobileMenuOpen(false);
                     }}
                     className="text-sm py-2.5 px-2 text-left text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
@@ -204,7 +210,7 @@ export function Navbar() {
                 )}
               </div>
             ) : "isAnchor" in link && link.isAnchor ? (
-              <button key={link.href} onClick={(e) => handleAnchorClick(e, new URL(link.href, "http://x").searchParams.get("scrollTo") || "")} className={cn("text-sm transition-colors text-gray-600 hover:text-gray-900")}>
+              <button key={link.href} onClick={(e) => handleAnchorClick(e, link.href)} className={cn("text-sm transition-colors text-gray-600 hover:text-gray-900")}>
                 {link.label}
               </button>
             ) : (
@@ -236,7 +242,7 @@ export function Navbar() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    {user.name && <p className="text-sm font-medium leading-none">{user.name}</p>}
+                    {user.firstName && user.lastName && <p className="text-sm font-medium leading-none">{`${user.firstName} ${user.lastName}`}</p>}
                     <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>

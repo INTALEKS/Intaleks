@@ -9,11 +9,12 @@ async function createAdminInteractive() {
   // Get credentials from environment variables or use defaults
   const email = process.env.ADMIN_EMAIL || "admin@yourdomain.com";
   const password = process.env.ADMIN_PASSWORD || "ChangeMe123!";
-  const name = process.env.ADMIN_NAME || "Admin User";
+  const firstName = process.env.ADMIN_FIRST_NAME || "Admin";
+  const lastName = process.env.ADMIN_LAST_NAME || "User";
 
   console.log("🔐 Creating admin user...");
   console.log(`📧 Email: ${email}`);
-  console.log(`👤 Name: ${name}`);
+  console.log(`👤 Name: ${firstName} ${lastName}`);
 
   try {
     // Check if user already exists
@@ -49,15 +50,18 @@ async function createAdminInteractive() {
       data: {
         email,
         password: hashedPassword,
-        name,
+        firstName,
+        lastName,
         role: UserRole.ADMIN,
+        termsAccepted: true,
+        termsAcceptedAt: new Date(),
       },
     });
 
     console.log("✅ Admin user created successfully!");
     console.log(`   ID: ${user.id}`);
     console.log(`   Email: ${user.email}`);
-    console.log(`   Name: ${user.name}`);
+    console.log(`   Name: ${user.firstName} ${user.lastName}`);
     console.log(`   Role: ${user.role}`);
     console.log("");
     console.log("🔑 Login credentials:");

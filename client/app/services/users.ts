@@ -17,7 +17,8 @@ export interface SubscriptionPlan {
 export interface User {
   id: string;
   email: string;
-  name: string | null;
+  firstName: string;
+  lastName: string;
   role: UserRole;
   status: UserStatus;
   subscriptionStatus: SubscriptionStatus;
@@ -58,13 +59,15 @@ export interface UserStats {
 export interface CreateUserInput {
   email: string;
   password: string;
-  name?: string;
+  firstName: string;
+  lastName: string;
   role?: UserRole;
 }
 
 export interface UpdateUserInput {
   email?: string;
-  name?: string;
+  firstName?: string;
+  lastName?: string;
   role?: UserRole;
 }
 

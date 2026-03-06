@@ -158,7 +158,8 @@ export interface Participant {
   time?: string;
   user: {
     id: string;
-    name: string | null;
+    firstName: string;
+    lastName: string;
     email: string;
   };
 }

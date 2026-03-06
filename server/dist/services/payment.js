@@ -78,12 +78,13 @@ class PaymentService {
     static async createAndStoreStripeCustomer(user) {
         try {
             // Create Stripe customer with user email and metadata
+            const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || undefined;
             const customer = await (0, stripe_1.getStripe)().customers.create({
                 email: user.email,
                 metadata: {
                     userId: user.id,
                 },
-                name: user.name || undefined,
+                name: fullName,
             });
             // Store customer ID in user record
             await db_1.prisma.user.update({
@@ -347,7 +348,8 @@ class PaymentService {
                     select: {
                         id: true,
                         email: true,
-                        name: true,
+                        firstName: true,
+                        lastName: true,
                     },
                 },
             },
@@ -390,7 +392,8 @@ class PaymentService {
                     select: {
                         id: true,
                         email: true,
-                        name: true,
+                        firstName: true,
+                        lastName: true,
                     },
                 },
             },

@@ -30,7 +30,9 @@ export interface LoginResponse {
 export interface RegisterRequest {
   email: string;
   password: string;
-  name?: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string; // Keep for backward compatibility
 }
 
 export interface RegisterResponse {
@@ -40,7 +42,8 @@ export interface RegisterResponse {
   user?: {
     id: string;
     email: string;
-    name: string | null;
+    firstName: string | null;
+    lastName: string | null;
     role: UserRole;
     subscriptionStatus: SubscriptionStatus;
     termsAccepted: boolean;
@@ -56,7 +59,8 @@ export interface UserLoginResponse {
   user?: {
     id: string;
     email: string;
-    name: string | null;
+    firstName: string | null;
+    lastName: string | null;
     role: UserRole;
     subscriptionStatus: SubscriptionStatus;
     currentPeriodEnd: Date | null;
@@ -86,7 +90,7 @@ export class AuthService {
    * Requirements: 1.1, 1.5, 1.6
    */
   static async registerUser(data: RegisterRequest): Promise<RegisterResponse> {
-    const { email, password, name } = data;
+    const { email, password, firstName, lastName, name } = data;
 
     // Normalize email
     const normalizedEmail = email.toLowerCase().trim();
@@ -124,12 +128,24 @@ export class AuthService {
       const verificationToken = crypto.randomBytes(32).toString("hex");
       const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
+      // Determine firstName and lastName
+      // If provided separately, use them; otherwise try to split name
+      let userFirstName = firstName?.trim() || null;
+      let userLastName = lastName?.trim() || null;
+
+      if (!userFirstName && !userLastName && name) {
+        const nameParts = name.trim().split(" ");
+        userFirstName = nameParts[0] || null;
+        userLastName = nameParts.slice(1).join(" ") || null;
+      }
+
       // Create user with USER role and ACTIVE status (Requirement 1.1)
       const user = await prisma.user.create({
         data: {
           email: normalizedEmail,
           password: hashedPassword,
-          name: name || null,
+          firstName: userFirstName,
+          lastName: userLastName,
           role: UserRole.USER,
           status: UserStatus.ACTIVE,
           subscriptionStatus: SubscriptionStatus.NONE,
@@ -140,7 +156,7 @@ export class AuthService {
       });
 
       // Send verification email (non-blocking)
-      emailService.sendVerificationEmail(user.email, verificationToken, user.name || undefined).catch((error) => {
+      emailService.sendVerificationEmail(user.email, verificationToken, userFirstName || undefined, userLastName || undefined).catch((error) => {
         console.error("Failed to send verification email:", error);
         // Don't fail registration if email fails
       });
@@ -150,7 +166,8 @@ export class AuthService {
         user: {
           id: user.id,
           email: user.email,
-          name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
           role: user.role,
           subscriptionStatus: user.subscriptionStatus,
           termsAccepted: user.termsAccepted,
@@ -230,7 +247,8 @@ export class AuthService {
         user: {
           id: user.id,
           email: user.email,
-          name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
           role: user.role,
           subscriptionStatus: user.subscriptionStatus,
           currentPeriodEnd: user.currentPeriodEnd,
@@ -434,10 +452,12 @@ export class AuthService {
       const tokenPayload: TokenPayload = { userId: user.id, email: user.email, role: user.role };
       const token = this.generateToken(tokenPayload);
 
+      const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || null;
+
       return {
         success: true,
         token,
-        user: { id: user.id, email: user.email, name: user.name, role: user.role, emailVerified: user.emailVerified },
+        user: { id: user.id, email: user.email, name: fullName, role: user.role, emailVerified: user.emailVerified },
       };
     } catch (error) {
       console.error("Login error:", error);
@@ -507,7 +527,8 @@ export class AuthService {
       // Send welcome email after verification
       emailService
         .sendWelcomeEmail({
-          name: user.name || "",
+          firstName: user.firstName || undefined,
+          lastName: user.lastName || undefined,
           email: user.email,
         })
         .catch((error) => {
@@ -565,7 +586,7 @@ export class AuthService {
       });
 
       // Send verification email
-      await emailService.sendVerificationEmail(user.email, verificationToken, user.name || undefined);
+      await emailService.sendVerificationEmail(user.email, verificationToken, user.firstName || undefined, user.lastName || undefined);
 
       return {
         success: true,

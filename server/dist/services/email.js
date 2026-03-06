@@ -245,9 +245,9 @@ Trading as Intaleks
             text,
         });
     }
-    async sendVerificationEmail(email, verificationToken, name) {
+    async sendVerificationEmail(email, verificationToken, firstName, lastName) {
         const verifyUrl = `${this.frontendUrl}/auth/verify-email/confirm?token=${verificationToken}`;
-        const displayName = name || "there";
+        const displayName = firstName ? `${firstName}${lastName ? " " + lastName : ""}` : "there";
         const content = `
       <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 24px;">Verify Your Email Address</h2>
       <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.5;">
@@ -310,8 +310,8 @@ Trading as Intaleks
         });
     }
     async sendWelcomeEmail(data) {
-        const { name, email } = data;
-        const displayName = name || "there";
+        const { firstName, lastName, name, email } = data;
+        const displayName = firstName ? `${firstName}${lastName ? " " + lastName : ""}` : name || "there";
         const loginUrl = `${this.frontendUrl}/login`;
         const calculatorUrl = `${this.frontendUrl}/calculator`;
         const content = `

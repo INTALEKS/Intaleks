@@ -11,7 +11,8 @@ import { RichTextEditor, Attachment } from "./RichTextEditor";
 import type { CreateForumPostInput } from "@/app/services/forum";
 
 export interface AdminUser {
-  name: string | null;
+  firstName: string;
+  lastName: string;
   email: string;
   avatar?: string;
 }
@@ -61,14 +62,8 @@ export function PostCreationPanel({ adminUser, onSubmit, onCancel, isSubmitting,
   const [isAnnouncement, setIsAnnouncement] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
 
-  const getInitials = (name: string | null) => {
-    if (!name) return "A";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName[0]}${lastName[0]}`.toUpperCase();
   };
 
   const handleTitleChange = useCallback(
@@ -79,7 +74,7 @@ export function PostCreationPanel({ adminUser, onSubmit, onCancel, isSubmitting,
         setErrors((prev) => ({ ...prev, title: undefined }));
       }
     },
-    [errors.title]
+    [errors.title],
   );
 
   const handleContentChange = useCallback(
@@ -90,7 +85,7 @@ export function PostCreationPanel({ adminUser, onSubmit, onCancel, isSubmitting,
         setErrors((prev) => ({ ...prev, content: undefined }));
       }
     },
-    [errors.content]
+    [errors.content],
   );
 
   const handleSubmit = useCallback(() => {
@@ -120,11 +115,11 @@ export function PostCreationPanel({ adminUser, onSubmit, onCancel, isSubmitting,
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12">
-              {adminUser.avatar && <AvatarImage src={adminUser.avatar} alt={adminUser.name || "Admin"} />}
-              <AvatarFallback>{getInitials(adminUser.name)}</AvatarFallback>
+              {adminUser.avatar && <AvatarImage src={adminUser.avatar} alt={`${adminUser.firstName} ${adminUser.lastName}`} />}
+              <AvatarFallback>{getInitials(adminUser.firstName, adminUser.lastName)}</AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="font-semibold text-lg">{adminUser.name || "Admin"}</h2>
+              <h2 className="font-semibold text-lg">{`${adminUser.firstName} ${adminUser.lastName}`}</h2>
               <p className="text-sm text-muted-foreground">{adminUser.email}</p>
             </div>
           </div>

@@ -20,7 +20,8 @@ const upload = (0, multer_1.default)({
 });
 // Validation schemas
 const updateProfileSchema = joi_1.default.object({
-    name: joi_1.default.string().min(1).max(100).required(),
+    firstName: joi_1.default.string().min(1).max(100).required(),
+    lastName: joi_1.default.string().min(1).max(100).required(),
     avatar: joi_1.default.string().uri().optional(),
 });
 const changePasswordSchema = joi_1.default.object({
@@ -48,13 +49,15 @@ router.patch("/profile", authMiddleware_1.authenticateToken, authMiddleware_1.re
         const user = await db_1.prisma.user.update({
             where: { id: req.user.id },
             data: {
-                name: value.name,
+                firstName: value.firstName,
+                lastName: value.lastName,
                 ...(value.avatar && { avatar: value.avatar }),
             },
             select: {
                 id: true,
                 email: true,
-                name: true,
+                firstName: true,
+                lastName: true,
                 role: true,
                 avatar: true,
             },
@@ -192,7 +195,8 @@ router.post("/accept-terms", authMiddleware_1.authenticateToken, authMiddleware_
             select: {
                 id: true,
                 email: true,
-                name: true,
+                firstName: true,
+                lastName: true,
                 termsAccepted: true,
                 termsAcceptedAt: true,
             },

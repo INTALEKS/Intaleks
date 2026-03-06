@@ -13,8 +13,8 @@ const router = (0, express_1.Router)();
  */
 router.post("/register", (0, authValidation_1.validateRequest)(authValidation_1.registerSchema), async (req, res) => {
     try {
-        const { email, password, name } = req.body;
-        const result = await auth_1.AuthService.registerUser({ email, password, name });
+        const { email, password, firstName, lastName, name } = req.body;
+        const result = await auth_1.AuthService.registerUser({ email, password, firstName, lastName, name });
         if (!result.success) {
             // Check if it's a duplicate email error (Requirement 1.2)
             if (result.message === "A user with this email already exists") {
@@ -190,7 +190,8 @@ router.get("/me", authMiddleware_1.authenticateToken, async (req, res) => {
             select: {
                 id: true,
                 email: true,
-                name: true,
+                firstName: true,
+                lastName: true,
                 avatar: true,
                 role: true,
                 subscriptionStatus: true,

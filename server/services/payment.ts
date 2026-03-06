@@ -138,12 +138,14 @@ export class PaymentService {
   private static async createAndStoreStripeCustomer(user: User): Promise<string> {
     try {
       // Create Stripe customer with user email and metadata
+      const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || undefined;
+
       const customer = await getStripe().customers.create({
         email: user.email,
         metadata: {
           userId: user.id,
         },
-        name: user.name || undefined,
+        name: fullName,
       });
 
       // Store customer ID in user record
@@ -447,7 +449,8 @@ export class PaymentService {
           select: {
             id: true,
             email: true,
-            name: true,
+            firstName: true,
+            lastName: true,
           },
         },
       },
@@ -494,7 +497,8 @@ export class PaymentService {
           select: {
             id: true,
             email: true,
-            name: true,
+            firstName: true,
+            lastName: true,
           },
         },
       },

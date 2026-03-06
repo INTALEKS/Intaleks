@@ -98,7 +98,8 @@ export interface PaymentWithUser extends Payment {
   user: {
     id: string;
     email: string;
-    name: string | null;
+    firstName: string;
+    lastName: string;
   };
 }
 

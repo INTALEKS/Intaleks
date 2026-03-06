@@ -29,8 +29,15 @@ export const createUserSchema = Joi.object({
     "string.empty": "Password is required",
     "any.required": "Password is required",
   }),
-  name: Joi.string().max(255).allow(null, "").messages({
-    "string.max": "Name must not exceed 255 characters",
+  firstName: Joi.string().max(255).required().messages({
+    "string.max": "First name must not exceed 255 characters",
+    "string.empty": "First name is required",
+    "any.required": "First name is required",
+  }),
+  lastName: Joi.string().max(255).required().messages({
+    "string.max": "Last name must not exceed 255 characters",
+    "string.empty": "Last name is required",
+    "any.required": "Last name is required",
   }),
   role: Joi.string()
     .valid(...USER_ROLE_VALUES)
@@ -68,8 +75,11 @@ export const updateUserSchema = Joi.object({
   password: Joi.string().min(8).messages({
     "string.min": "Password must be at least 8 characters",
   }),
-  name: Joi.string().max(255).allow(null, "").messages({
-    "string.max": "Name must not exceed 255 characters",
+  firstName: Joi.string().max(255).messages({
+    "string.max": "First name must not exceed 255 characters",
+  }),
+  lastName: Joi.string().max(255).messages({
+    "string.max": "Last name must not exceed 255 characters",
   }),
   role: Joi.string()
     .valid(...USER_ROLE_VALUES)

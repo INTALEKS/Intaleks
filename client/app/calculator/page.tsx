@@ -12,11 +12,12 @@ import { useAuthState } from "@/app/hooks/useAuthState";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { ApiClient } from "@/app/services/api";
+import { ApiClient, type SubscriptionPlan } from "@/app/services/api";
 import { ValuationQuestionnaire } from "@/components/calculator/ValuationQuestionnaire";
 import { useCalculatePreview } from "@/app/hooks/useQuestionnaire";
 import { useValuationMultiples } from "@/app/hooks/useValuationMultiples";
 import { useCalculateValuation } from "@/app/hooks/useCalculator";
+import { useCreateCheckout } from "@/app/hooks/usePayments";
 import type { QuestionnaireScores } from "@/lib/questionnaire-api";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,6 +25,8 @@ import Link from "next/link";
 
 // LocalStorage key for calculator data persistence
 const CALCULATOR_STORAGE_KEY = "intaleks_calculator_data";
+const CALCULATOR_TIMESTAMP_KEY = "intaleks_calculator_timestamp";
+const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
 // Financial metrics following standard P&L structure with sample placeholders
 // Only input fields - calculated fields are handled separately
@@ -64,21 +67,93 @@ interface CalculatorState {
   companyLogoType?: string;
 }
 
+// SubscribeButton component for authenticated users without subscription
+function SubscribeButton() {
+  const createCheckout = useCreateCheckout();
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(false);
+
+  useEffect(() => {
+    async function fetchPlans() {
+      setIsLoadingPlans(true);
+      try {
+        const response = await ApiClient.getPublicPlans();
+        if (response.success) {
+          setPlans(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch plans:", error);
+      } finally {
+        setIsLoadingPlans(false);
+      }
+    }
+    fetchPlans();
+  }, []);
+
+  const handleSubscribeClick = () => {
+    const paidPlan = plans.find((plan) => plan.price > 0);
+    if (paidPlan) {
+      createCheckout.mutate({
+        planId: paidPlan.id,
+        successUrl: `${window.location.origin}/calculator?success=true`,
+        cancelUrl: `${window.location.origin}/calculator`,
+      });
+    }
+  };
+
+  return (
+    <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSubscribeClick} disabled={createCheckout.isPending || isLoadingPlans}>
+      {createCheckout.isPending || isLoadingPlans ? (
+        <>
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          Loading...
+        </>
+      ) : (
+        "Subscribe Now"
+      )}
+    </Button>
+  );
+}
+
 export default function CalculatorPage() {
   const router = useRouter();
   const { isAuthenticated, hasActiveSubscription, subscriptionStatus, isAuthentiating, user } = useAuthState();
   const queryClient = useQueryClient();
   const { getMultiple } = useValuationMultiples();
 
-  // Helper function to get initial state from localStorage
+  // Helper function to get initial state from localStorage with expiration check
   const getInitialState = () => {
     try {
       const savedState = localStorage.getItem(CALCULATOR_STORAGE_KEY);
+      const savedTimestamp = localStorage.getItem(CALCULATOR_TIMESTAMP_KEY);
+
       if (savedState) {
+        // If there's data but no timestamp, it's old data - clear it
+        if (!savedTimestamp) {
+          console.log("No timestamp found for calculator data, clearing old localStorage");
+          localStorage.removeItem(CALCULATOR_STORAGE_KEY);
+          return null;
+        }
+
+        const timestamp = parseInt(savedTimestamp, 10);
+        const now = Date.now();
+        const age = now - timestamp;
+
+        // Check if cache has expired (older than 24 hours)
+        if (age > CACHE_EXPIRY_MS) {
+          console.log("Calculator cache expired, clearing localStorage");
+          localStorage.removeItem(CALCULATOR_STORAGE_KEY);
+          localStorage.removeItem(CALCULATOR_TIMESTAMP_KEY);
+          return null;
+        }
+
         return JSON.parse(savedState) as CalculatorState;
       }
     } catch (error) {
       console.error("Failed to parse saved state:", error);
+      // Clear corrupted data
+      localStorage.removeItem(CALCULATOR_STORAGE_KEY);
+      localStorage.removeItem(CALCULATOR_TIMESTAMP_KEY);
     }
     return null;
   };
@@ -266,15 +341,21 @@ export default function CalculatorPage() {
     return calculateAverageAdjustedEBIT(ebitValues, addbackValues);
   }, [calculatedMetrics, financialYears, totalAddbacksByYear]);
 
-  // This is now just for display purposes - not used in calculation
-  const displayMultiple = useMemo(() => {
-    // Use questionnaire multiple if calculated, otherwise use default from API
+  const baseIndustryMultiple = useMemo(() => getMultiple(country, industry) || 4.0, [country, industry, getMultiple]);
+
+  // Single source of truth for the multiple used in server calculations and PDF generation
+  const effectiveProfitMultiple = useMemo(() => {
     if (useQuestionnaireMultiple && calculatedMultiple) {
       return calculatedMultiple;
     }
-    // Get from API or fallback to 4.0
-    return getMultiple(country, industry) || 4.0;
-  }, [country, industry, useQuestionnaireMultiple, calculatedMultiple, getMultiple]);
+
+    const parsedCustom = parseFloat(customMultiple);
+    if (!Number.isNaN(parsedCustom) && parsedCustom >= 0) {
+      return parsedCustom;
+    }
+
+    return baseIndustryMultiple;
+  }, [useQuestionnaireMultiple, calculatedMultiple, customMultiple, baseIndustryMultiple]);
 
   // Calculate final valuation based on method
   const finalValuation = useMemo(() => {
@@ -283,13 +364,11 @@ export default function CalculatorPage() {
       const totalLiabilities = Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
       return totalAssets - totalLiabilities;
     } else if (selectedMethod === "profit") {
-      // Use questionnaire multiple if available, otherwise use default multiple
-      const multiple = useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0;
-      // Valuation = Average Adjusted EBIT × Multiple
-      return averageAdjustedEbit * multiple;
+      // Valuation = Average Adjusted EBIT × Effective Multiple
+      return averageAdjustedEbit * effectiveProfitMultiple;
     }
     return 0;
-  }, [selectedMethod, assets, liabilities, averageAdjustedEbit, useQuestionnaireMultiple, calculatedMultiple, country, industry, getMultiple]);
+  }, [selectedMethod, assets, liabilities, averageAdjustedEbit, effectiveProfitMultiple]);
 
   // ============================================
   // EVENT HANDLERS
@@ -340,7 +419,7 @@ export default function CalculatorPage() {
           valuationMethod: "profit" as const,
           financialData: formattedFinancialData,
           addbacks: formattedAddbacks,
-          multiple: useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0,
+          multiple: effectiveProfitMultiple,
           years: financialYears,
         };
       } else {
@@ -493,9 +572,12 @@ export default function CalculatorPage() {
 
       // Determine multiple source for transparency in PDF
       let multipleSource: ValuationReportData["multipleSource"] = "industry";
+      const parsedCustomMultiple = parseFloat(customMultiple);
+      const hasCustomMultiple = !Number.isNaN(parsedCustomMultiple) && parsedCustomMultiple >= 0;
+
       if (useQuestionnaireMultiple && calculatedMultiple) {
         multipleSource = "questionnaire";
-      } else if (customMultiple && customMultiple.trim() !== "" && !Number.isNaN(parseFloat(customMultiple))) {
+      } else if (hasCustomMultiple && Math.abs(parsedCustomMultiple - baseIndustryMultiple) > 0.001) {
         multipleSource = "custom";
       }
 
@@ -534,7 +616,7 @@ export default function CalculatorPage() {
         // Questionnaire data for RAVDA Scorecard
         questionnaireScore: totalScore,
         questionnaireCategory: multipleCategory,
-        calculatedMultiple: useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0,
+        calculatedMultiple: effectiveProfitMultiple,
         multipleSource,
         questionnaireScores: useQuestionnaireMultiple ? questionnaireScores : undefined,
       };
@@ -583,17 +665,25 @@ export default function CalculatorPage() {
   // STEP COMPLETION LOGIC
   // ============================================
 
-  // Step 1 is complete when all company info fields are filled
+  // Step 1 is complete only when all required fields have meaningful values
   const isStep1Complete = useMemo(() => {
-    return !!(companyName && startedYear && employees && stage && country && industry);
+    const hasCompanyName = companyName.trim().length > 0;
+    const hasStartedYear = startedYear.trim().length > 0;
+    const hasEmployees = employees.trim().length > 0;
+    const hasStage = stage.trim().length > 0;
+    const hasCountry = country.trim().length > 0;
+    const hasIndustry = industry.trim().length > 0;
+
+    return hasCompanyName && hasStartedYear && hasEmployees && hasStage && hasCountry && hasIndustry;
   }, [companyName, startedYear, employees, stage, country, industry]);
 
-  // Step 2 (Multiple Assessment) is optional - always considered complete if step 1 is done
+  // Step 2 is only complete after Step 1 is complete and questionnaire multiple is calculated
   const isStep2Complete = useMemo(() => {
-    return isStep1Complete;
-  }, [isStep1Complete]);
+    return isStep1Complete && useQuestionnaireMultiple && calculatedMultiple !== undefined;
+  }, [isStep1Complete, useQuestionnaireMultiple, calculatedMultiple]);
 
-  // Step 3 is complete when valuation method is selected (independent of step 2)
+  // Step 3 is complete when user has selected a valuation method
+  // Since there's a default method, this is complete once step 1 is done
   const isStep3Complete = useMemo(() => {
     return isStep1Complete && !!selectedMethod;
   }, [isStep1Complete, selectedMethod]);
@@ -711,6 +801,7 @@ export default function CalculatorPage() {
 
       try {
         localStorage.setItem(CALCULATOR_STORAGE_KEY, JSON.stringify(stateToSave));
+        localStorage.setItem(CALCULATOR_TIMESTAMP_KEY, Date.now().toString());
         console.log("Calculator data saved to localStorage");
       } catch (error) {
         console.error("Failed to save calculator state:", error);
@@ -777,6 +868,7 @@ export default function CalculatorPage() {
   const clearSavedData = () => {
     try {
       localStorage.removeItem(CALCULATOR_STORAGE_KEY);
+      localStorage.removeItem(CALCULATOR_TIMESTAMP_KEY);
     } catch (error) {
       console.error("Failed to clear calculator state:", error);
     }
@@ -960,7 +1052,7 @@ export default function CalculatorPage() {
             <CountryIndustrySelector country={country} industry={industry} customMultiple={customMultiple} onCountryChange={setCountry} onIndustryChange={setIndustry} onCustomMultipleChange={setCustomMultiple} />
             <div className="bg-blue-50 p-4 rounded-lg mt-4">
               <p className="text-sm text-gray-600">
-                Based on your selection, the default valuation multiple is: <span className="font-bold text-blue-600">{customMultiple || displayMultiple}x</span>
+                Based on your selection, the default valuation multiple is: <span className="font-bold text-blue-600">{customMultiple || baseIndustryMultiple}x</span>
               </p>
               {useQuestionnaireMultiple && calculatedMultiple && (
                 <p className="text-sm text-green-600 mt-2 font-semibold">
@@ -1028,9 +1120,7 @@ export default function CalculatorPage() {
                       </>
                     ) : (
                       <>
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push("/#pricing")}>
-                          View Pricing Plans
-                        </Button>
+                        <SubscribeButton />
                         {subscriptionStatus && subscriptionStatus !== "NONE" && (
                           <Button variant="outline" onClick={() => router.push("/settings")}>
                             Manage Subscription
@@ -1084,7 +1174,7 @@ export default function CalculatorPage() {
         <AccordionSection title="Download Valuation Document (PDF)" stepNumber={5} isOpen={openSections[5]} onToggle={() => toggleSection(5)}>
           <div className="py-6 space-y-6">
             {/* Comprehensive Valuation Summary Card */}
-            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={serverCalculatedValues?.averageSales ?? financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={serverCalculatedValues?.averageCOGS ?? financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={serverCalculatedValues?.averageEbit ?? financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} averageAddbacks={serverCalculatedValues?.averageAddbacks ?? financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0) / financialYears.length} adjustedEbit={serverCalculatedValues?.adjustedEbit ?? averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={serverCalculatedValues?.valuationMultiple ?? (useQuestionnaireMultiple && calculatedMultiple ? calculatedMultiple : getMultiple(country, industry) || 4.0)} finalValuation={serverCalculatedValues?.finalValuation ?? finalValuation} totalAssets={serverCalculatedValues?.totalAssets ?? (selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined)} totalLiabilities={serverCalculatedValues?.totalLiabilities ?? (selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined)} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription} showReport={showValuationReport} onShowReport={handleShowReport} />
+            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={serverCalculatedValues?.averageSales ?? financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={serverCalculatedValues?.averageCOGS ?? financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={serverCalculatedValues?.averageEbit ?? financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} averageAddbacks={serverCalculatedValues?.averageAddbacks ?? financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0) / financialYears.length} adjustedEbit={serverCalculatedValues?.adjustedEbit ?? averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={serverCalculatedValues?.valuationMultiple ?? effectiveProfitMultiple} finalValuation={serverCalculatedValues?.finalValuation ?? finalValuation} totalAssets={serverCalculatedValues?.totalAssets ?? (selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined)} totalLiabilities={serverCalculatedValues?.totalLiabilities ?? (selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined)} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription} showReport={showValuationReport} onShowReport={handleShowReport} />
 
             <div className="text-center">
               {!isStep4Complete ? (

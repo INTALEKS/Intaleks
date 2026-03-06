@@ -6,7 +6,9 @@ export interface loginData {
 export interface RegisterData {
   email: string;
   password: string;
-  name?: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string; // Keep for backward compatibility
 }
 
 export type UserRole = "USER" | "ADMIN" | "SUPER_ADMIN";
@@ -16,7 +18,9 @@ export type BillingPeriod = "MONTHLY" | "YEARLY" | "ONE_TIME";
 export interface User {
   id: string;
   email: string;
-  name: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  name?: string | null; // Keep for backward compatibility
   role: UserRole;
   avatar?: string | null;
   subscriptionStatus?: SubscriptionStatus;
@@ -83,7 +87,7 @@ export class ApiClient {
   /**
    * User registration
    */
-  static async register(email: string, password: string, name?: string): Promise<AuthResponse> {
+  static async register(email: string, password: string, firstName?: string, lastName?: string): Promise<AuthResponse> {
     try {
       const response = await fetch(`${this.BASE_URL}/auth/register`, {
         method: "POST",
@@ -91,7 +95,7 @@ export class ApiClient {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password, firstName, lastName }),
       });
 
       const data = await response.json();

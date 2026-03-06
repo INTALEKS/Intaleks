@@ -13,9 +13,9 @@ const router = Router();
  */
 router.post("/register", validateRequest(registerSchema), async (req: Request, res: Response) => {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, firstName, lastName, name } = req.body;
 
-    const result = await AuthService.registerUser({ email, password, name });
+    const result = await AuthService.registerUser({ email, password, firstName, lastName, name });
 
     if (!result.success) {
       // Check if it's a duplicate email error (Requirement 1.2)
@@ -210,7 +210,8 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
       select: {
         id: true,
         email: true,
-        name: true,
+        firstName: true,
+        lastName: true,
         avatar: true,
         role: true,
         subscriptionStatus: true,

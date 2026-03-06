@@ -68,9 +68,9 @@ export class ForumService {
     // Build where clause
     const where: Prisma.ForumPostWhereInput = {};
 
-    // Search filter - search in author name, title, or content
+    // Search filter - search in author firstName, lastName, title, or content
     if (search && search.trim()) {
-      where.OR = [{ title: { contains: search, mode: "insensitive" } }, { content: { contains: search, mode: "insensitive" } }, { author: { name: { contains: search, mode: "insensitive" } } }];
+      where.OR = [{ title: { contains: search, mode: "insensitive" } }, { content: { contains: search, mode: "insensitive" } }, { author: { firstName: { contains: search, mode: "insensitive" } } }, { author: { lastName: { contains: search, mode: "insensitive" } } }];
     }
 
     // Execute queries
@@ -84,7 +84,8 @@ export class ForumService {
           author: {
             select: {
               id: true,
-              name: true,
+              firstName: true,
+              lastName: true,
               email: true,
               role: true,
               subscriptionStatus: true,
@@ -96,7 +97,8 @@ export class ForumService {
               author: {
                 select: {
                   id: true,
-                  name: true,
+                  firstName: true,
+                  lastName: true,
                   email: true,
                   role: true,
                 },
@@ -158,7 +160,8 @@ export class ForumService {
         author: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             email: true,
             role: true,
             subscriptionStatus: true,
@@ -170,7 +173,8 @@ export class ForumService {
             author: {
               select: {
                 id: true,
-                name: true,
+                firstName: true,
+                lastName: true,
                 email: true,
                 role: true,
               },
@@ -241,7 +245,8 @@ export class ForumService {
         author: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             email: true,
             role: true,
             subscriptionStatus: true,
@@ -290,7 +295,8 @@ export class ForumService {
         author: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             email: true,
             role: true,
           },
@@ -331,7 +337,8 @@ export class ForumService {
         author: {
           select: {
             id: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             email: true,
             role: true,
             subscriptionStatus: true,

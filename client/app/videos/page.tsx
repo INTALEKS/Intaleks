@@ -111,7 +111,7 @@ export default function VideosPage() {
             ctaText="Start Learning"
             ctaHref="#videos"
             altCtaText="Subscribe to Learn"
-            altCtaHref="/pricing"
+            altCtaHref="/#pricing"
           />
           <FeatureCards features={features} />
         </>
@@ -145,6 +145,41 @@ export default function VideosPage() {
 
 // Preview Section for non-subscribed users
 function PreviewSection({ isAuthenticated }: { isAuthenticated: boolean }) {
+  const createCheckout = useCreateCheckout();
+  const [plans, setPlans] = useState<Video[]>([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      async function fetchPlans() {
+        setIsLoadingPlans(true);
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4545/api"}/subscriptions/plans`);
+          const data = await response.json();
+          if (data.success) {
+            setPlans(data.data);
+          }
+        } catch (error) {
+          console.error("Failed to fetch plans:", error);
+        } finally {
+          setIsLoadingPlans(false);
+        }
+      }
+      fetchPlans();
+    }
+  }, [isAuthenticated]);
+
+  const handleSubscribeClick = () => {
+    const paidPlan = plans.find((plan: any) => plan.price > 0);
+    if (paidPlan) {
+      createCheckout.mutate({
+        planId: (paidPlan as any).id,
+        successUrl: `${window.location.origin}/videos?success=true`,
+        cancelUrl: `${window.location.origin}/videos`,
+      });
+    }
+  };
+
   return (
     <div className="relative">
       <div className="flex justify-center -mb-4 relative z-10">
@@ -170,9 +205,16 @@ function PreviewSection({ isAuthenticated }: { isAuthenticated: boolean }) {
                   </Link>
                 </>
               ) : (
-                <Link href="/pricing">
-                  <Button className="bg-blue-500 hover:bg-blue-600">View Pricing Plans</Button>
-                </Link>
+                <Button className="bg-blue-500 hover:bg-blue-600" onClick={handleSubscribeClick} disabled={createCheckout.isPending || isLoadingPlans}>
+                  {createCheckout.isPending || isLoadingPlans ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Subscribe Now"
+                  )}
+                </Button>
               )}
             </div>
           </div>

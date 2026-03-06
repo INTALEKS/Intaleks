@@ -9,10 +9,6 @@ function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email");
 
-  const openGmail = () => {
-    window.open("https://mail.google.com", "_blank");
-  };
-
   return (
     <AuthFormLayout title="Verify your email">
       <div className="flex flex-col items-center gap-y-6 text-center">
@@ -35,12 +31,6 @@ function VerifyEmailContent() {
           </p>
           <p className="text-sm text-gray-500">Click the link in the email to verify your account and complete your registration.</p>
         </div>
-
-        {/* Open Gmail button */}
-        <button onClick={openGmail} className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 shadow-lg flex items-center justify-center gap-x-2">
-          <Mail className="w-5 h-5" />
-          Open Gmail
-        </button>
 
         {/* Additional info */}
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-600 space-y-2">

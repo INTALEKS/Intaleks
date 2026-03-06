@@ -15,9 +15,9 @@ class ForumService {
         const skip = (page - 1) * limit;
         // Build where clause
         const where = {};
-        // Search filter - search in author name, title, or content
+        // Search filter - search in author firstName, lastName, title, or content
         if (search && search.trim()) {
-            where.OR = [{ title: { contains: search, mode: "insensitive" } }, { content: { contains: search, mode: "insensitive" } }, { author: { name: { contains: search, mode: "insensitive" } } }];
+            where.OR = [{ title: { contains: search, mode: "insensitive" } }, { content: { contains: search, mode: "insensitive" } }, { author: { firstName: { contains: search, mode: "insensitive" } } }, { author: { lastName: { contains: search, mode: "insensitive" } } }];
         }
         // Execute queries
         const [items, total] = await Promise.all([
@@ -30,7 +30,8 @@ class ForumService {
                     author: {
                         select: {
                             id: true,
-                            name: true,
+                            firstName: true,
+                            lastName: true,
                             email: true,
                             role: true,
                             subscriptionStatus: true,
@@ -42,7 +43,8 @@ class ForumService {
                             author: {
                                 select: {
                                     id: true,
-                                    name: true,
+                                    firstName: true,
+                                    lastName: true,
                                     email: true,
                                     role: true,
                                 },
@@ -100,7 +102,8 @@ class ForumService {
                 author: {
                     select: {
                         id: true,
-                        name: true,
+                        firstName: true,
+                        lastName: true,
                         email: true,
                         role: true,
                         subscriptionStatus: true,
@@ -112,7 +115,8 @@ class ForumService {
                         author: {
                             select: {
                                 id: true,
-                                name: true,
+                                firstName: true,
+                                lastName: true,
                                 email: true,
                                 role: true,
                             },
@@ -177,7 +181,8 @@ class ForumService {
                 author: {
                     select: {
                         id: true,
-                        name: true,
+                        firstName: true,
+                        lastName: true,
                         email: true,
                         role: true,
                         subscriptionStatus: true,
@@ -221,7 +226,8 @@ class ForumService {
                 author: {
                     select: {
                         id: true,
-                        name: true,
+                        firstName: true,
+                        lastName: true,
                         email: true,
                         role: true,
                     },
@@ -258,7 +264,8 @@ class ForumService {
                 author: {
                     select: {
                         id: true,
-                        name: true,
+                        firstName: true,
+                        lastName: true,
                         email: true,
                         role: true,
                         subscriptionStatus: true,

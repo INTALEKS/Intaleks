@@ -15,13 +15,15 @@ async function deleteNonAdminUsers() {
             select: {
                 id: true,
                 email: true,
-                name: true,
+                firstName: true,
+                lastName: true,
                 role: true,
             },
         });
         console.log(`\n📊 Found ${nonAdminUsers.length} non-admin users:`);
         nonAdminUsers.forEach((user) => {
-            console.log(`  - ${user.email} (${user.name || "No name"}) - Role: ${user.role}`);
+            const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "No name";
+            console.log(`  - ${user.email} (${fullName}) - Role: ${user.role}`);
         });
         if (nonAdminUsers.length === 0) {
             console.log("\n✅ No non-admin users to delete.");
@@ -42,13 +44,15 @@ async function deleteNonAdminUsers() {
             select: {
                 id: true,
                 email: true,
-                name: true,
+                firstName: true,
+                lastName: true,
                 role: true,
             },
         });
         console.log(`\n👥 Remaining users (${remainingUsers.length}):`);
         remainingUsers.forEach((user) => {
-            console.log(`  - ${user.email} (${user.name || "No name"}) - Role: ${user.role}`);
+            const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "No name";
+            console.log(`  - ${user.email} (${fullName}) - Role: ${user.role}`);
         });
     }
     catch (error) {

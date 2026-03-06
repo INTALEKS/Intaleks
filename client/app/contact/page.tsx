@@ -11,23 +11,27 @@ import { ApiClient } from "@/app/services/api";
 const offices = [
   {
     city: "PERTH OFFICE",
-    address: "Level 25, 1 Spring Street,\nCapital Square Tower 3,\nPerth, 6000",
+    address: "Level 25,1 Spring Street, Capital Square Tower 3, Perth, 6000",
     phone: "(08) 6144 4723",
+    mapUrl: "https://maps.app.goo.gl/t2BXpv3n3SVscVgw5",
   },
   {
     city: "SYDNEY OFFICE",
-    address: "Level 35, 100 Barangaroo\nAve. Sydney NSW 2000",
+    address: "Level 35, 100 Barangaroo Ave. Sydney NSW 2000",
     phone: "(02) 8088 0798",
+    mapUrl: "https://maps.app.goo.gl/Zpw7GSjc2VhfrgaNA",
   },
   {
     city: "MELBOURNE OFFICE",
-    address: "Level 27, 101 Collins\nStreet, Melbourne VIC\n3000",
+    address: "Level 27, 101 Collins Street, Melbourne VIC 3000",
     phone: "(03) 7046 1243",
+    mapUrl: "https://maps.app.goo.gl/xoJ4Kmb3JL42fYs67",
   },
   {
     city: "BRISBANE OFFICE",
-    address: "Level 29, 97 Creek St,\nBrisbane City QLD 4000",
+    address: "Level 29, 97 Creek St, Brisbane City QLD 4000",
     phone: "(07) 3535 1238",
+    mapUrl: "https://maps.app.goo.gl/QX4bsmdj3oSBEY1N6",
   },
 ];
 
@@ -142,7 +146,15 @@ export default function ContactPage() {
                 {offices.map((office) => (
                   <div key={office.city}>
                     <h4 className="font-semibold text-sm mb-2">{office.city}</h4>
-                    <p className="text-gray-600 text-sm whitespace-pre-line">{office.address}</p>
+                    {office.mapUrl ? (
+                      <address className="not-italic">
+                        <a href={office.mapUrl} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 text-sm whitespace-pre-line transition-colors">
+                          {office.address}
+                        </a>
+                      </address>
+                    ) : (
+                      <p className="text-gray-600 text-sm whitespace-pre-line">{office.address}</p>
+                    )}
                     <p className="text-gray-600 text-sm mt-1">{office.phone}</p>
                   </div>
                 ))}

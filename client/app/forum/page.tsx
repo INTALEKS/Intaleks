@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, Suspense } from "react";
+import { useState, useMemo, Suspense, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Navbar, Footer } from "@/components/home";
@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/general-ui/PageHeader";
 import { FeatureCards } from "@/components/general-ui/FeatureCards";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useForumPosts, useForumPost, useAddForumReply, useCreateForumPost, useTogglePostReaction, useToggleReplyReaction, type ForumPost as APIForumPost, type ForumReply as APIForumReply, type ForumFilters } from "@/app/hooks/useForumPosts";
+import { useCreateCheckout } from "@/app/hooks/useSubscriptions";
 import { useDebounce } from "@/app/hooks/useDebounce";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -389,7 +390,7 @@ function ForumPageContent() {
             ctaText="Start New Discussion"
             ctaHref="#forum"
             altCtaText="Subscribe to Join"
-            altCtaHref="/?scrollTo=pricing"
+            altCtaHref="/#pricing"
           />
 
           <FeatureCards features={features} />
@@ -567,6 +568,47 @@ function ForumPageContent() {
 
 // Preview Section Component
 function PreviewSection({ isAuthenticated }: { isAuthenticated: boolean }) {
+  const [plans, setPlans] = useState<APIForumPost[]>([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(false);
+  const createCheckout = useCreateCheckout();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      async function fetchPlans() {
+        setIsLoadingPlans(true);
+        try {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4545/api"}/subscriptions/plans`);
+          const data = await response.json();
+          if (data.success) {
+            setPlans(data.data);
+          }
+        } catch (error) {
+          console.error("Failed to fetch plans:", error);
+        } finally {
+          setIsLoadingPlans(false);
+        }
+      }
+      fetchPlans();
+    }
+  }, [isAuthenticated]);
+
+  const handleSubscribeClick = () => {
+    if (isAuthenticated) {
+      // Find the first paid plan
+      const paidPlan = plans.find((plan: any) => plan.price > 0);
+      if (paidPlan) {
+        createCheckout.mutate({
+          planId: (paidPlan as any).id,
+          successUrl: `${window.location.origin}/forum?success=true`,
+          cancelUrl: `${window.location.origin}/forum`,
+        });
+      }
+    } else {
+      // Redirect to pricing page for non-authenticated users
+      window.location.href = "/#pricing";
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
       <div className="flex justify-center -mb-4 relative z-10">
@@ -592,9 +634,16 @@ function PreviewSection({ isAuthenticated }: { isAuthenticated: boolean }) {
                   </Link>
                 </>
               ) : (
-                <Link href="/pricing">
-                  <Button className="bg-blue-500 hover:bg-blue-600">View Pricing Plans</Button>
-                </Link>
+                <Button className="bg-blue-500 hover:bg-blue-600" onClick={handleSubscribeClick} disabled={isLoadingPlans || createCheckout.isPending}>
+                  {isLoadingPlans || createCheckout.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    "Subscribe Now"
+                  )}
+                </Button>
               )}
             </div>
           </div>

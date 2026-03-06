@@ -101,26 +101,42 @@ const generatePDF = async (req, res, next) => {
             return res.status(401).json({ error: "Unauthorized" });
         }
         const data = req.body;
+        // Debug logging
+        console.log("[PDF] Received data:", {
+            companyName: data.companyName,
+            valuationMethod: data.valuationMethod,
+            financialYears: data.financialYears,
+            years: data.years,
+            hasFinancialData: !!data.financialData,
+            financialDataKeys: data.financialData ? Object.keys(data.financialData) : [],
+        });
         if (!data.companyName || !data.valuationMethod) {
             return res.status(400).json({ error: "Missing required fields: companyName, valuationMethod" });
         }
+        const normalizedYears = [
+            ...(Array.isArray(data.years) ? data.years : []),
+            ...(Array.isArray(data.financialYears) ? data.financialYears : []),
+        ]
+            .map((year) => (typeof year === "string" ? year.trim() : ""))
+            .filter((year) => year.length > 0);
         // SERVER-SIDE RECALCULATION - Prevent client manipulation
         let recalculatedResult;
         let finalValuation;
         try {
             if (data.valuationMethod === "profit") {
                 // Validate required fields for profit method
-                if (!data.financialData || !data.years || !data.calculatedMultiple) {
+                if (!data.financialData || normalizedYears.length === 0 || !data.calculatedMultiple) {
                     return res.status(400).json({
                         error: "Missing required fields for profit method: financialData, years, calculatedMultiple",
                     });
                 }
+                const yearsForCalculation = normalizedYears.length > 0 ? normalizedYears : Object.keys(data.financialData || {});
                 // Recalculate on server to prevent manipulation
                 recalculatedResult = calculator_1.CalculatorService.validateAndCalculate("profit", {
                     financialData: data.financialData,
                     addbacks: data.addbacks || [],
                     multiple: data.calculatedMultiple,
-                    years: data.years,
+                    years: yearsForCalculation,
                 });
                 finalValuation = recalculatedResult.finalValuation;
                 // Log if client-side calculation differs from server-side (potential manipulation attempt)
@@ -131,6 +147,20 @@ const generatePDF = async (req, res, next) => {
                 data.finalValuation = finalValuation;
                 data.adjustedEbit = recalculatedResult.averageAdjustedEbit;
                 data.profitValuation = finalValuation;
+                // Use server-recalculated financial data for PDF
+                data.financialData = recalculatedResult.yearlyMetrics;
+                data.adjustedEbitPerYear = recalculatedResult.adjustedEbitByYear;
+                data.totalAddbacksPerYear = recalculatedResult.totalAddbacksByYear;
+                // Calculate average EBIT (before addbacks)
+                data.averageEbit = yearsForCalculation.reduce((sum, year) => sum + (recalculatedResult.yearlyMetrics[year]?.ebit || 0), 0) / yearsForCalculation.length;
+                // Ensure financialYears is set for PDF generation
+                data.financialYears = yearsForCalculation;
+                console.log("[PDF] After recalculation:", {
+                    financialYears: data.financialYears,
+                    yearlyMetricsKeys: Object.keys(recalculatedResult.yearlyMetrics),
+                    sampleYear: data.financialYears[0],
+                    sampleData: recalculatedResult.yearlyMetrics[data.financialYears[0]],
+                });
             }
             else if (data.valuationMethod === "asset") {
                 // Validate required fields for asset method

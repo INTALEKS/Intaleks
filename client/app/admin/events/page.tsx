@@ -47,7 +47,7 @@ function transformEvent(apiEvent: ApiEvent): Event {
     thumbnail: apiEvent.thumbnail || undefined,
     participants: (apiEvent.participants || []).map((p) => ({
       id: p.id,
-      name: p.user.name || p.user.email,
+      name: p.user.firstName && p.user.lastName ? `${p.user.firstName} ${p.user.lastName}` : p.user.email,
       role: "Member",
       company: "",
       status: p.status,

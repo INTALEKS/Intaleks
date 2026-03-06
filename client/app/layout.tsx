@@ -80,11 +80,37 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const localBusinessSchema = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: "Intaleks",
+    description: "Professional business valuation calculator and services",
+    url: process.env.NEXT_PUBLIC_APP_URL || "https://intaleks.com",
+    telephone: "+61-8-6144-4723",
+    email: "admin@intaleks.com",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "Level 25,1 Spring Street, Capital Square Tower 3",
+      addressLocality: "Perth",
+      addressRegion: "WA",
+      postalCode: "6000",
+      addressCountry: "AU",
+    },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: "-31.9523",
+      longitude: "115.8613",
+    },
+    openingHours: "Mo-Su 00:00-23:59",
+    priceRange: "$$",
+  };
+
   return (
     <html lang="en">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }} />
       </head>
       <body className={`${inter.variable} font-inter antialiased`}>
         <QueryProvider>{children}</QueryProvider>

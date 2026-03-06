@@ -13,7 +13,8 @@ interface FormErrors {
   email: string;
   password: string;
   confirmPassword: string;
-  name: string;
+  firstName: string;
+  lastName: string;
 }
 
 /**
@@ -28,13 +29,15 @@ function SignupForm() {
     email: "",
     password: "",
     confirmPassword: "",
-    name: "",
+    firstName: "",
+    lastName: "",
   });
   const [errors, setErrors] = useState<FormErrors>({
     email: "",
     password: "",
     confirmPassword: "",
-    name: "",
+    firstName: "",
+    lastName: "",
   });
 
   const { register, isRegistering, registerError } = useAuth(returnUrl || "/");
@@ -44,9 +47,22 @@ function SignupForm() {
       email: "",
       password: "",
       confirmPassword: "",
-      name: "",
+      firstName: "",
+      lastName: "",
     };
     let isValid = true;
+
+    // First name validation
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "First name is required";
+      isValid = false;
+    }
+
+    // Last name validation
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+      isValid = false;
+    }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -90,7 +106,8 @@ function SignupForm() {
     register({
       email: formData.email.toLowerCase().trim(),
       password: formData.password,
-      name: formData.name.trim() || undefined,
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
     });
   };
 
@@ -103,21 +120,38 @@ function SignupForm() {
         {/* Server error display */}
         {registerError && <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">{registerError.message}</div>}
 
-        {/* Name field (optional) */}
+        {/* First Name field */}
         <div className="flex flex-col gap-y-1">
           <InputField
             type="text"
-            label="Name (optional)"
-            placeholder="Enter your name"
+            label="First Name"
+            placeholder="Enter your first name"
             onChange={(e) =>
               setFormData((prev) => ({
                 ...prev,
-                name: e.target.value,
+                firstName: e.target.value,
               }))
             }
-            error={!!errors.name}
+            error={!!errors.firstName}
           />
-          {errors.name && <span className="text-red-500 text-xs">{errors.name}</span>}
+          {errors.firstName && <span className="text-red-500 text-xs">{errors.firstName}</span>}
+        </div>
+
+        {/* Last Name field */}
+        <div className="flex flex-col gap-y-1">
+          <InputField
+            type="text"
+            label="Last Name"
+            placeholder="Enter your last name"
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                lastName: e.target.value,
+              }))
+            }
+            error={!!errors.lastName}
+          />
+          {errors.lastName && <span className="text-red-500 text-xs">{errors.lastName}</span>}
         </div>
 
         {/* Email field */}

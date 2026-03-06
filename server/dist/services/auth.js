@@ -20,7 +20,7 @@ class AuthService {
      * Requirements: 1.1, 1.5, 1.6
      */
     static async registerUser(data) {
-        const { email, password, name } = data;
+        const { email, password, firstName, lastName, name } = data;
         // Normalize email
         const normalizedEmail = email.toLowerCase().trim();
         console.log("[DEBUG] Register attempt:", {
@@ -50,12 +50,22 @@ class AuthService {
             // Generate verification token
             const verificationToken = crypto_1.default.randomBytes(32).toString("hex");
             const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+            // Determine firstName and lastName
+            // If provided separately, use them; otherwise try to split name
+            let userFirstName = firstName?.trim() || null;
+            let userLastName = lastName?.trim() || null;
+            if (!userFirstName && !userLastName && name) {
+                const nameParts = name.trim().split(" ");
+                userFirstName = nameParts[0] || null;
+                userLastName = nameParts.slice(1).join(" ") || null;
+            }
             // Create user with USER role and ACTIVE status (Requirement 1.1)
             const user = await db_1.prisma.user.create({
                 data: {
                     email: normalizedEmail,
                     password: hashedPassword,
-                    name: name || null,
+                    firstName: userFirstName,
+                    lastName: userLastName,
                     role: client_1.UserRole.USER,
                     status: client_1.UserStatus.ACTIVE,
                     subscriptionStatus: client_1.SubscriptionStatus.NONE,
@@ -65,7 +75,7 @@ class AuthService {
                 },
             });
             // Send verification email (non-blocking)
-            email_1.default.sendVerificationEmail(user.email, verificationToken, user.name || undefined).catch((error) => {
+            email_1.default.sendVerificationEmail(user.email, verificationToken, userFirstName || undefined, userLastName || undefined).catch((error) => {
                 console.error("Failed to send verification email:", error);
                 // Don't fail registration if email fails
             });
@@ -74,7 +84,8 @@ class AuthService {
                 user: {
                     id: user.id,
                     email: user.email,
-                    name: user.name,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
                     role: user.role,
                     subscriptionStatus: user.subscriptionStatus,
                     termsAccepted: user.termsAccepted,
@@ -147,7 +158,8 @@ class AuthService {
                 user: {
                     id: user.id,
                     email: user.email,
-                    name: user.name,
+                    firstName: user.firstName,
+                    lastName: user.lastName,
                     role: user.role,
                     subscriptionStatus: user.subscriptionStatus,
                     currentPeriodEnd: user.currentPeriodEnd,
@@ -327,10 +339,11 @@ class AuthService {
             // Generate JWT token
             const tokenPayload = { userId: user.id, email: user.email, role: user.role };
             const token = this.generateToken(tokenPayload);
+            const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ") || null;
             return {
                 success: true,
                 token,
-                user: { id: user.id, email: user.email, name: user.name, role: user.role, emailVerified: user.emailVerified },
+                user: { id: user.id, email: user.email, name: fullName, role: user.role, emailVerified: user.emailVerified },
             };
         }
         catch (error) {
@@ -395,7 +408,8 @@ class AuthService {
             // Send welcome email after verification
             email_1.default
                 .sendWelcomeEmail({
-                name: user.name || "",
+                firstName: user.firstName || undefined,
+                lastName: user.lastName || undefined,
                 email: user.email,
             })
                 .catch((error) => {
@@ -446,7 +460,7 @@ class AuthService {
                 },
             });
             // Send verification email
-            await email_1.default.sendVerificationEmail(user.email, verificationToken, user.name || undefined);
+            await email_1.default.sendVerificationEmail(user.email, verificationToken, user.firstName || undefined, user.lastName || undefined);
             return {
                 success: true,
                 message: "Verification email sent successfully",

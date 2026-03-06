@@ -10,8 +10,13 @@ export const registerSchema = Joi.object({
     "string.min": "Password must be at least 8 characters",
     "any.required": "Password is required",
   }),
-  name: Joi.string().trim().optional().allow("").messages({
-    "string.base": "Name must be a string",
+  firstName: Joi.string().trim().required().messages({
+    "string.base": "First name must be a string",
+    "any.required": "First name is required",
+  }),
+  lastName: Joi.string().trim().required().messages({
+    "string.base": "Last name must be a string",
+    "any.required": "Last name is required",
   }),
 });
 

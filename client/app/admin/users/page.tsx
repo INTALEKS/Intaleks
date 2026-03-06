@@ -30,7 +30,7 @@ export default function UsersPage() {
   const [isRevokeSubscriptionOpen, setIsRevokeSubscriptionOpen] = useState(false);
   const [isChangeRoleOpen, setIsChangeRoleOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [newUser, setNewUser] = useState({ email: "", password: "", name: "" });
+  const [newUser, setNewUser] = useState({ email: "", password: "", firstName: "", lastName: "" });
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [revokeReason, setRevokeReason] = useState("");
   const [selectedRole, setSelectedRole] = useState<"USER" | "ADMIN" | "SUPER_ADMIN">("USER");
@@ -67,7 +67,7 @@ export default function UsersPage() {
     if (!newUser.email || !newUser.password) return;
     await createUser.mutateAsync(newUser);
     setIsAddUserOpen(false);
-    setNewUser({ email: "", password: "", name: "" });
+    setNewUser({ email: "", password: "", firstName: "", lastName: "" });
   };
 
   const handleDeleteUser = async () => {
@@ -252,7 +252,7 @@ export default function UsersPage() {
             ) : (
               data?.users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.name || "—"}</TableCell>
+                  <TableCell className="font-medium">{`${user.firstName} ${user.lastName}`}</TableCell>
                   <TableCell className="text-muted-foreground">{user.email}</TableCell>
                   <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
@@ -366,8 +366,12 @@ export default function UsersPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" value={newUser.name} onChange={(e) => setNewUser((prev) => ({ ...prev, name: e.target.value }))} placeholder="Enter name" />
+              <Label htmlFor="firstName">First Name</Label>
+              <Input id="firstName" value={newUser.firstName} onChange={(e) => setNewUser((prev) => ({ ...prev, firstName: e.target.value }))} placeholder="Enter first name" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">Last Name</Label>
+              <Input id="lastName" value={newUser.lastName} onChange={(e) => setNewUser((prev) => ({ ...prev, lastName: e.target.value }))} placeholder="Enter last name" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -395,7 +399,7 @@ export default function UsersPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete User</DialogTitle>
-            <DialogDescription>Are you sure you want to delete {selectedUser?.name || selectedUser?.email}? This action cannot be undone.</DialogDescription>
+            <DialogDescription>Are you sure you want to delete {selectedUser ? `${selectedUser.firstName} ${selectedUser.lastName}` : selectedUser?.email}? This action cannot be undone.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>

@@ -20,7 +20,8 @@ import { UserRole, UserStatus, SubscriptionStatus } from "@prisma/client";
 // Test data
 const testUserEmail = `test-${Date.now()}@example.com`;
 const testUserPassword = "TestPassword123!";
-const testUserName = "Test User";
+const testUserFirstName = "Test";
+const testUserLastName = "User";
 
 describe("User Authentication & Subscription Integration", () => {
   let testUserId: string | null = null;
@@ -53,7 +54,8 @@ describe("User Authentication & Subscription Integration", () => {
       const validInput = {
         email: testUserEmail,
         password: testUserPassword,
-        name: testUserName,
+        firstName: testUserFirstName,
+        lastName: testUserLastName,
       };
       const { error: validError } = registerSchema.validate(validInput);
       expect(validError).toBeUndefined();
@@ -79,14 +81,16 @@ describe("User Authentication & Subscription Integration", () => {
       const result = await AuthService.registerUser({
         email: testUserEmail,
         password: testUserPassword,
-        name: testUserName,
+        firstName: testUserFirstName,
+        lastName: testUserLastName,
       });
 
       expect(result.success).toBe(true);
       expect(result.token).toBeDefined();
       expect(result.user).toBeDefined();
       expect(result.user?.email).toBe(testUserEmail.toLowerCase());
-      expect(result.user?.name).toBe(testUserName);
+      expect(result.user?.firstName).toBe(testUserFirstName);
+      expect(result.user?.lastName).toBe(testUserLastName);
       expect(result.user?.role).toBe(UserRole.USER);
       expect(result.user?.subscriptionStatus).toBe(SubscriptionStatus.NONE);
 
