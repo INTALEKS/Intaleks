@@ -58,8 +58,8 @@ const officeLocations = [
 
 export function Footer() {
   return (
-    <footer className="pb-6 px-4">
-      <div className="w-full md:w-[90%] p-6 md:p-8 rounded-md bg-(--sky-light-blue) mx-auto">
+    <footer className="pb-6 px-4 mt-20">
+      <div className="w-full md:w-[90%] p-6 md:p-8 rounded-md bg-(--sky-light-blue)/20 mx-auto">
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8 md:mb-12">
           {/* Logo and Description */}
@@ -77,13 +77,6 @@ export function Footer() {
                 admin@intaleks.com
               </a>
             </p>
-
-            {/* Business Address */}
-            <address className="text-gray-600 text-sm mb-6 not-italic">
-              <a href="https://maps.app.goo.gl/t2BXpv3n3SVscVgw5" target="_blank" rel="noopener noreferrer" className="hover:text-gray-900 transition-colors">
-                Level 25,1 Spring Street, Capital Square Tower 3, Perth, 6000
-              </a>
-            </address>
 
             {/* Social Icons */}
             {/* <div className="flex gap-4">
