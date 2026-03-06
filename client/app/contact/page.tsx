@@ -8,33 +8,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Phone, Mail, Loader2 } from "lucide-react";
 import { ApiClient } from "@/app/services/api";
 
-const offices = [
-  {
-    city: "PERTH OFFICE",
-    address: "Level 25,1 Spring Street, Capital Square Tower 3, Perth, 6000",
-    phone: "(08) 6144 4723",
-    mapUrl: "https://maps.app.goo.gl/t2BXpv3n3SVscVgw5",
-  },
-  {
-    city: "SYDNEY OFFICE",
-    address: "Level 35, 100 Barangaroo Ave. Sydney NSW 2000",
-    phone: "(02) 8088 0798",
-    mapUrl: "https://maps.app.goo.gl/Zpw7GSjc2VhfrgaNA",
-  },
-  {
-    city: "MELBOURNE OFFICE",
-    address: "Level 27, 101 Collins Street, Melbourne VIC 3000",
-    phone: "(03) 7046 1243",
-    mapUrl: "https://maps.app.goo.gl/xoJ4Kmb3JL42fYs67",
-  },
-  {
-    city: "BRISBANE OFFICE",
-    address: "Level 29, 97 Creek St, Brisbane City QLD 4000",
-    phone: "(07) 3535 1238",
-    mapUrl: "https://maps.app.goo.gl/QX4bsmdj3oSBEY1N6",
-  },
-];
-
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: "",
@@ -113,8 +86,8 @@ export default function ContactPage() {
             )}
           </div>
 
-          {/* Contact Info & Offices */}
-          <div className="space-y-6">
+          {/* Contact Info */}
+          <div>
             {/* Contact Info */}
             <div className="bg-gray-50 rounded-xl p-6">
               <h3 className="font-semibold text-lg mb-4">Contact Info</h3>
@@ -137,35 +110,7 @@ export default function ContactPage() {
                 </div>
               </div>
             </div>
-
-            {/* Offices */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h3 className="font-semibold text-lg mb-4">Visit Our Offices</h3>
-
-              <div className="grid grid-cols-2 gap-6">
-                {offices.map((office) => (
-                  <div key={office.city}>
-                    <h4 className="font-semibold text-sm mb-2">{office.city}</h4>
-                    {office.mapUrl ? (
-                      <address className="not-italic">
-                        <a href={office.mapUrl} target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-gray-900 text-sm whitespace-pre-line transition-colors">
-                          {office.address}
-                        </a>
-                      </address>
-                    ) : (
-                      <p className="text-gray-600 text-sm whitespace-pre-line">{office.address}</p>
-                    )}
-                    <p className="text-gray-600 text-sm mt-1">{office.phone}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
-        </div>
-
-        {/* Map */}
-        <div className="mt-12 rounded-xl overflow-hidden h-[400px]">
-          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d7083017.789693877!2d134.35493855!3d-25.274398!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2b2bfd076787c5df%3A0x538267a1955b1352!2sAustralia!5e0!3m2!1sen!2sus!4v1704067200000!5m2!1sen!2sus" width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
         </div>
       </main>
 

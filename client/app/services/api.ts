@@ -249,7 +249,7 @@ export class ApiClient {
   /**
    * Update user profile
    */
-  static async updateProfile(name: string, avatar?: string): Promise<{ success: boolean; data: User }> {
+  static async updateProfile(firstName: string, lastName: string, avatar?: string): Promise<{ success: boolean; data: User }> {
     try {
       const response = await fetch(`${this.BASE_URL}/users/profile`, {
         method: "PATCH",
@@ -257,7 +257,7 @@ export class ApiClient {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ name, avatar }),
+        body: JSON.stringify({ firstName, lastName, avatar }),
       });
 
       const data = await response.json();
@@ -266,7 +266,7 @@ export class ApiClient {
         throw new Error(data?.message || "Failed to update profile");
       }
 
-      return data;
+      return { success: data.success, data: data.user };
     } catch (err) {
       throw err;
     }

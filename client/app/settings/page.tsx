@@ -19,6 +19,8 @@ type TabType = "details" | "subscriptions" | "contact";
 
 interface UserData {
   id: string;
+  firstName?: string | null;
+  lastName?: string | null;
   name?: string | null;
   email: string;
   role: string;
@@ -130,7 +132,8 @@ function SettingsPageContent() {
 
 // My Details Tab Component
 function MyDetailsTab({ user, onProfileUpdate }: { user: UserData | null; onProfileUpdate: () => void }) {
-  const [name, setName] = useState(user?.name || "");
+  const [firstName, setFirstName] = useState(user?.firstName || user?.name?.split(" ")[0] || "");
+  const [lastName, setLastName] = useState(user?.lastName || user?.name?.split(" ").slice(1).join(" ") || "");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -166,7 +169,7 @@ function MyDetailsTab({ user, onProfileUpdate }: { user: UserData | null; onProf
       const avatarUrl = uploadData.data.url;
 
       // Update profile with new avatar
-      await ApiClient.updateProfile(name.trim() || user?.name || "", avatarUrl);
+      await ApiClient.updateProfile(firstName.trim(), lastName.trim(), avatarUrl);
 
       toast.success("Avatar updated successfully");
       onProfileUpdate();
@@ -182,19 +185,19 @@ function MyDetailsTab({ user, onProfileUpdate }: { user: UserData | null; onProf
   };
 
   const handleUpdateProfile = async () => {
-    if (!name.trim()) {
-      toast.error("Name is required");
+    if (!firstName.trim() || !lastName.trim()) {
+      toast.error("First name and last name are required");
       return;
     }
 
-    if (name.trim().length > 100) {
-      toast.error("Name must be less than 100 characters");
+    if (firstName.trim().length > 100 || lastName.trim().length > 100) {
+      toast.error("First name and last name must be less than 100 characters");
       return;
     }
 
     setIsUpdatingProfile(true);
     try {
-      await ApiClient.updateProfile(name.trim(), user?.avatar || undefined);
+      await ApiClient.updateProfile(firstName.trim(), lastName.trim(), user?.avatar || undefined);
       toast.success("Profile updated successfully");
       onProfileUpdate();
     } catch (error: unknown) {
@@ -260,8 +263,13 @@ function MyDetailsTab({ user, onProfileUpdate }: { user: UserData | null; onProf
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter your name" className="mt-1 bg-gray-100 border-0" />
+            <Label htmlFor="firstName">First Name</Label>
+            <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Enter your first name" className="mt-1 bg-gray-100 border-0" />
+          </div>
+
+          <div>
+            <Label htmlFor="lastName">Last Name</Label>
+            <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Enter your last name" className="mt-1 bg-gray-100 border-0" />
           </div>
 
           <div>

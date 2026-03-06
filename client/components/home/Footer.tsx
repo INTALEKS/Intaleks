@@ -24,9 +24,36 @@ const startLinks = [
 
 const socialLinks = [
   // { icon: "facebook", href: "https://facebook.com", label: "Facebook" },
-  { icon: "linkedin", href: "https://linkedin.com", label: "LinkedIn" },
-  { icon: "instagram", href: "https://instagram.com", label: "Instagram" },
+  // { icon: "linkedin", href: "https://linkedin.com", label: "LinkedIn" },
+  // { icon: "instagram", href: "https://instagram.com", label: "Instagram" },
   // { icon: "x", href: "https://x.com", label: "X" },
+];
+
+const officeLocations = [
+  {
+    city: "Perth Office",
+    address: "Level 25,1 Spring Street, Capital Square Tower 3, Perth, 6000",
+    phone: "(08) 6144 4723",
+    mapUrl: "https://maps.app.goo.gl/t2BXpv3n3SVscVgw5",
+  },
+  {
+    city: "Sydney Office",
+    address: "Level 35, 100 Barangaroo Ave. Sydney NSW 2000",
+    phone: "(02) 8088 0798",
+    mapUrl: "https://maps.app.goo.gl/Zpw7GSjc2VhfrgaNA",
+  },
+  {
+    city: "Melbourne Office",
+    address: "Level 27, 101 Collins Street, Melbourne VIC 3000",
+    phone: "(03) 7046 1243",
+    mapUrl: "https://maps.app.goo.gl/xoJ4Kmb3JL42fYs67",
+  },
+  {
+    city: "Brisbane Office",
+    address: "Level 29, 97 Creek St, Brisbane City QLD 4000",
+    phone: "(07) 3535 1238",
+    mapUrl: "https://maps.app.goo.gl/QX4bsmdj3oSBEY1N6",
+  },
 ];
 
 export function Footer() {
@@ -59,13 +86,13 @@ export function Footer() {
             </address>
 
             {/* Social Icons */}
-            <div className="flex gap-4">
+            {/* <div className="flex gap-4">
               {socialLinks.map((social) => (
                 <a key={social.icon} href={social.href} target="_blank" rel="noopener noreferrer" aria-label={social.label} className="text-gray-700 hover:text-gray-900 transition-colors">
                   <SocialIcon name={social.icon} />
                 </a>
               ))}
-            </div>
+            </div> */}
           </div>
 
           {/* Navigate */}
@@ -113,6 +140,23 @@ export function Footer() {
                 </li>
               ))}
             </ul>
+          </div>
+        </div>
+
+        <div className="border-t border-blue-200 pt-6 mb-6">
+          <h3 className="font-semibold text-gray-900 mb-4 text-sm md:text-base">Our Offices</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {officeLocations.map((office) => (
+              <div key={office.city} className="bg-white/40 rounded-md p-3">
+                <p className="font-semibold text-gray-900 text-sm mb-1">{office.city}</p>
+                <address className="not-italic text-gray-700 text-xs leading-relaxed">
+                  <a href={office.mapUrl} target="_blank" rel="noopener noreferrer" className="hover:text-gray-900 transition-colors">
+                    {office.address}
+                  </a>
+                </address>
+                <p className="text-gray-700 text-xs mt-1">{office.phone}</p>
+              </div>
+            ))}
           </div>
         </div>
 
