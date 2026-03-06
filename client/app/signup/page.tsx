@@ -120,38 +120,40 @@ function SignupForm() {
         {/* Server error display */}
         {registerError && <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">{registerError.message}</div>}
 
-        {/* First Name field */}
-        <div className="flex flex-col gap-y-1">
-          <InputField
-            type="text"
-            label="First Name"
-            placeholder="Enter your first name"
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                firstName: e.target.value,
-              }))
-            }
-            error={!!errors.firstName}
-          />
-          {errors.firstName && <span className="text-red-500 text-xs">{errors.firstName}</span>}
-        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* First Name field */}
+          <div className="flex flex-col gap-y-1">
+            <InputField
+              type="text"
+              label="First Name"
+              placeholder="Enter your first name"
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  firstName: e.target.value,
+                }))
+              }
+              error={!!errors.firstName}
+            />
+            {errors.firstName && <span className="text-red-500 text-xs">{errors.firstName}</span>}
+          </div>
 
-        {/* Last Name field */}
-        <div className="flex flex-col gap-y-1">
-          <InputField
-            type="text"
-            label="Last Name"
-            placeholder="Enter your last name"
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                lastName: e.target.value,
-              }))
-            }
-            error={!!errors.lastName}
-          />
-          {errors.lastName && <span className="text-red-500 text-xs">{errors.lastName}</span>}
+          {/* Last Name field */}
+          <div className="flex flex-col gap-y-1">
+            <InputField
+              type="text"
+              label="Last Name"
+              placeholder="Enter your last name"
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  lastName: e.target.value,
+                }))
+              }
+              error={!!errors.lastName}
+            />
+            {errors.lastName && <span className="text-red-500 text-xs">{errors.lastName}</span>}
+          </div>
         </div>
 
         {/* Email field */}
