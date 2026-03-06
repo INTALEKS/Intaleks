@@ -419,7 +419,6 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
         )}
       </div> */}
 
-      {/* Other Plans */}
       {otherPlans.length > 0 && (
         <>
           {/* <h2 className="text-lg lg:text-xl font-semibold mb-4">Other Plans</h2> */}

@@ -230,6 +230,15 @@ function getStrengthBand(scoreOutOf50) {
         return { color: "#F97316", factorText: "50% (0.5x)" };
     return { color: "#EF4444", factorText: "30% (0.3x)" };
 }
+function getStrengthRating(scoreOutOf50) {
+    if (scoreOutOf50 >= 40)
+        return { label: "Excellent", bg: "#DCFCE7", text: "#166534" };
+    if (scoreOutOf50 >= 30)
+        return { label: "Good", bg: "#FEF3C7", text: "#92400E" };
+    if (scoreOutOf50 >= 20)
+        return { label: "Average", bg: "#FFEDD5", text: "#9A3412" };
+    return { label: "Below Average", bg: "#FEE2E2", text: "#991B1B" };
+}
 function drawLegendRow(doc, fonts, x, y, width) {
     const legendItems = [
         { color: "#22C55E", text: "40-50 points: 100% (1.0x)" },
@@ -707,6 +716,8 @@ function drawProfitSummaryPage(doc, data, fonts) {
     const avgAddbacks = yearCount > 0 ? (data.totalAddbacks || 0) / yearCount : 0;
     const avgAdjustedEbit = typeof data.adjustedEbit === "number" ? data.adjustedEbit : avgEbit + avgAddbacks;
     const valuationMultiple = typeof data.calculatedMultiple === "number" ? data.calculatedMultiple : 0;
+    const strengthScore = getScoreOutOf50(data);
+    const strengthRating = getStrengthRating(strengthScore);
     doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Report Summary", PAGE.marginX, 94, { lineBreak: false });
     doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Business Valuation Report", 0, 135, { width: PAGE.width, align: "center", lineBreak: false });
     // Company info line with justified spacing
@@ -753,9 +764,31 @@ function drawProfitSummaryPage(doc, data, fonts) {
     drawMetricCard(doc, fonts, x0, cardsY2, "Average Addbacks", money(avgAddbacks));
     drawMetricCard(doc, fonts, x0 + 150 + gap, cardsY2, "Average Adjusted EBIT", money(avgAdjustedEbit));
     drawMetricCard(doc, fonts, x0 + (150 + gap) * 2, cardsY2, "Valuation Multiple", `${valuationMultiple.toFixed(2)}x`);
+    // business strength assessment block
+    const assessmentY = 356;
+    const assessmentW = 150 * 3 + gap * 2;
+    const assessmentH = 52;
+    doc.roundedRect(x0, assessmentY, assessmentW, assessmentH, 8).fillAndStroke("#FFFFFF", "#DBEAFE");
+    doc
+        .font(fonts.regular)
+        .fontSize(10)
+        .fillColor("#6B7280")
+        .text("Business Strength Assessment", x0 + 12, assessmentY + 10, { lineBreak: false });
+    doc.font(fonts.bold).fontSize(18).fillColor("#2563EB").text(`${strengthScore}/50`, x0 + 12, assessmentY + 26, { lineBreak: false });
+    doc
+        .font(fonts.regular)
+        .fontSize(10)
+        .fillColor("#6B7280")
+        .text("Rating", x0 + assessmentW - 90, assessmentY + 10, { width: 72, align: "right", lineBreak: false });
+    doc.roundedRect(x0 + assessmentW - 78, assessmentY + 24, 66, 20, 10).fill(strengthRating.bg);
+    doc
+        .font(fonts.bold)
+        .fontSize(10)
+        .fillColor(strengthRating.text)
+        .text(strengthRating.label, x0 + assessmentW - 78, assessmentY + 30, { width: 66, align: "center", lineBreak: false });
     // blue valuation panel
     const panelX = PAGE.marginX + 26;
-    const panelY = 368;
+    const panelY = 424;
     const panelW = PAGE.width - (PAGE.marginX + 26) * 2;
     const panelH = 110;
     doc.roundedRect(panelX, panelY, panelW, panelH, 12).fill("#2F80ED");
@@ -785,29 +818,12 @@ function drawProfitSummaryPage(doc, data, fonts) {
     if (fs_1.default.existsSync(trophyPath)) {
         doc.image(trophyPath, panelX + panelW - 52, panelY + 20, { width: 40 });
     }
-    // risk snapshot
-    doc.font(fonts.bold).fontSize(12).fillColor("#111827").text("Risk & Strength Snapshot", PAGE.marginX, 510, { lineBreak: false });
-    const snapshot = ["Owner Dependence", "Recurring Revenue", "Customer Concentration"];
-    const badgePathCandidates = [path_1.default.join(__dirname, "../assets/verify-badge.png"), path_1.default.join(__dirname, "../../assets/verify-badge.png")];
-    const badgePath = badgePathCandidates.find((candidate) => fs_1.default.existsSync(candidate));
-    let bulletY = 538;
-    snapshot.forEach((label) => {
-        if (badgePath) {
-            doc.image(badgePath, PAGE.marginX + 9, bulletY, { width: 14, height: 14 });
-        }
-        doc
-            .font(fonts.regular)
-            .fontSize(10)
-            .fillColor("#111827")
-            .text(label, PAGE.marginX + 28, bulletY, { lineBreak: false });
-        bulletY += 24;
-    });
     const narrative = "This valuation estimate is generated from your financial performance, adjusted EBIT and selected valuation method. It is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
     doc
         .font(fonts.regular)
         .fontSize(9)
         .fillColor("#111827")
-        .text(narrative, PAGE.marginX, 650, {
+        .text(narrative, PAGE.marginX, 566, {
         width: PAGE.width - PAGE.marginX * 2,
         align: "left",
         lineGap: 1.4,
@@ -828,6 +844,8 @@ function drawAssetSummaryPage(doc, data, fonts) {
     const totalAssets = typeof data.totalAssets === "number" ? data.totalAssets : assets.plantEquipment + assets.inventory + assets.vehicles + assets.goodwill + assets.otherIntangible;
     const totalLiabilities = typeof data.totalLiabilities === "number" ? data.totalLiabilities : liabilities.loans + liabilities.annualLeave + liabilities.longServiceLeave + liabilities.otherLiabilities;
     const netAssetValue = typeof data.finalValuation === "number" ? data.finalValuation : totalAssets - totalLiabilities;
+    const strengthScore = getScoreOutOf50(data);
+    const strengthRating = getStrengthRating(strengthScore);
     doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Report Summary", PAGE.marginX, 94, { lineBreak: false });
     doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Business Valuation Report", 0, 135, { width: PAGE.width, align: "center", lineBreak: false });
     // Company info line with justified spacing
@@ -882,8 +900,30 @@ function drawAssetSummaryPage(doc, data, fonts) {
         .fontSize(16)
         .fillColor("#111827")
         .text(moneyComma(netAssetValue), x3, cardY + 32, { width: w, align: "center", lineBreak: false });
+    // business strength assessment block
+    const assessmentY = 286;
+    const assessmentW = 150 * 3 + gap * 2;
+    const assessmentH = 52;
+    doc.roundedRect(x0, assessmentY, assessmentW, assessmentH, 8).fillAndStroke("#FFFFFF", "#DBEAFE");
+    doc
+        .font(fonts.regular)
+        .fontSize(10)
+        .fillColor("#6B7280")
+        .text("Business Strength Assessment", x0 + 12, assessmentY + 10, { lineBreak: false });
+    doc.font(fonts.bold).fontSize(18).fillColor("#2563EB").text(`${strengthScore}/50`, x0 + 12, assessmentY + 26, { lineBreak: false });
+    doc
+        .font(fonts.regular)
+        .fontSize(10)
+        .fillColor("#6B7280")
+        .text("Rating", x0 + assessmentW - 90, assessmentY + 10, { width: 72, align: "right", lineBreak: false });
+    doc.roundedRect(x0 + assessmentW - 78, assessmentY + 24, 66, 20, 10).fill(strengthRating.bg);
+    doc
+        .font(fonts.bold)
+        .fontSize(10)
+        .fillColor(strengthRating.text)
+        .text(strengthRating.label, x0 + assessmentW - 78, assessmentY + 30, { width: 66, align: "center", lineBreak: false });
     const panelX = PAGE.marginX + 26;
-    const panelY = 318;
+    const panelY = 356;
     const panelW = PAGE.width - (PAGE.marginX + 26) * 2;
     const panelH = 110;
     doc.roundedRect(panelX, panelY, panelW, panelH, 12).fill("#2F80ED");
@@ -913,28 +953,12 @@ function drawAssetSummaryPage(doc, data, fonts) {
     if (fs_1.default.existsSync(trophyPath)) {
         doc.image(trophyPath, panelX + panelW - 52, panelY + 20, { width: 40 });
     }
-    doc.font(fonts.bold).fontSize(10).fillColor("#111827").text("Risk & Strength Snapshot", PAGE.marginX, 460, { lineBreak: false });
-    const snapshot = ["Owner Dependence", "Recurring Revenue", "Customer Concentration"];
-    const badgePathCandidates = [path_1.default.join(__dirname, "../assets/verify-badge.png"), path_1.default.join(__dirname, "../../assets/verify-badge.png")];
-    const badgePath = badgePathCandidates.find((candidate) => fs_1.default.existsSync(candidate));
-    let bulletY = 488;
-    snapshot.forEach((label) => {
-        if (badgePath) {
-            doc.image(badgePath, PAGE.marginX + 9, bulletY, { width: 14, height: 14 });
-        }
-        doc
-            .font(fonts.regular)
-            .fontSize(14)
-            .fillColor("#111827")
-            .text(label, PAGE.marginX + 28, bulletY, { lineBreak: false });
-        bulletY += 24;
-    });
     const narrative = "This valuation estimate is generated from your financial performance, adjusted EBIT and selected valuation method. It is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
     doc
         .font(fonts.regular)
         .fontSize(9)
         .fillColor("#111827")
-        .text(narrative, PAGE.marginX, 600, {
+        .text(narrative, PAGE.marginX, 498, {
         width: PAGE.width - PAGE.marginX * 2,
         align: "left",
         lineGap: 1.4,
