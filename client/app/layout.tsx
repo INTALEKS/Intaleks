@@ -104,7 +104,7 @@ export default function RootLayout({
       <head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }} />
       </head>
-      <body className="font-inter antialiased">
+      <body className="font-inter antialiased" suppressHydrationWarning>
         <QueryProvider>{children}</QueryProvider>
         <Toaster position="top-right" />
       </body>

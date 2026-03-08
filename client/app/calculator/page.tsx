@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Navbar, Footer } from "@/components/home";
 import { AccordionSection, MethodToggle, ValuationMethod, CountryIndustrySelector, FinancialDataTable, AddbacksTable, StepProgress, CompanyQuestionnaire, ValuationDocumentList, YearSelector, EarningCapacitySection, AddbacksExamplesSection, ValuationSummaryCard } from "@/components/calculator";
 import { AssetMethod } from "@/components/calculator/methods";
-import { calculateAverageAdjustedEBIT, calculateAverageEBIT, formatCurrency, FinancialYearData } from "@/lib/calculator-utils";
+import { calculateAverageAdjustedEBIT, formatCurrency, FinancialYearData } from "@/lib/calculator-utils";
 import { downloadValuationPDF, ValuationReportData } from "@/lib/valuation-api";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useRouter } from "next/navigation";
@@ -117,7 +117,7 @@ function SubscribeButton() {
 
 export default function CalculatorPage() {
   const router = useRouter();
-  const { isAuthenticated, hasActiveSubscription, subscriptionStatus, isAuthentiating, user } = useAuthState();
+  const { isAuthenticated, hasActiveSubscription, subscriptionStatus, user } = useAuthState();
   const queryClient = useQueryClient();
   const { getMultiple } = useValuationMultiples();
 
@@ -181,11 +181,11 @@ export default function CalculatorPage() {
   const [companyName, setCompanyName] = useState(initialState?.companyName || "");
   const [startedYear, setStartedYear] = useState(initialState?.startedYear || "");
   const [employees, setEmployees] = useState(initialState?.employees || "");
-  const [stage, setStage] = useState(initialState?.stage || "startup");
+  const [stage, setStage] = useState(initialState?.stage || "");
   const [companyLogo, setCompanyLogo] = useState<File | null>(null);
-  const [country, setCountry] = useState(initialState?.country || "australia");
-  const [industry, setIndustry] = useState(initialState?.industry || "retail");
-  const [customMultiple, setCustomMultiple] = useState(initialState?.customMultiple || "3");
+  const [country, setCountry] = useState(initialState?.country || "");
+  const [industry, setIndustry] = useState(initialState?.industry || "");
+  const [customMultiple, setCustomMultiple] = useState(initialState?.customMultiple || "");
 
   // ============================================
   // Questionnaire State
@@ -234,7 +234,7 @@ export default function CalculatorPage() {
   // ============================================
   // STEP 3: Valuation Model State
   // ============================================
-  const [selectedMethod, setSelectedMethod] = useState<ValuationMethod>(initialState?.selectedMethod || "profit");
+  const [selectedMethod, setSelectedMethod] = useState<ValuationMethod | "">(initialState?.selectedMethod || "");
 
   // Asset Method
   const [assets, setAssets] = useState<Record<string, string>>(initialState?.assets || {});
@@ -252,7 +252,7 @@ export default function CalculatorPage() {
   });
   const [isDownloading, setIsDownloading] = useState(false);
   const [showValuationReport, setShowValuationReport] = useState(false);
-  const [serverCalculatedValues, setServerCalculatedValues] = useState<any>(null);
+  const [serverCalculatedValues, setServerCalculatedValues] = useState<Record<string, unknown> | null>(null);
 
   const calculateValuationMutation = useCalculateValuation();
 
@@ -404,7 +404,7 @@ export default function CalculatorPage() {
 
       if (selectedMethod === "profit") {
         // Convert financial data to proper format
-        const formattedFinancialData: Record<string, any> = {};
+        const formattedFinancialData: Record<string, { sales: number; cogs: number; operatingExpenses: number; interestExpense: number; interestIncome: number }> = {};
         financialYears.forEach((year) => {
           formattedFinancialData[year] = {
             sales: parseFloat((financialData?.sales?.[year] as string) || "0"),
@@ -671,7 +671,7 @@ export default function CalculatorPage() {
   // STEP COMPLETION LOGIC
   // ============================================
 
-  // Step 1 is complete only when all required fields have meaningful values
+  // Step 1 is complete only when all required fields have meaningful values including logo
   const isStep1Complete = useMemo(() => {
     const hasCompanyName = companyName.trim().length > 0;
     const hasStartedYear = startedYear.trim().length > 0;
@@ -679,20 +679,20 @@ export default function CalculatorPage() {
     const hasStage = stage.trim().length > 0;
     const hasCountry = country.trim().length > 0;
     const hasIndustry = industry.trim().length > 0;
+    const hasLogo = companyLogo !== null;
 
-    return hasCompanyName && hasStartedYear && hasEmployees && hasStage && hasCountry && hasIndustry;
-  }, [companyName, startedYear, employees, stage, country, industry]);
+    return hasCompanyName && hasStartedYear && hasEmployees && hasStage && hasCountry && hasIndustry && hasLogo;
+  }, [companyName, startedYear, employees, stage, country, industry, companyLogo]);
 
   // Step 2 is only complete after Step 1 is complete and questionnaire multiple is calculated
   const isStep2Complete = useMemo(() => {
     return isStep1Complete && useQuestionnaireMultiple && calculatedMultiple !== undefined;
   }, [isStep1Complete, useQuestionnaireMultiple, calculatedMultiple]);
 
-  // Step 3 is complete when user has selected a valuation method
-  // Since there's a default method, this is complete once step 1 is done
+  // Step 3 is complete when Step 2 is complete and user has selected a valuation method
   const isStep3Complete = useMemo(() => {
-    return isStep1Complete && !!selectedMethod;
-  }, [isStep1Complete, selectedMethod]);
+    return isStep2Complete && !!selectedMethod;
+  }, [isStep2Complete, selectedMethod]);
 
   // Step 4 is complete when financial data is entered based on selected method
   const isStep4Complete = useMemo(() => {
@@ -1047,6 +1047,21 @@ export default function CalculatorPage() {
       {/* Step Progress */}
       <div className="max-w-4xl mx-auto px-4">
         <StepProgress steps={steps} currentStep={currentStep} completedSteps={completedSteps} />
+        {/* Debug: Clear localStorage button */}
+        {typeof window !== "undefined" && localStorage.getItem(CALCULATOR_STORAGE_KEY) && (
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => {
+                localStorage.removeItem(CALCULATOR_STORAGE_KEY);
+                localStorage.removeItem(CALCULATOR_TIMESTAMP_KEY);
+                window.location.reload();
+              }}
+              className="text-sm text-red-600 hover:text-red-700 underline"
+            >
+              Clear saved data and restart
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Main Content */}

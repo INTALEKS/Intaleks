@@ -8,9 +8,14 @@ const PAGE = {
   marginX: 50,
 };
 const FONT_REGULAR = "Inter";
+const FONT_MEDIUM = "Inter-Medium";
+const FONT_SEMIBOLD = "Inter-SemiBold";
 const FONT_BOLD = "Inter-Bold";
+
 type PdfFonts = {
   regular: string;
+  medium: string;
+  semibold: string;
   bold: string;
 };
 
@@ -130,16 +135,42 @@ function drawIntaleksLogo(doc: PDFKit.PDFDocument): void {
 }
 
 function registerInterFonts(doc: PDFKit.PDFDocument): PdfFonts {
-  const candidates = [path.join(__dirname, "../assets/fonts/InterVariable.ttf"), path.join(__dirname, "../../assets/fonts/InterVariable.ttf")];
-  const interPath = candidates.find((candidate) => fs.existsSync(candidate));
+  const fontsDir = [path.join(__dirname, "../assets/fonts"), path.join(__dirname, "../../assets/fonts")].find((dir) => fs.existsSync(dir));
 
-  if (!interPath) {
-    return { regular: "Helvetica", bold: "Helvetica-Bold" };
+  if (!fontsDir) {
+    return {
+      regular: "Helvetica",
+      medium: "Helvetica",
+      semibold: "Helvetica-Bold",
+      bold: "Helvetica-Bold",
+    };
   }
 
-  doc.registerFont(FONT_REGULAR, interPath);
-  doc.registerFont(FONT_BOLD, interPath);
-  return { regular: FONT_REGULAR, bold: FONT_BOLD };
+  const regularPath = path.join(fontsDir, "Inter-Regular.ttf");
+  const mediumPath = path.join(fontsDir, "Inter-Medium.ttf");
+  const semiboldPath = path.join(fontsDir, "Inter-SemiBold.ttf");
+  const boldPath = path.join(fontsDir, "Inter-Bold.ttf");
+
+  // Register static Inter fonts with different weights
+  if (fs.existsSync(regularPath)) {
+    doc.registerFont(FONT_REGULAR, regularPath);
+  }
+  if (fs.existsSync(mediumPath)) {
+    doc.registerFont(FONT_MEDIUM, mediumPath);
+  }
+  if (fs.existsSync(semiboldPath)) {
+    doc.registerFont(FONT_SEMIBOLD, semiboldPath);
+  }
+  if (fs.existsSync(boldPath)) {
+    doc.registerFont(FONT_BOLD, boldPath);
+  }
+
+  return {
+    regular: FONT_REGULAR,
+    medium: FONT_MEDIUM,
+    semibold: FONT_SEMIBOLD,
+    bold: FONT_BOLD,
+  };
 }
 
 function drawPlaceholderCompanyLogo(doc: PDFKit.PDFDocument): void {
@@ -199,10 +230,10 @@ function drawCenteredIntroPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
 
   const title = data.companyName || "Company";
   const titleMaxWidth = PAGE.width - PAGE.marginX * 2 - 20;
-  const titleSize = fitTitleFontSize(doc, title, fonts.regular, 36, hasCompanyLogo ? 62 : 74, titleMaxWidth);
+  const titleSize = fitTitleFontSize(doc, title, fonts.bold, 36, hasCompanyLogo ? 62 : 74, titleMaxWidth);
   const titleY = hasCompanyLogo ? 390 : 298;
   doc
-    .font(fonts.regular)
+    .font(fonts.bold)
     .fontSize(titleSize)
     .fillColor("#1E78D7")
     .text(title, PAGE.marginX, titleY, {
@@ -213,7 +244,7 @@ function drawCenteredIntroPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     });
 
   doc
-    .font(fonts.regular)
+    .font(fonts.medium)
     .fontSize(16)
     .fillColor("#111827")
     .text(sanitizeCountry(data.country), PAGE.marginX, titleY + 92, {
@@ -226,7 +257,7 @@ function drawCenteredIntroPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
 
   const industryLine = `Industry: ${toDisplayLabel(data.industry) || "N/A"}${baseMultiple ? ` (Base: ${baseMultiple}x)` : ""}`;
   doc
-    .font(fonts.regular)
+    .font(fonts.medium)
     .fontSize(17)
     .fillColor("#111827")
     .text(industryLine, PAGE.marginX, titleY + 146, {
@@ -257,7 +288,7 @@ function drawTableOfContentPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts:
 
   drawIntaleksLogo(doc);
 
-  doc.font(fonts.bold).fontSize(16).fillColor("#0F172A").text("Table of Content", PAGE.marginX, 120, {
+  doc.font(fonts.semibold).fontSize(16).fillColor("#0F172A").text("Table of Content", PAGE.marginX, 120, {
     lineBreak: false,
   });
 
@@ -389,7 +420,7 @@ function drawBusinessStrengthPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
 
   drawIntaleksLogo(doc);
 
-  doc.font(fonts.bold).fontSize(13).fillColor("#111827").text("Business strength assessment", PAGE.marginX, 110, {
+  doc.font(fonts.semibold).fontSize(13).fillColor("#111827").text("Business strength assessment", PAGE.marginX, 110, {
     lineBreak: false,
   });
 
@@ -537,7 +568,7 @@ function drawAssetMethodFinancialPage(doc: PDFKit.PDFDocument, data: RAVDAData, 
   doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
   drawIntaleksLogo(doc);
 
-  doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation method", PAGE.marginX, 94, { lineBreak: false });
+  doc.font(fonts.semibold).fontSize(16).fillColor("#111827").text("Valuation method", PAGE.marginX, 94, { lineBreak: false });
 
   doc.rect(PAGE.marginX, 128, PAGE.width - PAGE.marginX * 2, 40).fill("#2F80ED");
   doc
@@ -629,7 +660,7 @@ function drawProfitMethodFinancialPage(doc: PDFKit.PDFDocument, data: RAVDAData,
   const years = (data.financialYears || []).slice(0, 3);
   const [y1 = "Year 1", y2 = "Year 2", y3 = "Year 3"] = years;
 
-  doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Method", PAGE.marginX, 94, { lineBreak: false });
+  doc.font(fonts.semibold).fontSize(16).fillColor("#111827").text("Valuation Method", PAGE.marginX, 94, { lineBreak: false });
 
   const yearRows = [y1, y2, y3];
   let yearY = 129;
@@ -882,7 +913,7 @@ function drawProfitSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   const strengthScore = getScoreOutOf50(data);
   const strengthRating = getStrengthRating(strengthScore);
 
-  doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Report Summary", PAGE.marginX, 94, { lineBreak: false });
+  doc.font(fonts.semibold).fontSize(16).fillColor("#111827").text("Valuation Report Summary", PAGE.marginX, 94, { lineBreak: false });
   doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Business Valuation Report", 0, 135, { width: PAGE.width, align: "center", lineBreak: false });
 
   // Company info line with justified spacing
@@ -947,7 +978,11 @@ function drawProfitSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     .fontSize(10)
     .fillColor("#6B7280")
     .text("Business Strength Assessment", x0 + 12, assessmentY + 10, { lineBreak: false });
-  doc.font(fonts.bold).fontSize(18).fillColor("#2563EB").text(`${strengthScore}/50`, x0 + 12, assessmentY + 26, { lineBreak: false });
+  doc
+    .font(fonts.bold)
+    .fontSize(18)
+    .fillColor("#2563EB")
+    .text(`${strengthScore}/50`, x0 + 12, assessmentY + 26, { lineBreak: false });
   doc
     .font(fonts.regular)
     .fontSize(10)
@@ -1026,7 +1061,7 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
   const strengthScore = getScoreOutOf50(data);
   const strengthRating = getStrengthRating(strengthScore);
 
-  doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Report Summary", PAGE.marginX, 94, { lineBreak: false });
+  doc.font(fonts.semibold).fontSize(16).fillColor("#111827").text("Valuation Report Summary", PAGE.marginX, 94, { lineBreak: false });
   doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Business Valuation Report", 0, 135, { width: PAGE.width, align: "center", lineBreak: false });
 
   // Company info line with justified spacing
@@ -1100,7 +1135,11 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
     .fontSize(10)
     .fillColor("#6B7280")
     .text("Business Strength Assessment", x0 + 12, assessmentY + 10, { lineBreak: false });
-  doc.font(fonts.bold).fontSize(18).fillColor("#2563EB").text(`${strengthScore}/50`, x0 + 12, assessmentY + 26, { lineBreak: false });
+  doc
+    .font(fonts.bold)
+    .fontSize(18)
+    .fillColor("#2563EB")
+    .text(`${strengthScore}/50`, x0 + 12, assessmentY + 26, { lineBreak: false });
   doc
     .font(fonts.regular)
     .fontSize(10)

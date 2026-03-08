@@ -31,29 +31,30 @@ const socialLinks = [
 
 const officeLocations = [
   {
-    city: "Perth Office",
-    address: "Level 25,1 Spring Street, Capital Square Tower 3, Perth, 6000",
-    phone: "(08) 6144 4723",
-    mapUrl: "https://maps.app.goo.gl/t2BXpv3n3SVscVgw5",
-  },
-  {
     city: "Sydney Office",
     address: "Level 35, 100 Barangaroo Ave. Sydney NSW 2000",
     phone: "(02) 8088 0798",
     mapUrl: "https://maps.app.goo.gl/Zpw7GSjc2VhfrgaNA",
   },
-  {
-    city: "Melbourne Office",
-    address: "Level 27, 101 Collins Street, Melbourne VIC 3000",
-    phone: "(03) 7046 1243",
-    mapUrl: "https://maps.app.goo.gl/xoJ4Kmb3JL42fYs67",
-  },
-  {
-    city: "Brisbane Office",
-    address: "Level 29, 97 Creek St, Brisbane City QLD 4000",
-    phone: "(07) 3535 1238",
-    mapUrl: "https://maps.app.goo.gl/QX4bsmdj3oSBEY1N6",
-  },
+
+  // {
+  //   city: "Perth Office",
+  //   address: "Level 25,1 Spring Street, Capital Square Tower 3, Perth, 6000",
+  //   phone: "(08) 6144 4723",
+  //   mapUrl: "https://maps.app.goo.gl/t2BXpv3n3SVscVgw5",
+  // },
+  // {
+  //   city: "Melbourne Office",
+  //   address: "Level 27, 101 Collins Street, Melbourne VIC 3000",
+  //   phone: "(03) 7046 1243",
+  //   mapUrl: "https://maps.app.goo.gl/xoJ4Kmb3JL42fYs67",
+  // },
+  // {
+  //   city: "Brisbane Office",
+  //   address: "Level 29, 97 Creek St, Brisbane City QLD 4000",
+  //   phone: "(07) 3535 1238",
+  //   mapUrl: "https://maps.app.goo.gl/QX4bsmdj3oSBEY1N6",
+  // },
 ];
 
 export function Footer() {
@@ -61,9 +62,9 @@ export function Footer() {
     <footer className="pb-6 px-4 mt-20">
       <div className="w-full md:w-[90%] p-6 md:p-8 rounded-md bg-(--sky-light-blue)/20 mx-auto">
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8 md:mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 mb-8 md:mb-12">
           {/* Logo and Description */}
-          <div className="col-span-1 md:col-span-2 lg:col-span-1">
+          <div className="col-span-1 md:col-span-2 lg:col-span-2">
             <Image src="/intaleks.png" alt="Intaleks" width={150} height={40} className="mb-4" />
             <p className="text-gray-700 text-sm mb-4 leading-relaxed">
               Accurate, investor-ready business valuations.
@@ -79,13 +80,13 @@ export function Footer() {
             </p>
 
             {/* Social Icons */}
-            {/* <div className="flex gap-4">
+            <div className="flex gap-4">
               {socialLinks.map((social) => (
                 <a key={social.icon} href={social.href} target="_blank" rel="noopener noreferrer" aria-label={social.label} className="text-gray-700 hover:text-gray-900 transition-colors">
                   <SocialIcon name={social.icon} />
                 </a>
               ))}
-            </div> */}
+            </div>
           </div>
 
           {/* Navigate */}
@@ -134,13 +135,11 @@ export function Footer() {
               ))}
             </ul>
           </div>
-        </div>
 
-        <div className="border-t border-blue-200 pt-6 mb-6">
-          <h3 className="font-semibold text-gray-900 mb-4 text-sm md:text-base">Our Offices</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="col-span-1">
+            <h3 className="font-semibold text-gray-900 mb-4 text-sm md:text-base">Location</h3>
             {officeLocations.map((office) => (
-              <div key={office.city} className="bg-white/40 rounded-md p-3">
+              <div key={office.city}>
                 <p className="font-semibold text-gray-900 text-sm mb-1">{office.city}</p>
                 <address className="not-italic text-gray-700 text-xs leading-relaxed">
                   <a href={office.mapUrl} target="_blank" rel="noopener noreferrer" className="hover:text-gray-900 transition-colors">

@@ -8,22 +8,19 @@ interface Company {
 }
 
 const companies: Company[] = [
-  { name: "Company 1", logo: "/logo_01.png" },
-  { name: "Company 2", logo: "/logo_02.png" },
-  { name: "Company 3", logo: "/logo_03.png" },
-  { name: "Company 4", logo: "/logo_04.png" },
-  { name: "Company 5", logo: "/logo_05.png" },
-  { name: "Company 6", logo: "/logo_06.png" },
-  { name: "Company 7", logo: "/logo_07.png" },
-  { name: "Company 8", logo: "/logo_08.png" },
-  { name: "Company 9", logo: "/logo_09.png" },
-  { name: "Company 10", logo: "/logo_10.png" },
-  { name: "Company 11", logo: "/logo_11.png" },
-  { name: "Company 12", logo: "/logo_12.png" },
-  { name: "Company 13", logo: "/logo_13.png" },
-  { name: "Company 14", logo: "/logo_14.png" },
-  { name: "Company 15", logo: "/logo_15.png" },
-  { name: "Company 16", logo: "/logo_16.png" },
+  { name: "Ashworth", logo: "/companies/ashworth.svg" },
+  { name: "Hargrove", logo: "/companies/hargrove.svg" },
+  { name: "Lumivance", logo: "/companies/lumivance.svg" },
+  { name: "Solantis", logo: "/companies/solantis.svg" },
+  { name: "Velo", logo: "/companies/velo.svg" },
+  { name: "Veridian", logo: "/companies/veridian.svg" },
+  { name: "Ashworth", logo: "/companies/ashworth.svg" },
+  { name: "Hargrove", logo: "/companies/hargrove.svg" },
+  { name: "Lumivance", logo: "/companies/lumivance.svg" },
+  { name: "Solantis", logo: "/companies/solantis.svg" },
+  { name: "Velo", logo: "/companies/velo.svg" },
+  { name: "Veridian", logo: "/companies/veridian.svg" },
+  { name: "Whitfield", logo: "/companies/whitfield.svg" },
 ];
 
 export function TrustedCompanies() {
