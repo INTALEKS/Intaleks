@@ -105,7 +105,7 @@ export function Footer() {
 
           {/* Premium/Upgrade */}
           <div className="col-span-1">
-            <h3 className="font-semibold text-gray-900 mb-4 flex gap-x-2 items-center text-sm md:text-base">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center text-sm md:text-base">
               Premium Features{" "}
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
                 <path fill="#F4B400" d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14z" />
@@ -140,8 +140,7 @@ export function Footer() {
             <h3 className="font-semibold text-gray-900 mb-4 text-sm md:text-base">Location</h3>
             {officeLocations.map((office) => (
               <div key={office.city}>
-                <p className="font-semibold text-gray-900 text-sm mb-1">{office.city}</p>
-                <address className="not-italic text-gray-700 text-xs leading-relaxed">
+                <address className="not-italic text-gray-700 text-sm leading-relaxed">
                   <a href={office.mapUrl} target="_blank" rel="noopener noreferrer" className="hover:text-gray-900 transition-colors">
                     {office.address}
                   </a>

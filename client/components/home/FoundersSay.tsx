@@ -79,7 +79,7 @@ export function FoundersSay() {
           {/* Mobile: Single image */}
           <div className="md:hidden flex justify-center">
             <div className="relative overflow-hidden rounded-lg shadow-lg w-64 h-80 sm:w-72 sm:h-96">
-              <Image src={testimonials[currentIndex].image} alt={testimonials[currentIndex].name} fill className="object-cover" />
+              <Image src={testimonials[currentIndex].image} alt={testimonials[currentIndex].name} fill className="object-cover object-top" />
             </div>
           </div>
 
@@ -97,7 +97,7 @@ export function FoundersSay() {
                 const isCenter = position === 1;
                 return (
                   <div key={testimonial.id} className={`relative overflow-hidden rounded-lg transition-all duration-300 ${isCenter ? "w-88 h-96 z-10 shadow-lg" : "w-64 h-72 opacity-70 grayscale"}`}>
-                    <Image src={testimonial.image} alt={testimonial.name} fill className="object-cover" />
+                    <Image src={testimonial.image} alt={testimonial.name} fill className="object-cover object-top" />
                   </div>
                 );
               })}
