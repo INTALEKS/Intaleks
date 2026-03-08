@@ -134,7 +134,7 @@ export function Navbar() {
               )}
 
               {/* Mobile Auth Buttons */}
-              <div className="flex flex-col gap-3 mt-auto pt-4 px-4 pb-6 border-t">
+              <div className="flex flex-col gap-3 mt-auto pt-4 pb-6 border-t">
                 {isAuthenticated && user ? (
                   <>
                     <div className="px-2 py-3 bg-gray-50 rounded-lg">
