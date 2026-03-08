@@ -1047,21 +1047,6 @@ export default function CalculatorPage() {
       {/* Step Progress */}
       <div className="max-w-4xl mx-auto px-4">
         <StepProgress steps={steps} currentStep={currentStep} completedSteps={completedSteps} />
-        {/* Debug: Clear localStorage button */}
-        {typeof window !== "undefined" && localStorage.getItem(CALCULATOR_STORAGE_KEY) && (
-          <div className="mt-4 text-center">
-            <button
-              onClick={() => {
-                localStorage.removeItem(CALCULATOR_STORAGE_KEY);
-                localStorage.removeItem(CALCULATOR_TIMESTAMP_KEY);
-                window.location.reload();
-              }}
-              className="text-sm text-red-600 hover:text-red-700 underline"
-            >
-              Clear saved data and restart
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Main Content */}
