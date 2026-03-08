@@ -16,7 +16,7 @@ interface ValuationSummaryCardProps {
   adjustedEbit: number;
 
   // Valuation
-  valuationMethod: "asset" | "profit";
+  valuationMethod: "asset" | "profit" | "";
   valuationMultiple?: number;
   finalValuation: number;
 

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 export type ValuationMethod = "asset" | "profit";
 
 interface MethodToggleProps {
-  selectedMethod: ValuationMethod;
+  selectedMethod: ValuationMethod | "";
   onMethodChange: (method: ValuationMethod) => void;
 }
 

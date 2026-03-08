@@ -22,7 +22,7 @@ const startLinks = [
   { label: "Valuation Sample", href: "/valuation-sample.pdf" },
 ];
 
-const socialLinks = [
+const socialLinks: Array<{ icon: string; href: string; label: string }> = [
   // { icon: "facebook", href: "https://facebook.com", label: "Facebook" },
   // { icon: "linkedin", href: "https://linkedin.com", label: "LinkedIn" },
   // { icon: "instagram", href: "https://instagram.com", label: "Instagram" },

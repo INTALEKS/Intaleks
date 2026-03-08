@@ -19,6 +19,7 @@ import { useValuationMultiples } from "@/app/hooks/useValuationMultiples";
 import { useCalculateValuation } from "@/app/hooks/useCalculator";
 import { useCreateCheckout } from "@/app/hooks/usePayments";
 import type { QuestionnaireScores } from "@/lib/questionnaire-api";
+import type { CalculateValuationResponse } from "@/app/services/calculator";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
@@ -59,7 +60,7 @@ interface CalculatorState {
   selectedYears: number[];
   financialData: Record<string, Record<string, string>>;
   addbacks: Array<{ id: string; reason: string; values: Record<string, string> }>;
-  selectedMethod: ValuationMethod;
+  selectedMethod: ValuationMethod | "";
   assets: Record<string, string>;
   liabilities: Record<string, string>;
   companyLogoData?: string; // base64 encoded logo
@@ -252,7 +253,7 @@ export default function CalculatorPage() {
   });
   const [isDownloading, setIsDownloading] = useState(false);
   const [showValuationReport, setShowValuationReport] = useState(false);
-  const [serverCalculatedValues, setServerCalculatedValues] = useState<Record<string, unknown> | null>(null);
+  const [serverCalculatedValues, setServerCalculatedValues] = useState<CalculateValuationResponse | null>(null);
 
   const calculateValuationMutation = useCalculateValuation();
 
@@ -606,7 +607,7 @@ export default function CalculatorPage() {
         adjustedEbit: averageAdjustedEbit,
         adjustedEbitPerYear: Object.fromEntries(financialYears.map((year) => [year, adjustedEbitByYear[year] || 0])),
         totalAddbacksPerYear: Object.fromEntries(financialYears.map((year) => [year, totalAddbacksByYear[year] || 0])),
-        valuationMethod: selectedMethod,
+        valuationMethod: selectedMethod as "profit" | "asset",
         finalValuation,
         // Extended fields for multi-page PDF with cover page
         startedYear: startedYear || undefined,
@@ -1180,7 +1181,7 @@ export default function CalculatorPage() {
         <AccordionSection title="Download Valuation Document (PDF)" stepNumber={5} isOpen={openSections[5]} onToggle={() => toggleSection(5)}>
           <div className="py-6 space-y-6">
             {/* Comprehensive Valuation Summary Card */}
-            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={serverCalculatedValues?.averageSales ?? financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={serverCalculatedValues?.averageCOGS ?? financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={serverCalculatedValues?.averageEbit ?? financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} averageAddbacks={serverCalculatedValues?.averageAddbacks ?? financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0) / financialYears.length} adjustedEbit={serverCalculatedValues?.adjustedEbit ?? averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={serverCalculatedValues?.valuationMultiple ?? effectiveProfitMultiple} finalValuation={serverCalculatedValues?.finalValuation ?? finalValuation} totalAssets={serverCalculatedValues?.totalAssets ?? (selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined)} totalLiabilities={serverCalculatedValues?.totalLiabilities ?? (selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined)} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription} showReport={showValuationReport} onShowReport={handleShowReport} />
+            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageSales : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageCOGS : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageEbit : financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} averageAddbacks={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageAddbacks : financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0) / financialYears.length} adjustedEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.adjustedEbit : averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.valuationMultiple : effectiveProfitMultiple} finalValuation={serverCalculatedValues?.finalValuation ?? finalValuation} totalAssets={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalAssets : selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalLiabilities : selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription} showReport={showValuationReport} onShowReport={handleShowReport} />
 
             <div className="text-center">
               {!isStep4Complete ? (
