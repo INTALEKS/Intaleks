@@ -6,6 +6,7 @@ import { Navbar, HeroSection, TrustedCompanies, HowItWorks, WhyValuation, StatsS
 import { OrganizationJsonLd, WebApplicationJsonLd, FAQJsonLd } from "@/components/seo/JsonLd";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useCreateCheckout } from "@/app/hooks/usePayments";
+import { ApiClient } from "@/app/services/api";
 import Image from "next/image";
 
 // Handle scroll to section when navigating from another page
@@ -101,11 +102,12 @@ const stats = [
 
 /**
  * Component that handles subscribe query parameter for users returning from login
+ * and redirects new users (authenticated but no subscription) to checkout
  * Wrapped in Suspense because it uses useSearchParams
  */
 function SubscribeHandler() {
   const searchParams = useSearchParams();
-  const { isAuthenticated, isAuthentiating } = useAuthState();
+  const { isAuthenticated, isAuthentiating, subscriptionStatus, hasActiveSubscription } = useAuthState();
   const createCheckout = useCreateCheckout();
 
   // Handle subscribe query parameter for users returning from login (Requirement: 8.3)
@@ -127,6 +129,42 @@ function SubscribeHandler() {
       });
     }
   }, [searchParams, isAuthenticated, isAuthentiating, createCheckout]);
+
+  // Redirect new users (authenticated but no subscription) to checkout
+  useEffect(() => {
+    const successParam = searchParams.get("success");
+    const canceledParam = searchParams.get("canceled");
+    const subscribeParam = searchParams.get("subscribe");
+
+    // Don't redirect if:
+    // - User is still authenticating
+    // - User has active subscription
+    // - User just came back from checkout (success or canceled)
+    // - User has subscribe param (handled above)
+    // - Checkout is already in progress
+    if (isAuthentiating || hasActiveSubscription || successParam || canceledParam || subscribeParam || createCheckout.isPending) {
+      return;
+    }
+
+    // Redirect new users (authenticated with no subscription) to checkout
+    if (isAuthenticated && subscriptionStatus === "NONE") {
+      // Fetch plans and trigger checkout for the first paid plan
+      ApiClient.getPublicPlans()
+        .then((response) => {
+          const paidPlan = response.data.find((plan) => plan.price > 0);
+          if (paidPlan) {
+            createCheckout.mutate({
+              planId: paidPlan.id,
+              successUrl: `${window.location.origin}/?success=true`,
+              cancelUrl: `${window.location.origin}/?canceled=true`,
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to fetch plans:", error);
+        });
+    }
+  }, [isAuthenticated, isAuthentiating, subscriptionStatus, hasActiveSubscription, searchParams, createCheckout]);
 
   return null;
 }

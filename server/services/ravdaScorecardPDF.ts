@@ -230,7 +230,7 @@ function drawCenteredIntroPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
 
   const title = data.companyName || "Company";
   const titleMaxWidth = PAGE.width - PAGE.marginX * 2 - 20;
-  const titleSize = fitTitleFontSize(doc, title, fonts.bold, 36, hasCompanyLogo ? 62 : 74, titleMaxWidth);
+  const titleSize = fitTitleFontSize(doc, title, fonts.bold, 28, hasCompanyLogo ? 48 : 56, titleMaxWidth);
   const titleY = hasCompanyLogo ? 390 : 298;
   doc
     .font(fonts.bold)
@@ -247,7 +247,7 @@ function drawCenteredIntroPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     .font(fonts.medium)
     .fontSize(16)
     .fillColor("#111827")
-    .text(sanitizeCountry(data.country), PAGE.marginX, titleY + 92, {
+    .text(sanitizeCountry(data.country), PAGE.marginX, titleY + 60, {
       width: PAGE.width - PAGE.marginX * 2,
       align: "center",
       lineBreak: false,
@@ -258,9 +258,9 @@ function drawCenteredIntroPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   const industryLine = `Industry: ${toDisplayLabel(data.industry) || "N/A"}${baseMultiple ? ` (Base: ${baseMultiple}x)` : ""}`;
   doc
     .font(fonts.medium)
-    .fontSize(17)
+    .fontSize(13)
     .fillColor("#111827")
-    .text(industryLine, PAGE.marginX, titleY + 146, {
+    .text(industryLine, PAGE.marginX, titleY + 90, {
       width: PAGE.width - PAGE.marginX * 2,
       align: "center",
       lineBreak: false,
@@ -429,7 +429,7 @@ function drawBusinessStrengthPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
 
   const centerX = PAGE.width / 2;
   const centerY = 300;
-  const radius = 132;
+  const radius = 99;
 
   // Fill base circle by score band color.
   doc.circle(centerX, centerY, radius).fill(band.color);
@@ -657,12 +657,12 @@ function drawProfitMethodFinancialPage(doc: PDFKit.PDFDocument, data: RAVDAData,
   doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
   drawIntaleksLogo(doc);
 
-  const years = (data.financialYears || []).slice(0, 3);
-  const [y1 = "Year 1", y2 = "Year 2", y3 = "Year 3"] = years;
+  const years = (data.financialYears || []).slice(0, 2);
+  const [y1 = "Year 1", y2 = "Year 2"] = years;
 
   doc.font(fonts.semibold).fontSize(16).fillColor("#111827").text("Valuation Method", PAGE.marginX, 94, { lineBreak: false });
 
-  const yearRows = [y1, y2, y3];
+  const yearRows = years.length === 2 ? [y1, y2] : [y1];
   let yearY = 129;
   yearRows.forEach((year, idx) => {
     const label = `Year ${idx + 1}:`;
@@ -692,8 +692,9 @@ function drawProfitMethodFinancialPage(doc: PDFKit.PDFDocument, data: RAVDAData,
     .text("ACCOUNTING PROFIT AND LOSS", tableX + 6, tableY + 6, { lineBreak: false });
 
   // Header row
-  const metricW = 120;
-  const colW = (tableW - metricW) / 3;
+  const numYears = years.length;
+  const metricW = 140;
+  const colW = (tableW - metricW) / numYears;
   const headerY = tableY + 32;
   doc.rect(tableX, headerY, tableW, 32).fill("#E5E7EB");
   doc
@@ -702,44 +703,22 @@ function drawProfitMethodFinancialPage(doc: PDFKit.PDFDocument, data: RAVDAData,
     .fillColor("#374151")
     .text("METRIC", tableX + 4, headerY + 12, { lineBreak: false });
 
-  // Column headers with two lines
-  doc
-    .font(fonts.bold)
-    .fontSize(8.5)
-    .fillColor("#374151")
-    .text("2 YEAR PREVIOUS", tableX + metricW + 4, headerY + 4, { width: colW - 8, align: "center", lineBreak: false });
-  doc
-    .font(fonts.regular)
-    .fontSize(8)
-    .fillColor("#6B7280")
-    .text(`(${formatYearLabel(y1)})`, tableX + metricW + 4, headerY + 15, { width: colW - 8, align: "center", lineBreak: false });
+  // Column headers - simple year labels
+  if (numYears >= 1) {
+    doc
+      .font(fonts.bold)
+      .fontSize(8.5)
+      .fillColor("#374151")
+      .text(`Year ${formatYearLabel(y1)}`, tableX + metricW + 4, headerY + 12, { width: colW - 8, align: "center", lineBreak: false });
+  }
 
-  doc
-    .font(fonts.bold)
-    .fontSize(8.5)
-    .fillColor("#374151")
-    .text("1 YEAR PREVIOUS", tableX + metricW + colW + 4, headerY + 4, { width: colW - 8, align: "center", lineBreak: false });
-  doc
-    .font(fonts.regular)
-    .fontSize(8)
-    .fillColor("#6B7280")
-    .text(`(${formatYearLabel(y2)})`, tableX + metricW + colW + 4, headerY + 15, { width: colW - 8, align: "center", lineBreak: false });
-
-  doc
-    .font(fonts.bold)
-    .fontSize(8.5)
-    .fillColor("#374151")
-    .text("LAST FINANCIAL", tableX + metricW + colW * 2 + 4, headerY + 4, { width: colW - 8, align: "center", lineBreak: false });
-  doc
-    .font(fonts.bold)
-    .fontSize(8.5)
-    .fillColor("#374151")
-    .text("YEAR", tableX + metricW + colW * 2 + 4, headerY + 13, { width: colW - 8, align: "center", lineBreak: false });
-  doc
-    .font(fonts.regular)
-    .fontSize(8)
-    .fillColor("#6B7280")
-    .text(`(${formatYearLabel(y3)})`, tableX + metricW + colW * 2 + 4, headerY + 20, { width: colW - 8, align: "center", lineBreak: false });
+  if (numYears >= 2) {
+    doc
+      .font(fonts.bold)
+      .fontSize(8.5)
+      .fillColor("#374151")
+      .text(`Year ${formatYearLabel(y2)}`, tableX + metricW + colW + 4, headerY + 12, { width: colW - 8, align: "center", lineBreak: false });
+  }
 
   const metricRows: Array<{ label: string; key: "sales" | "grossProfit" | "cogs" | "operatingExpenses" | "netProfitAndLoss" | "interestExpense" | "interestIncome" }> = [
     { label: "Sales", key: "sales" },
@@ -758,20 +737,20 @@ function drawProfitMethodFinancialPage(doc: PDFKit.PDFDocument, data: RAVDAData,
       .fontSize(10)
       .fillColor("#111827")
       .text(row.label, tableX + 4, rowY + 6, { lineBreak: false });
-    [y1, y2, y3].forEach((year, idx) => {
+    years.forEach((year, idx) => {
       const x = tableX + metricW + idx * colW;
       doc.roundedRect(x + 1, rowY + 1, colW - 2, 19, 3).fillAndStroke("#F3F4F6", "#E5E7EB");
       doc
         .font(fonts.regular)
         .fontSize(9.5)
         .fillColor("#9CA3AF")
-        .text(money(financialValue(data, year, row.key)), x + 5, rowY + 6, {
-          width: colW - 10,
+        .text(money(financialValue(data, year, row.key)), x + 8, rowY + 6, {
+          width: colW - 16,
           align: "left",
           lineBreak: false,
         });
     });
-    rowY += 22;
+    rowY += 26;
   });
 
   // EBIT row
@@ -781,14 +760,14 @@ function drawProfitMethodFinancialPage(doc: PDFKit.PDFDocument, data: RAVDAData,
     .fontSize(10)
     .fillColor("#1F2937")
     .text("EBIT CALCULATED", tableX + 4, rowY + 8, { lineBreak: false });
-  [y1, y2, y3].forEach((year, idx) => {
+  years.forEach((year, idx) => {
     const x = tableX + metricW + idx * colW;
     doc
       .font(fonts.bold)
       .fontSize(10)
       .fillColor("#1F2937")
-      .text(money(financialValue(data, year, "ebit")), x + 5, rowY + 8, {
-        width: colW - 10,
+      .text(money(financialValue(data, year, "ebit")), x + 8, rowY + 8, {
+        width: colW - 16,
         align: "left",
         lineBreak: false,
       });
@@ -856,7 +835,7 @@ function drawProfitMethodFinancialPage(doc: PDFKit.PDFDocument, data: RAVDAData,
         width: addCol3 - 12,
         lineBreak: false,
       });
-    addY += 22;
+    addY += 26;
   });
 
   doc.rect(tableX, addY + 2, tableW, 21).fill("#BFDBFE");
@@ -895,6 +874,28 @@ function drawMetricCard(doc: PDFKit.PDFDocument, fonts: PdfFonts, x: number, y: 
     .text(value, x, y + 32, { width: w, align: "center", lineBreak: false });
 }
 
+function drawColoredMetricCard(doc: PDFKit.PDFDocument, fonts: PdfFonts, x: number, y: number, w: number, label: string, value: string, emoji: string, bgColor: string, borderColor: string, textColor: string): void {
+  const h = 64;
+  doc.roundedRect(x, y, w, h, 8).fillAndStroke(bgColor, borderColor);
+
+  // Label on top left
+  doc
+    .font(fonts.regular)
+    .fontSize(9)
+    .fillColor(textColor)
+    .fillOpacity(0.75)
+    .text(label, x + 8, y + 10, { width: w - 16, lineBreak: false });
+
+  doc.fillOpacity(1);
+
+  // Value on bottom
+  doc
+    .font(fonts.bold)
+    .fontSize(16)
+    .fillColor(textColor)
+    .text(value, x + 8, y + 34, { width: w - 16, lineBreak: false });
+}
+
 function drawProfitSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): void {
   doc.addPage();
   doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
@@ -913,120 +914,116 @@ function drawProfitSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   const strengthScore = getScoreOutOf50(data);
   const strengthRating = getStrengthRating(strengthScore);
 
-  doc.font(fonts.semibold).fontSize(16).fillColor("#111827").text("Valuation Report Summary", PAGE.marginX, 94, { lineBreak: false });
-  doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Business Valuation Report", 0, 135, { width: PAGE.width, align: "center", lineBreak: false });
+  // Header - Valuation Summary Report
+  doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Summary Report", PAGE.marginX, 94, { lineBreak: false });
 
-  // Company info line with justified spacing
-  const infoY = 175;
-  const infoStartX = PAGE.marginX + 26;
-  const infoEndX = PAGE.width - PAGE.marginX - 26;
-  const infoWidth = infoEndX - infoStartX;
-
-  const baseMultiple = typeof data.calculatedMultiple === "number" ? (data.calculatedMultiple % 1 === 0 ? data.calculatedMultiple.toFixed(0) : data.calculatedMultiple.toFixed(1)) : "0";
-  const industryText = `Industry: ${toDisplayLabel(data.industry) || "N/A"}(Base: ${baseMultiple}x)`;
-
-  // Calculate widths
-  doc.font(fonts.bold).fontSize(13);
-  const companyWidth = doc.widthOfString(data.companyName || "-");
-  doc.font(fonts.regular).fontSize(13);
-  const countryWidth = doc.widthOfString(sanitizeCountry(data.country));
-  const industryWidth = doc.widthOfString(industryText);
-
-  // Calculate spacing
-  const totalTextWidth = companyWidth + countryWidth + industryWidth;
-  const spacing = (infoWidth - totalTextWidth) / 2;
-
-  // Draw company name
+  // Company name
   doc
-    .font(fonts.bold)
-    .fontSize(13)
-    .fillColor("#111827")
-    .text(data.companyName || "-", infoStartX, infoY, { lineBreak: false });
+    .font(fonts.semibold)
+    .fontSize(14)
+    .fillColor("#4B5563")
+    .text(data.companyName || "Your Business", PAGE.marginX, 122, { lineBreak: false });
 
-  // Draw country
-  const countryX = infoStartX + companyWidth + spacing;
-  doc.font(fonts.regular).fontSize(13).fillColor("#111827").text(sanitizeCountry(data.country), countryX, infoY, { lineBreak: false });
-
-  // Draw industry with base multiple
-  const industryX = countryX + countryWidth + spacing;
+  // Industry and Country
   doc
     .font(fonts.regular)
-    .fontSize(13)
-    .fillColor("#111827")
-    .text(`Industry: ${toDisplayLabel(data.industry) || "N/A"}`, industryX, infoY, { lineBreak: false, continued: true });
-  doc.font(fonts.regular).fontSize(13).fillColor("#9CA3AF").text(`(Base: ${baseMultiple}x)`, { lineBreak: false });
+    .fontSize(11)
+    .fillColor("#6B7280")
+    .text(`${toDisplayLabel(data.industry) || "Retail"} • ${sanitizeCountry(data.country)}`, PAGE.marginX, 140, { lineBreak: false });
 
-  // metric cards
-  const cardsY1 = 210;
-  const gap = 12;
-  const x0 = PAGE.marginX + 26;
-  drawMetricCard(doc, fonts, x0, cardsY1, "Average Sales", money(avgSales));
-  drawMetricCard(doc, fonts, x0 + 150 + gap, cardsY1, "Average COGS", money(avgCogs));
-  drawMetricCard(doc, fonts, x0 + (150 + gap) * 2, cardsY1, "Average EBIT", money(avgEbit));
-  const cardsY2 = 284;
-  drawMetricCard(doc, fonts, x0, cardsY2, "Average Addbacks", money(avgAddbacks));
-  drawMetricCard(doc, fonts, x0 + 150 + gap, cardsY2, "Average Adjusted EBIT", money(avgAdjustedEbit));
-  drawMetricCard(doc, fonts, x0 + (150 + gap) * 2, cardsY2, "Valuation Multiple", `${valuationMultiple.toFixed(2)}x`);
+  // Metric cards - Row 1
+  const cardsY1 = 170;
+  const cardW = 160;
+  const gap = 10;
+  const x0 = PAGE.marginX;
 
-  // business strength assessment block
-  const assessmentY = 356;
-  const assessmentW = 150 * 3 + gap * 2;
+  // Average Sales - Blue
+  drawColoredMetricCard(doc, fonts, x0, cardsY1, cardW, "Average Sales", money(avgSales), "💰", "#EFF6FF", "#BFDBFE", "#1E40AF");
+
+  // Average COGS - Gray
+  drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY1, cardW, "Average COGS", money(avgCogs), "📊", "#F9FAFB", "#E5E7EB", "#374151");
+
+  // Average EBIT - Green
+  drawColoredMetricCard(doc, fonts, x0 + (cardW + gap) * 2, cardsY1, cardW, "Average EBIT", money(avgEbit), "📈", "#F0FDF4", "#BBF7D0", "#15803D");
+
+  // Metric cards - Row 2
+  const cardsY2 = cardsY1 + 74;
+
+  // Average Addbacks - Purple
+  drawColoredMetricCard(doc, fonts, x0, cardsY2, cardW, "Average Addbacks", money(avgAddbacks), "➕", "#FAF5FF", "#E9D5FF", "#7C3AED");
+
+  // Average Adjusted EBIT - Indigo
+  drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY2, cardW, "Average Adjusted EBIT", money(avgAdjustedEbit), "✨", "#EEF2FF", "#C7D2FE", "#4F46E5");
+
+  // Valuation Multiple - Orange
+  drawColoredMetricCard(doc, fonts, x0 + (cardW + gap) * 2, cardsY2, cardW, "Valuation Multiple", `${valuationMultiple.toFixed(2)}x`, "🎯", "#FFF7ED", "#FED7AA", "#C2410C");
+
+  // Business Strength Assessment
+  const assessmentY = cardsY2 + 84;
+  const assessmentW = PAGE.width - PAGE.marginX * 2;
   const assessmentH = 52;
-  doc.roundedRect(x0, assessmentY, assessmentW, assessmentH, 8).fillAndStroke("#FFFFFF", "#DBEAFE");
+  doc.roundedRect(PAGE.marginX, assessmentY, assessmentW, assessmentH, 8).fillAndStroke("#FFFFFF", "#BFDBFE");
+
   doc
     .font(fonts.regular)
     .fontSize(10)
     .fillColor("#6B7280")
-    .text("Business Strength Assessment", x0 + 12, assessmentY + 10, { lineBreak: false });
+    .text("Business Strength Assessment", PAGE.marginX + 12, assessmentY + 10, { lineBreak: false });
+
   doc
     .font(fonts.bold)
     .fontSize(18)
     .fillColor("#2563EB")
-    .text(`${strengthScore}/50`, x0 + 12, assessmentY + 26, { lineBreak: false });
+    .text(`${strengthScore}/50`, PAGE.marginX + 12, assessmentY + 26, { lineBreak: false });
+
   doc
     .font(fonts.regular)
     .fontSize(10)
     .fillColor("#6B7280")
-    .text("Rating", x0 + assessmentW - 90, assessmentY + 10, { width: 72, align: "right", lineBreak: false });
-  doc.roundedRect(x0 + assessmentW - 78, assessmentY + 24, 66, 20, 10).fill(strengthRating.bg);
+    .text("Rating", PAGE.marginX + assessmentW - 80, assessmentY + 10, { width: 72, align: "right", lineBreak: false });
+
+  doc.roundedRect(PAGE.marginX + assessmentW - 80, assessmentY + 24, 68, 18, 9).fill(strengthRating.bg);
+
   doc
     .font(fonts.bold)
-    .fontSize(10)
+    .fontSize(9)
     .fillColor(strengthRating.text)
-    .text(strengthRating.label, x0 + assessmentW - 78, assessmentY + 30, { width: 66, align: "center", lineBreak: false });
+    .text(strengthRating.label, PAGE.marginX + assessmentW - 80, assessmentY + 29, { width: 68, align: "center", lineBreak: false });
 
-  // blue valuation panel
-  const panelX = PAGE.marginX + 26;
-  const panelY = 424;
-  const panelW = PAGE.width - (PAGE.marginX + 26) * 2;
+  // Blue valuation panel
+  const panelX = PAGE.marginX;
+  const panelY = assessmentY + 68;
+  const panelW = PAGE.width - PAGE.marginX * 2;
   const panelH = 110;
-  doc.roundedRect(panelX, panelY, panelW, panelH, 12).fill("#2F80ED");
+  doc.roundedRect(panelX, panelY, panelW, panelH, 12).fill("#2563EB");
+
   doc
     .font(fonts.regular)
     .fontSize(12)
-    .fillColor("#EAF2FF")
+    .fillColor("#DBEAFE")
     .text("Estimated Business Valuation", panelX + 12, panelY + 14, { lineBreak: false });
+
   doc
     .font(fonts.bold)
     .fontSize(32)
     .fillColor("#FFFFFF")
     .text(moneyComma(data.finalValuation), panelX + 12, panelY + 34, { lineBreak: false });
+
   doc
     .moveTo(panelX + 12, panelY + 80)
     .lineTo(panelX + panelW - 12, panelY + 80)
     .lineWidth(1)
-    .strokeColor("#5FA6FF")
+    .strokeColor("#60A5FA")
     .stroke();
+
   doc
     .font(fonts.regular)
     .fontSize(11)
-    .fillColor("#EAF2FF")
-    .text(`Method: ${data.valuationMethod === "asset" ? "Asset Method" : "Profit Method"}`, panelX + 12, panelY + 88, { lineBreak: false });
+    .fillColor("#DBEAFE")
+    .text(`Method: ${data.valuationMethod === "asset" ? "Asset Method" : "Profit Method"}`, panelX + 12, panelY + 88, { lineBreak: false, continued: true });
 
-  // Trophy image
-  const trophyPath = path.join(__dirname, "../assets/win.png");
-  if (fs.existsSync(trophyPath)) {
-    doc.image(trophyPath, panelX + panelW - 52, panelY + 20, { width: 40 });
+  if (data.valuationMethod === "profit" && valuationMultiple) {
+    doc.text(` • Multiple: ${valuationMultiple.toFixed(2)}x`, { lineBreak: false });
   }
 
   const narrative = "This valuation estimate is generated from your financial performance, adjusted EBIT and selected valuation method. It is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
@@ -1034,7 +1031,7 @@ function drawProfitSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     .font(fonts.regular)
     .fontSize(9)
     .fillColor("#111827")
-    .text(narrative, PAGE.marginX, 566, {
+    .text(narrative, PAGE.marginX, panelY + panelH + 20, {
       width: PAGE.width - PAGE.marginX * 2,
       align: "left",
       lineGap: 1.4,
@@ -1061,8 +1058,8 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
   const strengthScore = getScoreOutOf50(data);
   const strengthRating = getStrengthRating(strengthScore);
 
-  doc.font(fonts.semibold).fontSize(16).fillColor("#111827").text("Valuation Report Summary", PAGE.marginX, 94, { lineBreak: false });
-  doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Business Valuation Report", 0, 135, { width: PAGE.width, align: "center", lineBreak: false });
+  doc.font(fonts.semibold).fontSize(14).fillColor("#111827").text("Valuation Report Summary", PAGE.marginX, 94, { lineBreak: false });
+  // doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Business Valuation Report", 0, 135, { width: PAGE.width, align: "center", lineBreak: false });
 
   // Company info line with justified spacing
   const infoY = 175;
@@ -1127,34 +1124,34 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
 
   // business strength assessment block
   const assessmentY = 286;
-  const assessmentW = 150 * 3 + gap * 2;
+  const assessmentW = PAGE.width - PAGE.marginX * 2;
   const assessmentH = 52;
-  doc.roundedRect(x0, assessmentY, assessmentW, assessmentH, 8).fillAndStroke("#FFFFFF", "#DBEAFE");
+  doc.roundedRect(PAGE.marginX, assessmentY, assessmentW, assessmentH, 8).fillAndStroke("#FFFFFF", "#DBEAFE");
   doc
     .font(fonts.regular)
     .fontSize(10)
     .fillColor("#6B7280")
-    .text("Business Strength Assessment", x0 + 12, assessmentY + 10, { lineBreak: false });
+    .text("Business Strength Assessment", PAGE.marginX + 12, assessmentY + 10, { lineBreak: false });
   doc
     .font(fonts.bold)
     .fontSize(18)
     .fillColor("#2563EB")
-    .text(`${strengthScore}/50`, x0 + 12, assessmentY + 26, { lineBreak: false });
+    .text(`${strengthScore}/50`, PAGE.marginX + 12, assessmentY + 26, { lineBreak: false });
   doc
     .font(fonts.regular)
     .fontSize(10)
     .fillColor("#6B7280")
-    .text("Rating", x0 + assessmentW - 90, assessmentY + 10, { width: 72, align: "right", lineBreak: false });
-  doc.roundedRect(x0 + assessmentW - 78, assessmentY + 24, 66, 20, 10).fill(strengthRating.bg);
+    .text("Rating", PAGE.marginX + assessmentW - 90, assessmentY + 10, { width: 72, align: "right", lineBreak: false });
+  doc.roundedRect(PAGE.marginX + assessmentW - 78, assessmentY + 24, 66, 20, 10).fill(strengthRating.bg);
   doc
     .font(fonts.bold)
     .fontSize(10)
     .fillColor(strengthRating.text)
-    .text(strengthRating.label, x0 + assessmentW - 78, assessmentY + 30, { width: 66, align: "center", lineBreak: false });
+    .text(strengthRating.label, PAGE.marginX + assessmentW - 78, assessmentY + 30, { width: 66, align: "center", lineBreak: false });
 
-  const panelX = PAGE.marginX + 26;
+  const panelX = PAGE.marginX;
   const panelY = 356;
-  const panelW = PAGE.width - (PAGE.marginX + 26) * 2;
+  const panelW = PAGE.width - PAGE.marginX * 2;
   const panelH = 110;
   doc.roundedRect(panelX, panelY, panelW, panelH, 12).fill("#2F80ED");
   doc

@@ -168,8 +168,18 @@ function MyDetailsTab({ user, onProfileUpdate }: { user: UserData | null; onProf
       const uploadData = await ApiClient.uploadAvatar(file);
       const avatarUrl = uploadData.data.url;
 
+      // Get current names - use input values if not empty, otherwise use user data
+      const currentFirstName = firstName.trim() ? firstName.trim() : user?.firstName || user?.name?.split(" ")[0] || "User";
+      const currentLastName = lastName.trim() ? lastName.trim() : user?.lastName || user?.name?.split(" ").slice(1).join(" ") || "Name";
+
+      // Validate we have at least a first name
+      if (!currentFirstName) {
+        toast.error("Please set your first name before uploading an avatar");
+        return;
+      }
+
       // Update profile with new avatar
-      await ApiClient.updateProfile(firstName.trim(), lastName.trim(), avatarUrl);
+      await ApiClient.updateProfile(currentFirstName, currentLastName, avatarUrl);
 
       toast.success("Avatar updated successfully");
       onProfileUpdate();
@@ -332,7 +342,8 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
 
   const currentPlan = user?.subscription;
   const hasActiveSubscription = user?.subscriptionStatus === "ACTIVE";
-  const otherPlans = (plans as SubscriptionPlan[] | undefined)?.filter((p) => p.id !== currentPlan?.id) || [];
+  const allPlans = (plans as SubscriptionPlan[] | undefined) || [];
+  const otherPlans = allPlans.filter((p) => p.id !== currentPlan?.id);
 
   const formatPrice = (price: number) => {
     if (price === 0) return "FREE";
@@ -392,38 +403,37 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
 
   return (
     <div>
-      {/* Current Plan
-      <h2 className="text-xl font-semibold mb-4">Current plan</h2>
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8 max-w-md">
-        <div className="flex items-center justify-between mb-4">
-          <span className="inline-block bg-yellow-400 text-black text-xs font-semibold px-2 py-1 rounded">{currentPlan?.name?.toUpperCase() || "VISITOR"}</span>
-          {hasActiveSubscription && <span className="text-xs text-green-600 font-medium">Active</span>}
-        </div>
-        <div className="text-4xl font-bold mb-4">${formatPrice(currentPlan?.price || 0)}</div>
-        <ul className="space-y-2 mb-6">
-          {(currentPlan?.features || ["Basic charts visualization", "Preview company visualization"]).map((feature: string, i: number) => (
-            <li key={i} className="flex items-start gap-2 text-sm">
-              <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-              <span>{feature}</span>
-            </li>
-          ))}
-        </ul>
-        {hasActiveSubscription ? (
-          <Button variant="outline" className="w-full text-red-600 border-red-200 hover:bg-red-50" onClick={handleCancelSubscription}>
-            Cancel Subscription
-          </Button>
-        ) : (
-          <Button variant="outline" className="w-full" onClick={() => otherPlans[0] && handleSubscribe(otherPlans[0].id)}>
-            Upgrade
-          </Button>
-        )}
-      </div> */}
-
-      {otherPlans.length > 0 && (
+      {/* Current Plan */}
+      {hasActiveSubscription && currentPlan && (
         <>
-          {/* <h2 className="text-lg lg:text-xl font-semibold mb-4">Other Plans</h2> */}
+          <h2 className="text-xl font-semibold mb-4">Current Plan</h2>
+          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8 max-w-md">
+            <div className="flex items-center justify-between mb-4">
+              <span className="inline-block bg-yellow-400 text-black text-xs font-semibold px-2 py-1 rounded">{currentPlan?.name?.toUpperCase() || "VISITOR"}</span>
+              <span className="text-xs text-green-600 font-medium">Active</span>
+            </div>
+            <div className="text-4xl font-bold mb-4">${formatPrice(currentPlan?.price || 0)}</div>
+            <ul className="space-y-2 mb-6">
+              {(currentPlan?.features || ["Basic charts visualization", "Preview company visualization"]).map((feature: string, i: number) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+            <Button variant="outline" className="w-full text-red-600 border-red-200 hover:bg-red-50" onClick={handleCancelSubscription}>
+              Cancel Subscription
+            </Button>
+          </div>
+        </>
+      )}
+
+      {/* Available Plans */}
+      {!hasActiveSubscription && allPlans.length > 0 && (
+        <>
+          <h2 className="text-lg lg:text-xl font-semibold mb-4">Available Plans</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
-            {otherPlans.map((plan) => (
+            {allPlans.map((plan) => (
               <div key={plan.id} className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6">
                 <span className="inline-block bg-yellow-400 text-black text-xs font-semibold px-2 py-1 rounded mb-4">{getBillingLabel(plan.billingPeriod)}</span>
                 <h3 className="font-semibold mb-2">{plan.name}</h3>
@@ -450,6 +460,13 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
             ))}
           </div>
         </>
+      )}
+
+      {/* No subscription message */}
+      {!hasActiveSubscription && allPlans.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No subscription plans available at the moment.</p>
+        </div>
       )}
     </div>
   );
