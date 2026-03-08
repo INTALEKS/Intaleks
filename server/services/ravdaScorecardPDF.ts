@@ -694,7 +694,9 @@ function drawProfitMethodFinancialPage(doc: PDFKit.PDFDocument, data: RAVDAData,
   // Header row
   const numYears = years.length;
   const metricW = 140;
-  const colW = (tableW - metricW) / numYears;
+  const colGap = 8; // Gap between columns
+  const availableColWidth = tableW - metricW - (numYears - 1) * colGap;
+  const colW = availableColWidth / numYears;
   const headerY = tableY + 32;
   doc.rect(tableX, headerY, tableW, 32).fill("#E5E7EB");
   doc
@@ -717,7 +719,7 @@ function drawProfitMethodFinancialPage(doc: PDFKit.PDFDocument, data: RAVDAData,
       .font(fonts.bold)
       .fontSize(8.5)
       .fillColor("#374151")
-      .text(`Year ${formatYearLabel(y2)}`, tableX + metricW + colW + 4, headerY + 12, { width: colW - 8, align: "center", lineBreak: false });
+      .text(`Year ${formatYearLabel(y2)}`, tableX + metricW + colW + colGap + 4, headerY + 12, { width: colW - 8, align: "center", lineBreak: false });
   }
 
   const metricRows: Array<{ label: string; key: "sales" | "grossProfit" | "cogs" | "operatingExpenses" | "netProfitAndLoss" | "interestExpense" | "interestIncome" }> = [
@@ -738,15 +740,15 @@ function drawProfitMethodFinancialPage(doc: PDFKit.PDFDocument, data: RAVDAData,
       .fillColor("#111827")
       .text(row.label, tableX + 4, rowY + 6, { lineBreak: false });
     years.forEach((year, idx) => {
-      const x = tableX + metricW + idx * colW;
+      const x = tableX + metricW + idx * (colW + colGap);
       doc.roundedRect(x + 1, rowY + 1, colW - 2, 19, 3).fillAndStroke("#F3F4F6", "#E5E7EB");
       doc
         .font(fonts.regular)
         .fontSize(9.5)
-        .fillColor("#9CA3AF")
-        .text(money(financialValue(data, year, row.key)), x + 8, rowY + 6, {
-          width: colW - 16,
-          align: "left",
+        .fillColor("#111827")
+        .text(money(financialValue(data, year, row.key)), x + 4, rowY + 6, {
+          width: colW - 8,
+          align: "center",
           lineBreak: false,
         });
     });
@@ -761,14 +763,14 @@ function drawProfitMethodFinancialPage(doc: PDFKit.PDFDocument, data: RAVDAData,
     .fillColor("#1F2937")
     .text("EBIT CALCULATED", tableX + 4, rowY + 8, { lineBreak: false });
   years.forEach((year, idx) => {
-    const x = tableX + metricW + idx * colW;
+    const x = tableX + metricW + idx * (colW + colGap);
     doc
       .font(fonts.bold)
       .fontSize(10)
       .fillColor("#1F2937")
-      .text(money(financialValue(data, year, "ebit")), x + 8, rowY + 8, {
-        width: colW - 16,
-        align: "left",
+      .text(money(financialValue(data, year, "ebit")), x + 4, rowY + 8, {
+        width: colW - 8,
+        align: "center",
         lineBreak: false,
       });
   });
@@ -783,25 +785,47 @@ function drawProfitMethodFinancialPage(doc: PDFKit.PDFDocument, data: RAVDAData,
     .text("ADDBACKS/ADJUSTMENTS", tableX + 6, addbacksTitleY + 6, { lineBreak: false });
 
   const addHeadY = addbacksTitleY + 32;
-  const addCol1 = 150;
-  const addCol2 = 210;
-  const addCol3 = tableW - addCol1 - addCol2;
+  const addNameW = 80;
+  const addReasonW = 140;
+  const addMetricW = addNameW + colGap + addReasonW;
+  const addYearColW = (tableW - addMetricW - (numYears - 1) * colGap) / numYears;
+
   doc.rect(tableX, addHeadY, tableW, 20).fill("#E5E7EB");
   doc
     .font(fonts.bold)
     .fontSize(9)
     .fillColor("#374151")
     .text("ADDBACK", tableX + 4, addHeadY + 6, { lineBreak: false });
-  doc.text("ADDBACK REASON", tableX + addCol1 + 4, addHeadY + 6, { lineBreak: false });
-  doc.text("ADDBACK VALUE", tableX + addCol1 + addCol2 + 4, addHeadY + 6, { lineBreak: false });
+  doc
+    .font(fonts.bold)
+    .fontSize(9)
+    .fillColor("#374151")
+    .text("ADDBACK REASON", tableX + addNameW + colGap + 4, addHeadY + 6, { lineBreak: false });
+
+  // Year column headers - same pattern as financial table
+  if (numYears >= 1) {
+    doc
+      .font(fonts.bold)
+      .fontSize(8.5)
+      .fillColor("#374151")
+      .text(`Year ${formatYearLabel(y1)}`, tableX + addMetricW + 4, addHeadY + 6, { width: addYearColW - 8, align: "center", lineBreak: false });
+  }
+
+  if (numYears >= 2) {
+    doc
+      .font(fonts.bold)
+      .fontSize(8.5)
+      .fillColor("#374151")
+      .text(`Year ${formatYearLabel(y2)}`, tableX + addMetricW + addYearColW + colGap + 4, addHeadY + 6, { width: addYearColW - 8, align: "center", lineBreak: false });
+  }
 
   const addbacks = (data.addbacks || []).slice(0, 6);
   // Filter out empty addbacks - only show those with reason and value
   const validAddbacks = addbacks.filter((item) => {
     if (!item) return false;
     const hasReason = item.reason && item.reason.trim() !== "";
-    const value = Object.values(item.values || {}).reduce((sum, v) => sum + (Number(v) || 0), 0);
-    const hasValue = value > 0;
+    const totalValue = Object.values(item.values || {}).reduce((sum, v) => sum + (Number(v) || 0), 0);
+    const hasValue = totalValue > 0;
     return hasReason || hasValue;
   });
 
@@ -813,28 +837,36 @@ function drawProfitMethodFinancialPage(doc: PDFKit.PDFDocument, data: RAVDAData,
       .split("-")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(" ");
-    const value = Object.values(item.values || {}).reduce((sum, v) => sum + (Number(v) || 0), 0);
 
     doc
       .font(fonts.regular)
       .fontSize(9.5)
       .fillColor("#111827")
       .text(name, tableX + 4, addY + 6, { lineBreak: false });
-    doc.roundedRect(tableX + addCol1 + 1, addY + 1, addCol2 - 2, 19, 3).fillAndStroke("#F3F4F6", "#E5E7EB");
+
+    doc.roundedRect(tableX + addNameW + colGap + 1, addY + 1, addReasonW - 2, 19, 3).fillAndStroke("#F3F4F6", "#E5E7EB");
     doc
       .font(fonts.regular)
       .fontSize(8.8)
       .fillColor("#111827")
-      .text(formattedReason, tableX + addCol1 + 6, addY + 6, { width: addCol2 - 12, lineBreak: false, ellipsis: true });
-    doc.roundedRect(tableX + addCol1 + addCol2 + 1, addY + 1, addCol3 - 2, 19, 3).fillAndStroke("#F3F4F6", "#E5E7EB");
-    doc
-      .font(fonts.regular)
-      .fontSize(9.2)
-      .fillColor("#111827")
-      .text(money(value), tableX + addCol1 + addCol2 + 6, addY + 6, {
-        width: addCol3 - 12,
-        lineBreak: false,
-      });
+      .text(formattedReason, tableX + addNameW + colGap + 6, addY + 6, { width: addReasonW - 12, lineBreak: false, ellipsis: true });
+
+    // Year value columns - same pattern as financial table
+    years.forEach((year, idx) => {
+      const x = tableX + addMetricW + idx * (addYearColW + colGap);
+      const value = item.values?.[year] || 0;
+      doc.roundedRect(x + 1, addY + 1, addYearColW - 2, 19, 3).fillAndStroke("#F3F4F6", "#E5E7EB");
+      doc
+        .font(fonts.regular)
+        .fontSize(9.2)
+        .fillColor("#111827")
+        .text(money(value), x + 4, addY + 6, {
+          width: addYearColW - 8,
+          align: "center",
+          lineBreak: false,
+        });
+    });
+
     addY += 26;
   });
 
@@ -982,13 +1014,13 @@ function drawProfitSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     .fillColor("#6B7280")
     .text("Rating", PAGE.marginX + assessmentW - 80, assessmentY + 10, { width: 72, align: "right", lineBreak: false });
 
-  doc.roundedRect(PAGE.marginX + assessmentW - 80, assessmentY + 24, 68, 18, 9).fill(strengthRating.bg);
+  doc.roundedRect(PAGE.marginX + assessmentW - 80, assessmentY + 24, 68, 20, 10).fill(strengthRating.bg);
 
   doc
-    .font(fonts.bold)
-    .fontSize(9)
+    .font(fonts.medium)
+    .fontSize(8)
     .fillColor(strengthRating.text)
-    .text(strengthRating.label, PAGE.marginX + assessmentW - 80, assessmentY + 29, { width: 68, align: "center", lineBreak: false });
+    .text(strengthRating.label, PAGE.marginX + assessmentW - 80, assessmentY + 30, { width: 68, align: "center", lineBreak: false });
 
   // Blue valuation panel
   const panelX = PAGE.marginX;
@@ -1144,8 +1176,8 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
     .text("Rating", PAGE.marginX + assessmentW - 90, assessmentY + 10, { width: 72, align: "right", lineBreak: false });
   doc.roundedRect(PAGE.marginX + assessmentW - 78, assessmentY + 24, 66, 20, 10).fill(strengthRating.bg);
   doc
-    .font(fonts.bold)
-    .fontSize(10)
+    .font(fonts.medium)
+    .fontSize(8)
     .fillColor(strengthRating.text)
     .text(strengthRating.label, PAGE.marginX + assessmentW - 78, assessmentY + 30, { width: 66, align: "center", lineBreak: false });
 
