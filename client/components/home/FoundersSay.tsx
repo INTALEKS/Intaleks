@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 
@@ -50,6 +50,9 @@ const testimonials: Testimonial[] = [
 
 export function FoundersSay() {
   const [currentIndex, setCurrentIndex] = useState(1);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handlePrev = () => {
     setCurrentIndex((prev) => (prev === 0 ? testimonials.length - 1 : prev - 1));
@@ -57,6 +60,33 @@ export function FoundersSay() {
 
   const handleNext = () => {
     setCurrentIndex((prev) => (prev === testimonials.length - 1 ? 0 : prev + 1));
+  };
+
+  // Handle touch events for swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      handleNext();
+    }
+    if (isRightSwipe) {
+      handlePrev();
+    }
+
+    setTouchStart(0);
+    setTouchEnd(0);
   };
 
   const getVisibleIndices = () => {
@@ -76,11 +106,19 @@ export function FoundersSay() {
 
         {/* Image Carousel */}
         <div className="relative flex items-center justify-center mb-6 md:mb-8">
-          {/* Mobile: Single image */}
-          <div className="md:hidden flex justify-center">
+          {/* Mobile: Single image with swipe */}
+          <div ref={containerRef} className="md:hidden flex justify-center relative" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
             <div className="relative overflow-hidden rounded-lg shadow-lg w-64 h-80 sm:w-72 sm:h-96">
               <Image src={testimonials[currentIndex].image} alt={testimonials[currentIndex].name} fill className="object-cover object-top" />
             </div>
+
+            {/* Mobile Arrow Buttons */}
+            <button onClick={handlePrev} className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/90 shadow-lg hover:bg-white transition-colors" aria-label="Previous testimonial">
+              <ChevronLeft className="w-5 h-5 text-gray-700" />
+            </button>
+            <button onClick={handleNext} className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/90 shadow-lg hover:bg-white transition-colors" aria-label="Next testimonial">
+              <ChevronRight className="w-5 h-5 text-gray-700" />
+            </button>
           </div>
 
           {/* Tablet and Desktop: Carousel with 3 images */}
@@ -134,9 +172,12 @@ export function FoundersSay() {
         {/* Mobile Navigation Dots */}
         <div className="md:hidden flex justify-center gap-2 mt-6">
           {testimonials.map((_, idx) => (
-            <button key={idx} onClick={() => setCurrentIndex(idx)} className={`w-2 h-2 rounded-full transition-all ${idx === currentIndex ? "bg-blue-500 w-6" : "bg-gray-300"}`} aria-label={`Go to testimonial ${idx + 1}`} />
+            <button key={idx} onClick={() => setCurrentIndex(idx)} className={`w-2.5 h-2.5 rounded-full transition-all ${idx === currentIndex ? "bg-blue-500 w-8" : "bg-gray-400"}`} aria-label={`Go to testimonial ${idx + 1}`} />
           ))}
         </div>
+
+        {/* Mobile Swipe Hint */}
+        <p className="md:hidden text-center text-xs text-gray-500 mt-4">Swipe or use arrows to navigate</p>
       </div>
     </section>
   );

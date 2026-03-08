@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Loader2, Globe } from "lucide-react";
+import { Loader2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApiClient, type SubscriptionPlan } from "@/app/services/api";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useCreateCheckout } from "@/app/hooks/usePayments";
-import { toast } from "sonner";
 import { usePricing } from "@/app/hooks/usePricing";
 
 /**
@@ -152,7 +151,7 @@ export function PricingSection() {
 
   if (loading || priceLoading) {
     return (
-      <section className="py-20 px-4 bg-gradient-to-b from-blue-50 to-cyan-50">
+      <section className="py-20 px-4 bg-linear-to-b from-blue-50 to-cyan-50">
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-12">Pricing</h2>
           <div className="flex justify-center">
@@ -168,7 +167,7 @@ export function PricingSection() {
   }
 
   return (
-    <section id="pricing" className="py-20 px-4 bg-gradient-to-b from-blue-50 to-cyan-50">
+    <section id="pricing" className="py-20 px-4 bg-linear-to-b from-blue-50 to-cyan-50">
       <div className="max-w-5xl mx-auto">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Pricing</h2>
         <p className="text-gray-600 text-center mb-4 max-w-2xl mx-auto">Choose the plan that fits your business valuation needs</p>
@@ -200,7 +199,7 @@ export function PricingSection() {
                 {/* Price */}
                 <div className="mb-8">
                   <div className="flex items-baseline mb-2">
-                    <span className="text-6xl font-bold text-gray-900">{price}</span>
+                    <span className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900">{price}</span>
                     <span className="text-gray-500 ml-2 text-lg">{isFree ? "/lifetime" : plan.billingPeriod === "ONE_TIME" ? "/one-time" : plan.billingPeriod === "YEARLY" ? "/year" : "/month"}</span>
                   </div>
                   {pricing && pricing.currency.code !== "AUD" && !isFree && <p className="text-sm text-gray-500">≈ A$399 AUD</p>}
