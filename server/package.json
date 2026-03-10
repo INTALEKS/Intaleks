@@ -28,6 +28,7 @@
     "db:seed:all": "tsx scripts/seed-all.ts",
     "db:seed:prod": "node dist/scripts/seed-base-multiples-raw.js",
     "db:reset-multiples": "tsx scripts/reset-valuation-multiples.ts",
+    "db:fix-migration": "node scripts/fix-migration.js",
     "create-admin": "tsx scripts/create-admin.ts",
     "create-admin-interactive": "tsx scripts/create-admin-interactive.ts",
     "setup-stripe": "tsx scripts/setup-stripe-product.ts",
