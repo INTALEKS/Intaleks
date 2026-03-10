@@ -955,151 +955,6 @@ function drawColoredMetricCard(doc: PDFKit.PDFDocument, fonts: PdfFonts, x: numb
     .text(value, x + 8, y + 34, { width: w - 16, lineBreak: false });
 }
 
-function drawProfitSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): void {
-  doc.addPage();
-  doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
-  drawIntaleksLogo(doc);
-
-  const years = (data.financialYears || []).slice(0, 3);
-  const yearCount = years.length || 1;
-  const sumBy = (key: "sales" | "cogs" | "ebit"): number => years.reduce((sum, year) => sum + (data.financialData?.[year]?.[key] || 0), 0);
-
-  const avgSales = sumBy("sales") / yearCount;
-  const avgCogs = sumBy("cogs") / yearCount;
-  const avgEbit = typeof data.averageEbit === "number" ? data.averageEbit : sumBy("ebit") / yearCount;
-  const avgAddbacks = yearCount > 0 ? (data.totalAddbacks || 0) / yearCount : 0;
-  const avgAdjustedEbit = typeof data.adjustedEbit === "number" ? data.adjustedEbit : avgEbit + avgAddbacks;
-  const valuationMultiple = typeof data.calculatedMultiple === "number" ? data.calculatedMultiple : 0;
-  const strengthScore = getScoreOutOf50(data);
-  const strengthRating = getStrengthRating(strengthScore);
-
-  // Header - Profit Method Summary
-  doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Profit Method Summary", PAGE.marginX, 94, { lineBreak: false });
-
-  // Company name
-  doc
-    .font(fonts.semibold)
-    .fontSize(14)
-    .fillColor("#4B5563")
-    .text(data.companyName || "Your Business", PAGE.marginX, 122, { lineBreak: false });
-
-  // Industry and Country
-  doc
-    .font(fonts.regular)
-    .fontSize(11)
-    .fillColor("#6B7280")
-    .text(`${toDisplayLabel(data.industry) || "Retail"} • ${sanitizeCountry(data.country)}`, PAGE.marginX, 140, { lineBreak: false });
-
-  // Metric cards - Row 1
-  const cardsY1 = 170;
-  const cardW = 160;
-  const gap = 10;
-  const x0 = PAGE.marginX;
-
-  // Average Sales - Blue
-  drawColoredMetricCard(doc, fonts, x0, cardsY1, cardW, "Average Sales", money(avgSales), "💰", "#EFF6FF", "#BFDBFE", "#1E40AF");
-
-  // Average COGS - Gray
-  drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY1, cardW, "Average COGS", money(avgCogs), "📊", "#F9FAFB", "#E5E7EB", "#374151");
-
-  // Average EBIT - Green
-  drawColoredMetricCard(doc, fonts, x0 + (cardW + gap) * 2, cardsY1, cardW, "Average EBIT", money(avgEbit), "📈", "#F0FDF4", "#BBF7D0", "#15803D");
-
-  // Metric cards - Row 2
-  const cardsY2 = cardsY1 + 74;
-
-  // Average Addbacks - Purple
-  drawColoredMetricCard(doc, fonts, x0, cardsY2, cardW, "Average Addbacks", money(avgAddbacks), "➕", "#FAF5FF", "#E9D5FF", "#7C3AED");
-
-  // Average Adjusted EBIT - Indigo
-  drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY2, cardW, "Average Adjusted EBIT", money(avgAdjustedEbit), "✨", "#EEF2FF", "#C7D2FE", "#4F46E5");
-
-  // Valuation Multiple - Orange
-  drawColoredMetricCard(doc, fonts, x0 + (cardW + gap) * 2, cardsY2, cardW, "Valuation Multiple", `${valuationMultiple.toFixed(2)}x`, "🎯", "#FFF7ED", "#FED7AA", "#C2410C");
-
-  // Business Strength Assessment
-  const assessmentY = cardsY2 + 84;
-  const assessmentW = PAGE.width - PAGE.marginX * 2;
-  const assessmentH = 52;
-  doc.roundedRect(PAGE.marginX, assessmentY, assessmentW, assessmentH, 8).fillAndStroke("#FFFFFF", "#BFDBFE");
-
-  doc
-    .font(fonts.regular)
-    .fontSize(10)
-    .fillColor("#6B7280")
-    .text("Business Strength Assessment", PAGE.marginX + 12, assessmentY + 10, { lineBreak: false });
-
-  doc
-    .font(fonts.bold)
-    .fontSize(18)
-    .fillColor("#2563EB")
-    .text(`${strengthScore}/50`, PAGE.marginX + 12, assessmentY + 26, { lineBreak: false });
-
-  doc
-    .font(fonts.regular)
-    .fontSize(10)
-    .fillColor("#6B7280")
-    .text("Rating", PAGE.marginX + assessmentW - 80, assessmentY + 10, { width: 72, align: "right", lineBreak: false });
-
-  doc.roundedRect(PAGE.marginX + assessmentW - 80, assessmentY + 24, 68, 20, 10).fill(strengthRating.bg);
-
-  doc
-    .font(fonts.medium)
-    .fontSize(8)
-    .fillColor(strengthRating.text)
-    .text(strengthRating.label, PAGE.marginX + assessmentW - 80, assessmentY + 30, { width: 68, align: "center", lineBreak: false });
-
-  // Blue valuation panel
-  const panelX = PAGE.marginX;
-  const panelY = assessmentY + 68;
-  const panelW = PAGE.width - PAGE.marginX * 2;
-  const panelH = 110;
-  doc.roundedRect(panelX, panelY, panelW, panelH, 12).fill("#2563EB");
-
-  doc
-    .font(fonts.regular)
-    .fontSize(12)
-    .fillColor("#DBEAFE")
-    .text("Estimated Business Valuation", panelX + 12, panelY + 14, { lineBreak: false });
-
-  doc
-    .font(fonts.bold)
-    .fontSize(32)
-    .fillColor("#FFFFFF")
-    .text(moneyComma(data.finalValuation), panelX + 12, panelY + 34, { lineBreak: false });
-
-  doc
-    .moveTo(panelX + 12, panelY + 80)
-    .lineTo(panelX + panelW - 12, panelY + 80)
-    .lineWidth(1)
-    .strokeColor("#60A5FA")
-    .stroke();
-
-  doc
-    .font(fonts.regular)
-    .fontSize(11)
-    .fillColor("#DBEAFE")
-    .text(`Method: Profit Method • Multiple: ${valuationMultiple.toFixed(2)}x`, panelX + 12, panelY + 88, { lineBreak: false });
-
-  const narrative = "This valuation estimate is generated from your financial performance, adjusted EBIT and selected valuation method. It is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
-  doc
-    .font(fonts.regular)
-    .fontSize(9)
-    .fillColor("#111827")
-    .text(narrative, PAGE.marginX, panelY + panelH + 20, {
-      width: PAGE.width - PAGE.marginX * 2,
-      align: "left",
-      lineGap: 1.4,
-    });
-
-  const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("5", 0, footerY, {
-    width: PAGE.width,
-    align: "center",
-    lineBreak: false,
-  });
-}
-
 function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): void {
   doc.addPage();
   doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
@@ -1383,174 +1238,115 @@ function drawEarlyDisclaimerPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts
     lineBreak: false,
   });
 }
-function drawDisclaimerPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): void {
+function drawBusinessStrengthAssessmentPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): void {
   doc.addPage();
   doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
+
   drawIntaleksLogo(doc);
 
-  let y = 96;
-  doc.font(fonts.bold).fontSize(20).fillColor("#1F2937").text("BUSINESS VALUATION DISCLAIMER", 0, y, {
-    width: PAGE.width,
-    align: "center",
+  doc.font(fonts.semibold).fontSize(16).fillColor("#111827").text("Business strength assessment", PAGE.marginX, 94, {
     lineBreak: false,
   });
-  y += 34;
 
+  const score = getScoreOutOf50(data);
+  const band = getStrengthBand(score);
+
+  const centerX = PAGE.width / 2;
+  const centerY = 300;
+  const radius = 132;
+
+  // Fill base circle by score band color.
+  doc.circle(centerX, centerY, radius).fill(band.color);
+
+  // Overlay gray wedge for the unscored portion.
+  const remainingRatio = Math.max(0, Math.min(1, (50 - score) / 50));
+  if (remainingRatio > 0) {
+    const startAngle = 0;
+    const endAngle = remainingRatio * Math.PI * 2;
+    doc.save();
+    doc.fillColor("#E5E7EB");
+
+    // Draw remaining portion using path
+    doc.path(`M ${centerX} ${centerY} L ${centerX + radius} ${centerY}`);
+    for (let angle = startAngle; angle <= endAngle; angle += 0.1) {
+      const x = centerX + radius * Math.cos(angle);
+      const y = centerY + radius * Math.sin(angle);
+      doc.lineTo(x, y);
+    }
+    doc.closePath().fill();
+    doc.restore();
+  }
+
+  const scoreY = 438;
+  const leftScore = `${score}/`;
+  doc.font(fonts.regular).fontSize(26);
+  const leftWidth = doc.widthOfString(leftScore);
+  const rightScore = "50";
+  const rightWidth = doc.widthOfString(rightScore);
+  const totalWidth = leftWidth + rightWidth;
+  const startX = centerX - totalWidth / 2;
+
+  doc.font(fonts.regular).fontSize(26).fillColor("#111827").text(leftScore, startX, scoreY, { lineBreak: false });
+  doc
+    .font(fonts.regular)
+    .fontSize(26)
+    .fillColor("#C4C4C4")
+    .text(rightScore, startX + leftWidth, scoreY, { lineBreak: false });
+
+  drawLegendRow(doc, fonts, PAGE.marginX + 14, 498, PAGE.width - PAGE.marginX * 2 - 28);
+
+  // Formula box
+  const boxX = PAGE.marginX;
+  const boxY = 550;
+  const boxWidth = PAGE.width - PAGE.marginX * 2;
+  const boxHeight = 110;
+  doc.rect(boxX, boxY, boxWidth, boxHeight).fill("#F3F4F6");
+
+  // Info icon and title
+  doc;
+  // Info icon
+  doc
+    .circle(boxX + 20, boxY + 25, 8)
+    .lineWidth(1.8)
+    .strokeColor("#1E78D7")
+    .stroke();
+  doc
+    .font(fonts.bold)
+    .fontSize(11)
+    .fillColor("#1E78D7")
+    .text("i", boxX + 17.5, boxY + 20.5, { lineBreak: false });
+
+  // Title on same line as icon
+  doc
+    .font(fonts.bold)
+    .fontSize(11)
+    .fillColor("#111827")
+    .text("Multiple Calculation Formula", boxX + 34, boxY + 19, { lineBreak: false });
+
+  // Description with inline bold text
+  const descY = boxY + 48;
   doc
     .font(fonts.regular)
     .fontSize(10)
-    .fillColor("#FF0000")
-    .text("DISCLAIMER - GUIDANCE ONLY (NOT LEGAL, FINANCIAL, OR PROFESSIONAL ADVICE)", PAGE.marginX, y, {
-      width: PAGE.width - PAGE.marginX * 2,
-      align: "center",
-      lineBreak: false,
-    });
-  y += 30;
-
-  const intro = 'The valuation estimate generated by Perth Business Evaluators Pty Ltd (ABN: 51 622 231 832), trading as Intaleks ("Intaleks") is a general informational guide only. It is based on automated modelling, user-provided inputs, and available data sources.';
-  doc
-    .font(fonts.regular)
-    .fontSize(11)
     .fillColor("#111827")
-    .text(intro, PAGE.marginX, y, {
-      width: PAGE.width - PAGE.marginX * 2,
-      lineGap: 1.5,
-    });
-  y += 66;
+    .text("Your final multiple is calculated as: ", boxX + 14, descY, { lineBreak: false, continued: true });
+  doc.font(fonts.bold).text("Base Multiple x Score Factor", { lineBreak: false });
 
-  doc.font(fonts.bold).fontSize(13).fillColor("#111827").text("This valuation is not:", PAGE.marginX, y, { lineBreak: false });
-  y += 16;
-  const bullets = ["• A certified business valuation", "• A legal valuation for court, taxation, or regulatory purposes", "• Financial, accounting, investment, or legal advice", "• A substitute for professional valuation services"];
-  bullets.forEach((b) => {
-    doc
-      .font(fonts.regular)
-      .fontSize(11)
-      .fillColor("#111827")
-      .text(b, PAGE.marginX, y, {
-        width: PAGE.width - PAGE.marginX * 2,
-        lineBreak: false,
-      });
-    y += 16;
-  });
-  y += 12;
+  // Legend row
+  drawLegendRow(doc, fonts, boxX + 14, descY + 20, boxWidth - 28);
 
-  doc
-    .font(fonts.regular)
-    .fontSize(11)
-    .fillColor("#111827")
-    .text("The results are estimates only and may not reflect actual market value or current economic conditions. No action or decision should be made based solely on this valuation output.", PAGE.marginX, y, {
-      width: PAGE.width - PAGE.marginX * 2,
-      lineGap: 1.5,
-    });
-  y += 50;
-
-  doc
-    .font(fonts.regular)
-    .fontSize(11)
-    .fillColor("#111827")
-    .text("For legal proceedings, taxation matters, lending requirements, compliance purposes, or formal business transactions, you must obtain a qualified, independent, and certified professional valuation.", PAGE.marginX, y, {
-      width: PAGE.width - PAGE.marginX * 2,
-      lineGap: 1.5,
-    });
-  y += 50;
-
-  doc.font(fonts.bold).fontSize(13).fillColor("#111827").text("Limitation of Liability", PAGE.marginX, y, { lineBreak: false });
-  y += 14;
-  doc
-    .font(fonts.regular)
-    .fontSize(11)
-    .fillColor("#111827")
-    .text("Intaleks accepts no liability for any loss, decision, or action taken in reliance on the valuation estimate.", PAGE.marginX, y, {
-      width: PAGE.width - PAGE.marginX * 2,
-      lineGap: 1.5,
-    });
-  y += 50;
-
-  const noticeX = PAGE.marginX;
-  const noticeY = y;
-  const noticeW = PAGE.width - PAGE.marginX * 2;
-  const noticeH = 60;
-  doc.rect(noticeX, noticeY, noticeW, noticeH).fillAndStroke("#FEE2E2", "#EF4444");
-  doc
-    .font(fonts.bold)
-    .fontSize(10.5)
-    .fillColor("#FF0000")
-    .text("IMPORTANT LEGAL NOTICE", noticeX + 10, noticeY + 12, {
-      lineBreak: false,
-    });
-  doc
-    .font(fonts.regular)
-    .fontSize(9.5)
-    .fillColor("#111827")
-    .text("The Platform provides automated valuation estimates only and is NOT a certified valuation and CANNOT be used for legal, tax, court, or regulatory purposes.", noticeX + 10, noticeY + 30, {
-      width: noticeW - 20,
-      lineGap: 1.2,
-    });
-
-  const generated = data.generatedDate || new Date().toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" });
-
-  doc.font(fonts.bold).fontSize(11).fillColor("#111827").text("Perth Business Evaluators Pty", PAGE.marginX, 673, { lineBreak: false });
-  doc.font(fonts.regular).fontSize(10).fillColor("#6B7280").text("Ltd ABN: 51 622 231 832", PAGE.marginX, 688, { lineBreak: false });
-  doc.font(fonts.regular).fontSize(10).fillColor("#6B7280").text("Trading as: Intaleks", PAGE.marginX, 702, { lineBreak: false });
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("Email: aleks@executivebusinessevaluers.com.au", PAGE.marginX, 716, { lineBreak: false });
-  doc.font(fonts.regular).fontSize(10.5).fillColor("#111827").text(`Generated: ${generated}`, PAGE.marginX, 736, { lineBreak: false, oblique: true });
-
-  const ravdaText = "The RAVDA is a proprietary tool developed by Intaleks to help business owners understand the key risk and value drivers. A high RAVDA score usually indicates lower risks and potentially a more valuable business. The score is calculated using a combination of your responses and industry data. The score is intended as an introduction to assess key risk and value drivers. There may be omissions or inaccuracies, and the reader needs to make their own enquiries before making any decision. The issuer shall not be held liable for any loss or damage arising from relying on this document.";
+  // Example text
   doc
     .font(fonts.regular)
     .fontSize(8)
-    .fillColor("#111827")
-    .text(ravdaText, PAGE.marginX, 752, {
-      width: PAGE.width - PAGE.marginX * 2,
-      height: 34,
-      ellipsis: true,
-      lineGap: 1.2,
+    .fillColor("#9CA3AF")
+    .text("Example: If your industry base multiple is 5.0x and you score 35 points, your multiple = 5.0 x 0.8 = 4.0x", boxX + 14, descY + 45, {
+      width: boxWidth - 28,
+      lineBreak: true,
     });
 
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("7", 0, footerY, {
-    width: PAGE.width,
-    align: "center",
-    lineBreak: false,
-  });
-}
-
-function drawOutroPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): void {
-  doc.addPage();
-  doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
-
-  const logoPngPath = path.join(__dirname, "../assets/intaleks.png");
-  const logoJpgPath = path.join(__dirname, "../assets/intaleks.jpg");
-  const logoPath = fs.existsSync(logoPngPath) ? logoPngPath : logoJpgPath;
-
-  const centerX = PAGE.width / 2;
-  const logoY = 382;
-  if (fs.existsSync(logoPath)) {
-    const width = 260;
-    doc.image(logoPath, centerX - width / 2, logoY, { width });
-  } else {
-    doc
-      .font(fonts.bold)
-      .fontSize(54)
-      .fillColor("#111827")
-      .text("intaleks", 0, logoY + 20, { width: PAGE.width, align: "center" });
-  }
-
-  doc.font(fonts.regular).fontSize(14).fillColor("#9CA3AF").text("intaleks.com", 0, 448, {
-    width: PAGE.width,
-    align: "center",
-    lineBreak: false,
-  });
-
-  const generatedText = `Report generated ${formatGeneratedDate(data.generatedDate)}`;
-  doc.font(fonts.regular).fontSize(15).fillColor("#111827").text(generatedText, 0, 470, {
-    width: PAGE.width,
-    align: "center",
-    lineBreak: false,
-  });
-
-  const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("7", 0, footerY, {
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("5", 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -1583,6 +1379,7 @@ export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer
       drawValuationSummaryPage(doc, data, fonts); // Page 3 - Well-formatted valuation summary
     }
     drawFinancialDataPage(doc, data, fonts); // Page 4 - Financial data with method-specific title
+    drawBusinessStrengthAssessmentPage(doc, data, fonts); // Page 5 - Business Strength Assessment
 
     doc.end();
   });
