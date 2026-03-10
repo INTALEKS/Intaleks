@@ -2,6 +2,7 @@ import { prisma } from "../config/db";
 import { getStripe, stripeConfig } from "../config/stripe";
 import { StripeError, STRIPE_ERROR_CODES } from "../errors";
 import { WebhookErrorLogger } from "./webhook-logger";
+import { invoiceService } from "./invoice";
 import Stripe from "stripe";
 
 // Subscription status values matching Prisma enum
@@ -237,7 +238,7 @@ export class WebhookService {
       const amountTotal = session.amount_total || 0;
       const paymentIntentId = session.payment_intent as string | null;
 
-      await prisma.payment.create({
+      const payment = await prisma.payment.create({
         data: {
           userId,
           planId: planId || null,
@@ -248,6 +249,16 @@ export class WebhookService {
           description: `Subscription payment for plan`,
         },
       });
+
+      // Generate and send invoice
+      try {
+        const invoice = await invoiceService.createInvoice(payment.id);
+        await invoiceService.sendInvoiceEmail(invoice.id);
+        console.log(`✅ Invoice ${invoice.invoiceNumber} generated and sent for payment ${payment.id}`);
+      } catch (invoiceError) {
+        console.error("Failed to generate/send invoice:", invoiceError);
+        // Don't fail the webhook for invoice errors
+      }
 
       return {
         success: true,
@@ -323,7 +334,7 @@ export class WebhookService {
       });
 
       if (existingPayments > 0 || invoice.billing_reason === "subscription_cycle") {
-        await prisma.payment.create({
+        const payment = await prisma.payment.create({
           data: {
             userId: user.id,
             planId: user.subscriptionId,
@@ -334,6 +345,16 @@ export class WebhookService {
             description: "Subscription renewal",
           },
         });
+
+        // Generate and send invoice for renewal
+        try {
+          const invoiceRecord = await invoiceService.createInvoice(payment.id);
+          await invoiceService.sendInvoiceEmail(invoiceRecord.id);
+          console.log(`✅ Renewal invoice ${invoiceRecord.invoiceNumber} generated and sent for payment ${payment.id}`);
+        } catch (invoiceError) {
+          console.error("Failed to generate/send renewal invoice:", invoiceError);
+          // Don't fail the webhook for invoice errors
+        }
       }
 
       return {

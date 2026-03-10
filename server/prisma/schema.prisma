@@ -46,6 +46,7 @@ model User {
   forumReplies      ForumReply[]
   forumReactions    ForumReaction[]
   payments          Payment[]
+  invoices          Invoice[]
   adminActions      AdminAction[]      @relation("AdminActions")
   targetActions     AdminAction[]      @relation("TargetActions")
   valuationDocuments ValuationDocument[]
@@ -70,6 +71,7 @@ model SubscriptionPlan {
 
   users    User[]
   payments Payment[]
+  invoices Invoice[]
 
   @@map("subscription_plans")
 }
@@ -233,10 +235,37 @@ model Payment {
   description     String?
   createdAt       DateTime      @default(now()) @map("created_at")
 
-  user User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan SubscriptionPlan? @relation(fields: [planId], references: [id])
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan    SubscriptionPlan? @relation(fields: [planId], references: [id])
+  invoice Invoice?
 
   @@map("payments")
+}
+
+// Invoice model for tracking generated invoices
+model Invoice {
+  id              String        @id @default(cuid())
+  invoiceNumber   String        @unique @map("invoice_number") // e.g., INV-2024-001
+  paymentId       String        @unique @map("payment_id")
+  userId          String        @map("user_id")
+  planId          String?       @map("plan_id")
+  amount          Int           // Amount in cents
+  currency        String        @default("usd")
+  status          InvoiceStatus @default(PENDING)
+  stripeInvoiceId String?       @map("stripe_invoice_id")
+  pdfUrl          String?       @map("pdf_url") // URL to generated PDF
+  emailSent       Boolean       @default(false) @map("email_sent")
+  emailSentAt     DateTime?     @map("email_sent_at")
+  dueDate         DateTime?     @map("due_date")
+  paidAt          DateTime?     @map("paid_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  payment Payment           @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan    SubscriptionPlan? @relation(fields: [planId], references: [id])
+
+  @@map("invoices")
 }
 
 // Admin action audit logging model
@@ -269,6 +298,15 @@ enum PaymentStatus {
   SUCCEEDED
   FAILED
   REFUNDED
+}
+
+// Invoice status enum for tracking invoice state
+enum InvoiceStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  VOID
 }
 
 // Valuation document tracking model

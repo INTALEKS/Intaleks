@@ -5,7 +5,7 @@ import { Navbar, Footer } from "@/components/home";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Phone, Mail, Loader2 } from "lucide-react";
+import { Mail, Loader2 } from "lucide-react";
 import { ApiClient } from "@/app/services/api";
 
 export default function ContactPage() {
@@ -44,7 +44,7 @@ export default function ContactPage() {
 
         <div className="mt-8">
           <h2 className="text-xl font-semibold">Available 24/7</h2>
-          <p className="text-gray-600 mt-1">If you have any questions, contact us via email, text, phone, or the form below</p>
+          <p className="text-gray-600 mt-1">If you have any questions, contact us via email or the form below</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 mt-8">
@@ -93,14 +93,6 @@ export default function ContactPage() {
               <h3 className="font-semibold text-lg mb-4">Contact Info</h3>
 
               <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Phone className="w-5 h-5 text-gray-500 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Phone</p>
-                    <p className="text-gray-600">0466 805 568</p>
-                  </div>
-                </div>
-
                 <div className="flex items-start gap-3">
                   <Mail className="w-5 h-5 text-gray-500 mt-0.5" />
                   <div>

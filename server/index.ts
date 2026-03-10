@@ -16,6 +16,7 @@ import valuationRoutes from "./routes/valuation.routes";
 import valuationMultiplesAdminRoutes, { publicValuationMultiplesRouter } from "./routes/valuationMultiples.routes";
 import { questionnaireRouter } from "./routes/questionnaire.routes";
 import paymentRoutes, { webhookRouter } from "./routes/payment.routes";
+import invoiceRoutes from "./routes/invoice.routes";
 import profileRoutes from "./routes/profile.routes";
 import contactRoutes from "./routes/contact.routes";
 import calculatorRoutes from "./routes/calculator.routes";
@@ -83,6 +84,7 @@ app.use("/api/valuation", valuationRoutes);
 app.use("/api/valuation-multiples", publicValuationMultiplesRouter);
 app.use("/api/questionnaire", questionnaireRouter);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/invoices", invoiceRoutes);
 app.use("/api/users", profileRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/upload", profileRoutes); // For avatar uploads

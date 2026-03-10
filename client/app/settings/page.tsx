@@ -11,11 +11,12 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useActiveSubscriptionPlans } from "@/app/hooks/useSubscriptions";
+import { InvoiceList } from "@/components/InvoiceList";
 import { Loader2, Check, Mail, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { ApiClient } from "@/app/services/api";
 
-type TabType = "details" | "subscriptions" | "contact";
+type TabType = "details" | "subscriptions" | "invoices" | "contact";
 
 interface UserData {
   id: string;
@@ -84,6 +85,7 @@ function SettingsPageContent() {
   const tabs = [
     { key: "details" as TabType, label: "My Details" },
     { key: "subscriptions" as TabType, label: "Subscriptions" },
+    { key: "invoices" as TabType, label: "Invoices" },
     { key: "contact" as TabType, label: "Contact Admin" },
   ];
 
@@ -120,6 +122,7 @@ function SettingsPageContent() {
 
             {activeTab === "details" && <MyDetailsTab user={user} onProfileUpdate={refetch} />}
             {activeTab === "subscriptions" && <SubscriptionsTab user={user} />}
+            {activeTab === "invoices" && <InvoicesTab />}
             {activeTab === "contact" && <ContactAdminTab user={user} />}
           </div>
         </div>
@@ -566,6 +569,17 @@ function ContactAdminTab({ user }: { user: UserData | null }) {
       </div>
 
       {/* Office Locations - Removed as not in original footer */}
+    </div>
+  );
+}
+
+// Invoices Tab Component
+function InvoicesTab() {
+  return (
+    <div>
+      <h2 className="text-lg lg:text-xl font-semibold mb-4 lg:mb-6">Payment History & Invoices</h2>
+      <p className="text-gray-600 mb-6">View and manage your payment history and download invoices for your subscription payments.</p>
+      <InvoiceList />
     </div>
   );
 }
