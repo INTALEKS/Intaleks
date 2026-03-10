@@ -8,6 +8,7 @@ const db_1 = require("../config/db");
 const stripe_1 = require("../config/stripe");
 const errors_1 = require("../errors");
 const webhook_logger_1 = require("./webhook-logger");
+const invoice_1 = require("./invoice");
 const stripe_2 = __importDefault(require("stripe"));
 const SubscriptionStatusValues = {
     NONE: "NONE",
@@ -204,7 +205,7 @@ class WebhookService {
             // Create payment record (Requirement 3.2)
             const amountTotal = session.amount_total || 0;
             const paymentIntentId = session.payment_intent;
-            await db_1.prisma.payment.create({
+            const payment = await db_1.prisma.payment.create({
                 data: {
                     userId,
                     planId: planId || null,
@@ -215,6 +216,16 @@ class WebhookService {
                     description: `Subscription payment for plan`,
                 },
             });
+            // Generate and send invoice
+            try {
+                const invoice = await invoice_1.invoiceService.createInvoice(payment.id);
+                await invoice_1.invoiceService.sendInvoiceEmail(invoice.id);
+                console.log(`✅ Invoice ${invoice.invoiceNumber} generated and sent for payment ${payment.id}`);
+            }
+            catch (invoiceError) {
+                console.error("Failed to generate/send invoice:", invoiceError);
+                // Don't fail the webhook for invoice errors
+            }
             return {
                 success: true,
                 eventType: event.type,
@@ -281,7 +292,7 @@ class WebhookService {
                 where: { userId: user.id },
             });
             if (existingPayments > 0 || invoice.billing_reason === "subscription_cycle") {
-                await db_1.prisma.payment.create({
+                const payment = await db_1.prisma.payment.create({
                     data: {
                         userId: user.id,
                         planId: user.subscriptionId,
@@ -292,6 +303,16 @@ class WebhookService {
                         description: "Subscription renewal",
                     },
                 });
+                // Generate and send invoice for renewal
+                try {
+                    const invoiceRecord = await invoice_1.invoiceService.createInvoice(payment.id);
+                    await invoice_1.invoiceService.sendInvoiceEmail(invoiceRecord.id);
+                    console.log(`✅ Renewal invoice ${invoiceRecord.invoiceNumber} generated and sent for payment ${payment.id}`);
+                }
+                catch (invoiceError) {
+                    console.error("Failed to generate/send renewal invoice:", invoiceError);
+                    // Don't fail the webhook for invoice errors
+                }
             }
             return {
                 success: true,

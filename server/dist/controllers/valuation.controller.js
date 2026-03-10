@@ -113,12 +113,7 @@ const generatePDF = async (req, res, next) => {
         if (!data.companyName || !data.valuationMethod) {
             return res.status(400).json({ error: "Missing required fields: companyName, valuationMethod" });
         }
-        const normalizedYears = [
-            ...(Array.isArray(data.years) ? data.years : []),
-            ...(Array.isArray(data.financialYears) ? data.financialYears : []),
-        ]
-            .map((year) => (typeof year === "string" ? year.trim() : ""))
-            .filter((year) => year.length > 0);
+        const normalizedYears = [...(Array.isArray(data.years) ? data.years : []), ...(Array.isArray(data.financialYears) ? data.financialYears : [])].map((year) => (typeof year === "string" ? year.trim() : "")).filter((year) => year.length > 0);
         // SERVER-SIDE RECALCULATION - Prevent client manipulation
         let recalculatedResult;
         let finalValuation;
@@ -204,8 +199,10 @@ const generatePDF = async (req, res, next) => {
         let fileUrl;
         let fileSize = pdfBuffer.length;
         try {
-            const filename = `${data.companyName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-valuation-${Date.now()}.pdf`;
-            const uploadResult = await storage_1.StorageService.uploadPDF(pdfBuffer, filename);
+            // Generate consistent filename format for both download and storage
+            const sanitizedCompanyName = data.companyName.replace(/[<>:"/\\|?*]/g, "").trim();
+            const storageFilename = `${sanitizedCompanyName.replace(/\s+/g, "-").toLowerCase()}-intaleks-business-valuation-report-${Date.now()}.pdf`;
+            const uploadResult = await storage_1.StorageService.uploadPDF(pdfBuffer, storageFilename);
             fileUrl = uploadResult.url;
             fileSize = uploadResult.size;
         }
@@ -231,8 +228,11 @@ const generatePDF = async (req, res, next) => {
             console.error("Failed to save valuation document to database:", dbError);
             // Continue - user can still download the PDF
         }
+        // Generate filename in format: "Company Name - Intaleks Business Valuation Report.pdf"
+        const sanitizedCompanyName = data.companyName.replace(/[<>:"/\\|?*]/g, "").trim();
+        const filename = `${sanitizedCompanyName} - Intaleks Business Valuation Report.pdf`;
         res.setHeader("Content-Type", "application/pdf");
-        res.setHeader("Content-Disposition", `attachment; filename="ravda-scorecard-${Date.now()}.pdf"`);
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
         res.setHeader("Content-Length", pdfBuffer.length);
         res.send(pdfBuffer);
     }

@@ -67,7 +67,7 @@ services:
         condition: service_healthy
     networks:
       - intaleks-network
-    command: npm run dev
+    command: pnpm dev
 
   # Client (Next.js)
   client:
@@ -89,7 +89,7 @@ services:
       - server
     networks:
       - intaleks-network
-    command: npm run dev
+    command: pnpm dev
 
 volumes:
   postgres_data:

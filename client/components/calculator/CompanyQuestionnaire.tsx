@@ -30,7 +30,22 @@ const stages = [
 ];
 
 export function CompanyQuestionnaire({ companyName, onCompanyNameChange, startedYear, onStartedYearChange, employees, onEmployeesChange, stage, onStageChange, onLogoChange }: CompanyQuestionnaireProps) {
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  // Initialize logoPreview with saved data from localStorage
+  const [logoPreview, setLogoPreview] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      const savedLogoData = localStorage.getItem("companyLogo");
+      if (savedLogoData) {
+        try {
+          const { base64 } = JSON.parse(savedLogoData);
+          return base64;
+        } catch (error) {
+          console.error("Error loading saved logo:", error);
+          localStorage.removeItem("companyLogo");
+        }
+      }
+    }
+    return null;
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,7 +62,15 @@ export function CompanyQuestionnaire({ companyName, onCompanyNameChange, started
       onLogoChange(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
+        const base64Data = reader.result as string;
+        setLogoPreview(base64Data);
+
+        // Save logo to localStorage with base64 and mime type
+        const logoData = {
+          base64: base64Data,
+          mimeType: file.type,
+        };
+        localStorage.setItem("companyLogo", JSON.stringify(logoData));
       };
       reader.readAsDataURL(file);
     }

@@ -399,4 +399,79 @@ export class ApiClient {
       throw err;
     }
   }
+
+  /**
+   * Get user invoices
+   */
+  static async getInvoices(): Promise<{ success: boolean; data: any[] }> {
+    try {
+      const response = await fetch(`${this.BASE_URL}/invoices`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data?.message || "Failed to fetch invoices");
+      }
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Get specific invoice
+   */
+  static async getInvoice(invoiceId: string): Promise<{ success: boolean; data: any }> {
+    try {
+      const response = await fetch(`${this.BASE_URL}/invoices/${invoiceId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data?.message || "Failed to fetch invoice");
+      }
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Resend invoice email
+   */
+  static async resendInvoiceEmail(invoiceId: string): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await fetch(`${this.BASE_URL}/invoices/${invoiceId}/resend`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data?.message || "Failed to resend invoice email");
+      }
+
+      return data;
+    } catch (err) {
+      throw err;
+    }
+  }
 }

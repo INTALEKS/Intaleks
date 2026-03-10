@@ -1,34 +1,34 @@
 # Production Dockerfile for Railway deployment
-# Updated: 2026-02-08 - Run from server directory context
+# Updated: 2026-03-10 - Use pnpm for consistency
 FROM node:22-alpine
 
 WORKDIR /app
 
-# Install system dependencies for Prisma
-RUN apk add --no-cache openssl
+# Install system dependencies for Prisma and pnpm
+RUN apk add --no-cache openssl && npm install -g pnpm
 
 # Copy package files
-COPY package.json package-lock.json* ./
+COPY package.json pnpm-lock.yaml* ./
 
 # Install ALL dependencies (including dev dependencies needed for build)
-RUN npm ci || npm install
+RUN pnpm install
 
 # Copy Prisma schema and generate client
 COPY prisma ./prisma
-RUN npx prisma generate
+RUN pnpm prisma generate
 
 # Copy source code and assets
 COPY . .
 
 # Build TypeScript
-RUN npm run build
+RUN pnpm build
 
 # Keep tsx for seed scripts in production
 # Prune dev dependencies except tsx and prisma
-RUN npm prune --omit=dev && npm install tsx prisma
+RUN pnpm prune --prod && pnpm add tsx prisma
 
 # Expose port
 EXPOSE ${PORT:-4545}
 
 # Start command - run migrations, generate client, seed data, then start server
-CMD ["npm", "run", "start:prod:with-seed"]
+CMD ["pnpm", "run", "start:prod:with-seed"]

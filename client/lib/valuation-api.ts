@@ -109,11 +109,15 @@ export async function downloadValuationPDF(data: ValuationReportData): Promise<v
   try {
     const blob = await generateValuationPDF(data);
 
+    // Create a professional filename with company name and Intaleks branding
+    const companyName = data.companyName || "Company";
+    const filename = `${companyName} - Intaleks Business Valuation Report.pdf`;
+
     // Create download link
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `valuation-report-${Date.now()}.pdf`;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
 

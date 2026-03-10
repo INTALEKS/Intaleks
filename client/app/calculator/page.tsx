@@ -575,6 +575,26 @@ export default function CalculatorPage() {
         });
         logoBase64 = logoData.base64;
         logoMimeType = logoData.mimeType;
+      } else {
+        // Check localStorage for saved logo data
+        const savedLogoData = localStorage.getItem("companyLogo");
+        if (savedLogoData) {
+          try {
+            const { base64, mimeType } = JSON.parse(savedLogoData);
+            // Extract base64 data (remove data:image/xxx;base64, prefix if present)
+            const base64Match = base64.match(/^data:([^;]+);base64,(.+)$/);
+            if (base64Match) {
+              logoBase64 = base64Match[2];
+              logoMimeType = base64Match[1];
+            } else {
+              // Already clean base64 data
+              logoBase64 = base64;
+              logoMimeType = mimeType;
+            }
+          } catch (error) {
+            console.error("Error loading saved logo:", error);
+          }
+        }
       }
 
       // Determine multiple source for transparency in PDF

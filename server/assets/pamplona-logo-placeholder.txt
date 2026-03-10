@@ -1,0 +1,7 @@
+This is a placeholder for the Pamplona Group logo.
+Please replace with the actual logo file:
+- pamplona-logo.png (preferred)
+- pamplona-logo.jpg (alternative)
+- pamplona-logo.svg (alternative)
+
+The logo should be approximately 120px wide for optimal display in the PDF.

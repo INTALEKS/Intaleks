@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "../services/api";
+import { ApiClient } from "../services/api";
 
 interface Invoice {
   id: string;
@@ -32,8 +32,8 @@ export function useInvoices() {
   return useQuery({
     queryKey: ["invoices"],
     queryFn: async (): Promise<Invoice[]> => {
-      const response = await api.get("/invoices");
-      return response.data.data;
+      const response = await ApiClient.getInvoices();
+      return response.data;
     },
   });
 }
@@ -45,8 +45,8 @@ export function useInvoice(invoiceId: string) {
   return useQuery({
     queryKey: ["invoices", invoiceId],
     queryFn: async (): Promise<Invoice> => {
-      const response = await api.get(`/invoices/${invoiceId}`);
-      return response.data.data;
+      const response = await ApiClient.getInvoice(invoiceId);
+      return response.data;
     },
     enabled: !!invoiceId,
   });
@@ -60,8 +60,8 @@ export function useResendInvoiceEmail() {
 
   return useMutation({
     mutationFn: async (invoiceId: string) => {
-      const response = await api.post(`/invoices/${invoiceId}/resend`);
-      return response.data;
+      const response = await ApiClient.resendInvoiceEmail(invoiceId);
+      return response;
     },
     onSuccess: (_, invoiceId) => {
       // Invalidate and refetch invoice data

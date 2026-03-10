@@ -3,6 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.emailService = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const resend_1 = require("resend");
 class EmailService {
@@ -481,5 +482,104 @@ Trading as Intaleks
     isConfigured() {
         return this.useResend ? this.resend !== null : this.transporter !== null;
     }
+    async sendInvoiceEmail(data) {
+        const { email, firstName, lastName, invoiceNumber, amount, currency, planName, paidAt, stripeInvoiceId } = data;
+        const displayName = firstName ? `${firstName}${lastName ? " " + lastName : ""}` : "there";
+        const formattedAmount = (amount / 100).toFixed(2);
+        const currencySymbol = currency.toUpperCase() === "USD" ? "$" : currency.toUpperCase();
+        const formattedDate = paidAt.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
+        const invoicesUrl = `${this.frontendUrl}/settings`;
+        const stripeInvoiceUrl = stripeInvoiceId ? `https://invoice.stripe.com/i/${stripeInvoiceId}` : null;
+        const content = `
+      <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 24px;">Payment Receipt</h2>
+      <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.5;">
+        Hi ${displayName},
+      </p>
+      <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.5;">
+        Thank you for your payment! This email confirms your subscription payment has been processed successfully.
+      </p>
+      
+      <!-- Invoice Details -->
+      <div style="margin: 30px 0; padding: 25px; background-color: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+        <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px; font-weight: bold;">Invoice Details</h3>
+        
+        <table role="presentation" style="width: 100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Invoice Number:</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: bold; text-align: right;">${invoiceNumber}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Date:</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${formattedDate}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Plan:</td>
+            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${planName}</td>
+          </tr>
+          <tr style="border-top: 2px solid #e5e7eb;">
+            <td style="padding: 15px 0 0 0; color: #1f2937; font-size: 16px; font-weight: bold;">Total Paid:</td>
+            <td style="padding: 15px 0 0 0; color: #10b981; font-size: 20px; font-weight: bold; text-align: right;">${currencySymbol}${formattedAmount}</td>
+          </tr>
+        </table>
+      </div>
+      
+      ${stripeInvoiceUrl
+            ? `
+      <!-- View Invoice Button -->
+      <table role="presentation" style="margin: 30px 0;">
+        <tr>
+          <td style="border-radius: 6px; background-color: #3b82f6;">
+            <a href="${stripeInvoiceUrl}" target="_blank" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px;">
+              View Full Invoice
+            </a>
+          </td>
+        </tr>
+      </table>
+      `
+            : ""}
+      
+      <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
+        <p style="margin: 0 0 10px 0; color: #4b5563; font-size: 14px; line-height: 1.5;">
+          You can view all your invoices and manage your subscription in your <a href="${invoicesUrl}" style="color: #3b82f6; text-decoration: none;">account settings</a>.
+        </p>
+        <p style="margin: 10px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.5;">
+          If you have any questions about this payment, please contact us at <a href="mailto:admin@intaleks.com" style="color: #3b82f6; text-decoration: none;">admin@intaleks.com</a>
+        </p>
+      </div>
+    `;
+        const text = `
+Payment Receipt
+
+Hi ${displayName},
+
+Thank you for your payment! This email confirms your subscription payment has been processed successfully.
+
+Invoice Details:
+- Invoice Number: ${invoiceNumber}
+- Date: ${formattedDate}
+- Plan: ${planName}
+- Total Paid: ${currencySymbol}${formattedAmount}
+
+${stripeInvoiceUrl ? `View full invoice: ${stripeInvoiceUrl}\n` : ""}
+You can view all your invoices and manage your subscription in your account settings: ${invoicesUrl}
+
+If you have any questions about this payment, please contact us at admin@intaleks.com
+
+---
+Perth Business Evaluators Pty Ltd (ABN: 51 622 231 832)
+Trading as Intaleks
+    `.trim();
+        return this.sendEmail({
+            to: email,
+            subject: `Payment Receipt - Invoice ${invoiceNumber}`,
+            html: this.getEmailTemplate(content),
+            text,
+        });
+    }
 }
 exports.default = new EmailService();
+exports.emailService = new EmailService();

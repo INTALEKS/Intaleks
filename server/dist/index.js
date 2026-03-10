@@ -54,6 +54,7 @@ const valuation_routes_1 = __importDefault(require("./routes/valuation.routes"))
 const valuationMultiples_routes_1 = __importStar(require("./routes/valuationMultiples.routes"));
 const questionnaire_routes_1 = require("./routes/questionnaire.routes");
 const payment_routes_1 = __importStar(require("./routes/payment.routes"));
+const invoice_routes_1 = __importDefault(require("./routes/invoice.routes"));
 const profile_routes_1 = __importDefault(require("./routes/profile.routes"));
 const contact_routes_1 = __importDefault(require("./routes/contact.routes"));
 const calculator_routes_1 = __importDefault(require("./routes/calculator.routes"));
@@ -110,6 +111,7 @@ app.use("/api/valuation", valuation_routes_1.default);
 app.use("/api/valuation-multiples", valuationMultiples_routes_1.publicValuationMultiplesRouter);
 app.use("/api/questionnaire", questionnaire_routes_1.questionnaireRouter);
 app.use("/api/payments", payment_routes_1.default);
+app.use("/api/invoices", invoice_routes_1.default);
 app.use("/api/users", profile_routes_1.default);
 app.use("/api/contact", contact_routes_1.default);
 app.use("/api/upload", profile_routes_1.default); // For avatar uploads
