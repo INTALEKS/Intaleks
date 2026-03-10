@@ -695,11 +695,10 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
   drawIntaleksLogo(doc);
 
-  // Dynamic title based on valuation method
-  const methodTitle = data.valuationMethod === "asset" ? "Asset Method" : "Profit Method";
-  doc.font(fonts.semibold).fontSize(16).fillColor("#111827").text(methodTitle, PAGE.marginX, 94, { lineBreak: false });
+  // Title should always be "Valuation Method"
+  doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Method", PAGE.marginX, 94, { lineBreak: false });
 
-  // Year selection section
+  // Year selection section - show just the years
   const years = (data.financialYears || []).slice(0, 3);
   let yearY = 140;
 
@@ -711,19 +710,30 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
       .fillColor("#111827")
       .text(label, PAGE.marginX, yearY + 8, { lineBreak: false });
 
-    // Year input box
+    // Year input box - show just the year number
     doc.roundedRect(PAGE.marginX + 80, yearY, PAGE.width - PAGE.marginX * 2 - 80, 32, 4).fillAndStroke("#F3F4F6", "#E5E7EB");
+    const yearOnly = formatYearLabel(year).replace("Year ", "");
     doc
       .font(fonts.regular)
       .fontSize(12)
       .fillColor("#111827")
-      .text(formatYearLabel(year), PAGE.marginX + 90, yearY + 10, { lineBreak: false });
+      .text(yearOnly, PAGE.marginX + 90, yearY + 10, { lineBreak: false });
 
     yearY += 50;
   });
 
+  // Blue method header box
+  const methodHeaderY = yearY + 20;
+  const methodTitle = data.valuationMethod === "asset" ? "ASSET BASED VALUATION METHOD" : "PROFIT BASED VALUATION METHOD";
+  doc.rect(PAGE.marginX, methodHeaderY, PAGE.width - PAGE.marginX * 2, 40).fill("#2F80ED");
+  doc
+    .font(fonts.bold)
+    .fontSize(16)
+    .fillColor("#FFFFFF")
+    .text(methodTitle, PAGE.marginX + 10, methodHeaderY + 12, { lineBreak: false });
+
   // Accounting Profit and Loss Table
-  const tableY = yearY + 30;
+  const tableY = methodHeaderY + 60;
   const tableW = PAGE.width - PAGE.marginX * 2;
   const tableX = PAGE.marginX;
 
@@ -750,11 +760,12 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
 
   years.forEach((year, idx) => {
     const colX = tableX + metricW + idx * colW;
+    const yearOnly = formatYearLabel(year).replace("Year ", "");
     doc
       .font(fonts.bold)
       .fontSize(10)
       .fillColor("#374151")
-      .text(`Year ${formatYearLabel(year)}`, colX + 12, headerY + 10, { width: colW - 24, align: "center", lineBreak: false });
+      .text(`Year ${yearOnly}`, colX + 12, headerY + 10, { width: colW - 24, align: "center", lineBreak: false });
   });
 
   // Financial data rows
@@ -845,11 +856,12 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
 
   years.forEach((year, idx) => {
     const colX = tableX + addbackW + reasonW + idx * addYearColW;
+    const yearOnly = formatYearLabel(year).replace("Year ", "");
     doc
       .font(fonts.bold)
       .fontSize(10)
       .fillColor("#374151")
-      .text(`Year ${formatYearLabel(year)}`, colX + 12, addHeaderY + 10, { width: addYearColW - 24, align: "center", lineBreak: false });
+      .text(`Year ${yearOnly}`, colX + 12, addHeaderY + 10, { width: addYearColW - 24, align: "center", lineBreak: false });
   });
 
   // Addback rows
