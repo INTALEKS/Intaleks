@@ -66,7 +66,7 @@ const COUNTRY_TO_CURRENCY: Record<string, CurrencyInfo> = {
 const DEFAULT_CURRENCY: CurrencyInfo = { code: "AUD", symbol: "A$", name: "Australian Dollar" };
 
 // Base price in AUD cents
-const BASE_PRICE_AUD = 39900; // $399 AUD
+const BASE_PRICE_AUD = 49500; // $495 AUD
 
 // Cache configuration
 const PRICING_CACHE_KEY = "intaleks_user_pricing_cache";

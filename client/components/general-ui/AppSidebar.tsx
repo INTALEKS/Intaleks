@@ -64,7 +64,7 @@ export default function AppSidebar() {
 
           <div>
             <h3 className="font-medium text-sm">Manage Subscription</h3>
-            <p className="text-[12px] font-lig">Check this out, user14$ subscribed to $399 per month, generated 25 valuation reports with their handles and add.... </p>
+            <p className="text-[12px] font-lig">Check this out, user14$ subscribed to $495 per month, generated 25 valuation reports with their handles and add.... </p>
           </div>
 
           <div className="flex items-center gap-x-2 w-full justify-between">

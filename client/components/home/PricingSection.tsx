@@ -179,7 +179,7 @@ export function PricingSection() {
             <span>
               Prices shown in {pricing.currency.name} ({pricing.currency.code})
             </span>
-            <span className="text-gray-400">• Converted from A$399 AUD</span>
+            <span className="text-gray-400">• Converted from A$495 AUD</span>
           </div>
         )}
 
@@ -202,7 +202,7 @@ export function PricingSection() {
                     <span className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900">{price}</span>
                     <span className="text-gray-500 ml-2 text-lg">{isFree ? "/lifetime" : plan.billingPeriod === "ONE_TIME" ? "/one-time" : plan.billingPeriod === "YEARLY" ? "/year" : "/month"}</span>
                   </div>
-                  {pricing && pricing.currency.code !== "AUD" && !isFree && <p className="text-sm text-gray-500">≈ A$399 AUD</p>}
+                  {pricing && pricing.currency.code !== "AUD" && !isFree && <p className="text-sm text-gray-500">≈ A$495 AUD</p>}
                 </div>
 
                 {/* Features */}

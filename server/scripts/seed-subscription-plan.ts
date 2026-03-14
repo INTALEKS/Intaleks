@@ -3,7 +3,7 @@ import { BillingPeriod } from "@prisma/client";
 
 /**
  * Seeds the One-Off subscription plan only
- * AUD $399 one-time payment with full features
+ * AUD $495 one-time payment with full features
  */
 export async function seedSubscriptionPlan(): Promise<void> {
   try {
@@ -25,7 +25,7 @@ export async function seedSubscriptionPlan(): Promise<void> {
     });
 
     const planData = {
-      price: 39900, // AUD $399.00 in cents
+      price: 49500, // AUD $495.00 in cents
       billingPeriod: BillingPeriod.ONE_TIME,
       features: ["Worldwide Industry Multiples (US, Canada, UK, Australia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking"],
       active: true,
@@ -37,7 +37,7 @@ export async function seedSubscriptionPlan(): Promise<void> {
         where: { name: "One-Off" },
         data: planData,
       });
-      console.log("✅ One-Off subscription plan updated to AUD $399");
+      console.log("✅ One-Off subscription plan updated to AUD $495");
     } else {
       // Create the One-Off subscription plan
       const plan = await prisma.subscriptionPlan.create({

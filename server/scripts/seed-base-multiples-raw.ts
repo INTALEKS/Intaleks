@@ -248,7 +248,7 @@ async function main() {
 
   // Upsert One-Off plan
   const planData = {
-    price: 39900, // AUD $399.00 in cents
+    price: 49500, // AUD $495.00 in cents
     billingPeriod: "ONE_TIME" as const,
     features: ["Worldwide Industry Multiples (US, Canada, UK, Australia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking"],
     active: true,
@@ -264,7 +264,7 @@ async function main() {
       where: { name: "One-Off" },
       data: planData,
     });
-    console.log("✅ One-Off subscription plan updated to AUD $399");
+    console.log("✅ One-Off subscription plan updated to AUD $495");
   } else {
     plan = await prisma.subscriptionPlan.create({
       data: {
@@ -272,7 +272,7 @@ async function main() {
         ...planData,
       },
     });
-    console.log("✅ One-Off subscription plan created at AUD $399");
+    console.log("✅ One-Off subscription plan created at AUD $495");
   }
 
   // Set up Stripe product and price if Stripe is configured

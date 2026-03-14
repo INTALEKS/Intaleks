@@ -27,9 +27,9 @@ export function usePricing() {
         setError(err instanceof Error ? err : new Error("Failed to fetch pricing"));
         // Set fallback pricing
         setPricing({
-          amount: 399,
+          amount: 495,
           currency: { code: "AUD", symbol: "A$", name: "Australian Dollar" },
-          formatted: "A$399",
+          formatted: "A$495",
         });
       } finally {
         setLoading(false);

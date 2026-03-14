@@ -244,7 +244,7 @@ async function seedSubscriptionPlans() {
   const plan = await prisma.subscriptionPlan.create({
     data: {
       name: "One-Off",
-      price: 39900, // $399.00
+      price: 49500, // $495.00
       billingPeriod: BillingPeriod.ONE_TIME,
       features: ["Worldwide Industry Multiples (US, Canada, UK, Australia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking"],
       active: true,
