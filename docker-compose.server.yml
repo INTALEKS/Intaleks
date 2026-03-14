@@ -67,7 +67,7 @@ services:
         condition: service_healthy
     networks:
       - intaleks-network
-    command: npm run dev
+    command: pnpm dev
 
 volumes:
   postgres_data:

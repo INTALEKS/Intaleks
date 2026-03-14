@@ -207,6 +207,10 @@ export async function generateValuationPDF(data: ValuationPDFData): Promise<Buff
     calculatedMultiple: data.calculatedMultiple,
     multipleSource: data.multipleSource,
 
+    // Questionnaire data
+    questionnaireScore: data.questionnaireScore,
+    questionnaireResponses: data.questionnaireScores,
+
     // Company info
     startedYear: data.startedYear,
     employees: data.employees,

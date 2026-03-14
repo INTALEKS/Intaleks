@@ -74,6 +74,18 @@ export interface RAVDAData {
   };
   logoBase64?: string;
   logoMimeType?: string;
+  questionnaireResponses?: {
+    ownerDependence: number;
+    recurringRevenue: number;
+    customerConcentration: number;
+    managementDepth: number;
+    growthRate: number;
+    competitiveAdvantage: number;
+    revenueDiversification: number;
+    systemsScalability: number;
+    marginStability: number;
+    externalRisk: number;
+  };
 }
 
 function formatGeneratedDate(input?: string): string {
@@ -428,6 +440,136 @@ type StrengthRating = {
   text: string;
 };
 
+interface QuestionDefinition {
+  key: keyof NonNullable<RAVDAData["questionnaireResponses"]>;
+  title: string;
+  description: string;
+  options: Array<{ value: number; label: string; description: string }>;
+}
+
+const questionDefinitions: QuestionDefinition[] = [
+  {
+    key: "ownerDependence",
+    title: "1. Owner Dependence",
+    description: "How reliant is the business on you personally?",
+    options: [
+      { value: 1, label: "High Risk", description: "You drive most revenue, decisions, and relationships" },
+      { value: 2, label: "Moderate-High", description: "Heavy involvement in key areas" },
+      { value: 3, label: "Neutral", description: "Some reliance, but key functions are shared" },
+      { value: 4, label: "Low-Moderate", description: "Limited involvement needed" },
+      { value: 5, label: "Strong", description: "Business operates independently of you" },
+    ],
+  },
+  {
+    key: "recurringRevenue",
+    title: "2. Recurring or Contracted Revenue",
+    description: "What proportion of revenue is predictable?",
+    options: [
+      { value: 1, label: "Weak", description: "Mostly one-off, transactional" },
+      { value: 2, label: "Low", description: "Some repeat business" },
+      { value: 3, label: "Neutral", description: "Mix of recurring and one-off" },
+      { value: 4, label: "Good", description: "Majority recurring" },
+      { value: 5, label: "Strong", description: "High recurring, contracted, subscription-based" },
+    ],
+  },
+  {
+    key: "customerConcentration",
+    title: "3. Customer Concentration",
+    description: "How diversified is your customer base?",
+    options: [
+      { value: 1, label: "High Risk", description: "One client >40% of revenue" },
+      { value: 2, label: "Moderate Risk", description: "Top client 30-40%" },
+      { value: 3, label: "Neutral", description: "Top client 15-30%" },
+      { value: 4, label: "Good", description: "Top client 10-15%" },
+      { value: 5, label: "Strong", description: "No client >10%" },
+    ],
+  },
+  {
+    key: "managementDepth",
+    title: "4. Management Depth",
+    description: "Can the business run without you?",
+    options: [
+      { value: 1, label: "Weak", description: "No management layer" },
+      { value: 2, label: "Limited", description: "One key manager" },
+      { value: 3, label: "Neutral", description: "Partial coverage" },
+      { value: 4, label: "Good", description: "Solid team in place" },
+      { value: 5, label: "Strong", description: "Strong, stable leadership team" },
+    ],
+  },
+  {
+    key: "growthRate",
+    title: "5. Growth Rate",
+    description: "What is your 3-5 year revenue/EBITDA growth?",
+    options: [
+      { value: 1, label: "Declining", description: "Flat or declining" },
+      { value: 2, label: "Slow", description: "0-5% growth" },
+      { value: 3, label: "Neutral", description: "Moderate, steady growth (5-15%)" },
+      { value: 4, label: "Good", description: "Strong growth (15-30%)" },
+      { value: 5, label: "Excellent", description: "Strong, consistent growth (>30%)" },
+    ],
+  },
+  {
+    key: "competitiveAdvantage",
+    title: "6. Competitive Advantage",
+    description: "How defensible is your position?",
+    options: [
+      { value: 1, label: "Weak", description: "Easily replicated, low barriers" },
+      { value: 2, label: "Limited", description: "Some advantages" },
+      { value: 3, label: "Neutral", description: "Some differentiation" },
+      { value: 4, label: "Good", description: "Clear advantages" },
+      { value: 5, label: "Strong", description: "Strong IP, contracts, brand, or barriers" },
+    ],
+  },
+  {
+    key: "revenueDiversification",
+    title: "7. Revenue Diversification",
+    description: "How many revenue streams do you have?",
+    options: [
+      { value: 1, label: "Single", description: "Single product/service" },
+      { value: 2, label: "Limited", description: "1-2 streams" },
+      { value: 3, label: "Neutral", description: "2-3 streams" },
+      { value: 4, label: "Good", description: "3-5 streams" },
+      { value: 5, label: "Strong", description: "Multiple stable streams" },
+    ],
+  },
+  {
+    key: "systemsScalability",
+    title: "8. Systems & Scalability",
+    description: "How well-systemised is the business?",
+    options: [
+      { value: 1, label: "Weak", description: "Manual, founder-driven" },
+      { value: 2, label: "Limited", description: "Basic processes" },
+      { value: 3, label: "Neutral", description: "Some documented processes" },
+      { value: 4, label: "Good", description: "Well documented" },
+      { value: 5, label: "Strong", description: "Strong systems, automation, tech-enabled" },
+    ],
+  },
+  {
+    key: "marginStability",
+    title: "9. Margin Stability",
+    description: "How consistent are your margins?",
+    options: [
+      { value: 1, label: "Volatile", description: "Highly volatile" },
+      { value: 2, label: "Unstable", description: "Significant fluctuation" },
+      { value: 3, label: "Neutral", description: "Some fluctuation" },
+      { value: 4, label: "Stable", description: "Generally consistent" },
+      { value: 5, label: "Very Stable", description: "Stable, predictable margins" },
+    ],
+  },
+  {
+    key: "externalRisk",
+    title: "10. External / Industry Risk",
+    description: "How exposed are you to regulatory or industry shocks?",
+    options: [
+      { value: 1, label: "High Risk", description: "High exposure" },
+      { value: 2, label: "Elevated", description: "Significant exposure" },
+      { value: 3, label: "Neutral", description: "Moderate exposure" },
+      { value: 4, label: "Low", description: "Limited exposure" },
+      { value: 5, label: "Very Low", description: "Low exposure" },
+    ],
+  },
+];
+
 function getScoreOutOf50(data: RAVDAData): number {
   if (typeof data.questionnaireScore === "number" && Number.isFinite(data.questionnaireScore)) {
     return Math.max(0, Math.min(50, Math.round(data.questionnaireScore)));
@@ -682,8 +824,9 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
       lineGap: 1.4,
     });
 
+  // Page number
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("3", 0, footerY, {
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("4", 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -963,7 +1106,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
 
   // Page number
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("4", 0, footerY, {
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("5", 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -1157,7 +1300,7 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
     });
 
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("5", 0, footerY, {
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("4", 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -1399,7 +1542,208 @@ function drawBusinessStrengthAssessmentPage(doc: PDFKit.PDFDocument, data: RAVDA
     });
 
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("5", 0, footerY, {
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("6", 0, footerY, {
+    width: PAGE.width,
+    align: "center",
+    lineBreak: false,
+  });
+}
+
+function drawQuestionnaireQAPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): void {
+  doc.addPage();
+  doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
+
+  drawIntaleksLogo(doc);
+
+  // Page title
+  doc.font(fonts.semibold).fontSize(16).fillColor("#111827").text("Questionnaire Responses", PAGE.marginX, 94, {
+    lineBreak: false,
+  });
+
+  // Subtitle with score
+  const score = getScoreOutOf50(data);
+  doc.font(fonts.regular).fontSize(10).fillColor("#6B7280").text(`Your responses to the 10 business strength questions (Total Score: ${score}/50)`, PAGE.marginX, 115, {
+    lineBreak: false,
+  });
+
+  const responses = data.questionnaireResponses;
+
+  if (!responses) {
+    doc.font(fonts.regular).fontSize(11).fillColor("#9CA3AF").text("No questionnaire responses available.", PAGE.marginX, 150, {
+      lineBreak: false,
+    });
+
+    const footerY = PAGE.height - PAGE.marginX - 20;
+    doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("7", 0, footerY, {
+      width: PAGE.width,
+      align: "center",
+      lineBreak: false,
+    });
+    return;
+  }
+
+  // Two-column layout for better space utilization
+  const leftColumnX = PAGE.marginX;
+  const rightColumnX = PAGE.width / 2 + 10;
+  const columnWidth = (PAGE.width - PAGE.marginX * 2 - 20) / 2;
+  let leftY = 145;
+  let rightY = 145;
+
+  // Display questions in two columns
+  questionDefinitions.forEach((question, index) => {
+    const userScore = responses[question.key];
+    const selectedOption = question.options.find((opt) => opt.value === userScore);
+
+    // Determine which column to use
+    const isLeftColumn = index < 5;
+    const currentX = isLeftColumn ? leftColumnX : rightColumnX;
+    let currentY = isLeftColumn ? leftY : rightY;
+
+    // Score color based on value
+    const scoreColor = userScore >= 4 ? "#22C55E" : userScore >= 3 ? "#EAB308" : userScore >= 2 ? "#F97316" : "#EF4444";
+    const scoreBg = userScore >= 4 ? "#F0FDF4" : userScore >= 3 ? "#FEF9C3" : userScore >= 2 ? "#FFF7ED" : "#FEF2F2";
+
+    // Question container - more compact design
+    const questionHeight = 50;
+
+    // Question header with score circle and title
+    doc.roundedRect(currentX, currentY, columnWidth, questionHeight, 6).fill("#F9FAFB");
+
+    // Score circle - smaller and positioned better
+    doc.circle(currentX + 15, currentY + 15, 8).fill(scoreColor);
+
+    // Use more precise centering with adjusted positioning
+    doc
+      .font(fonts.bold)
+      .fontSize(8)
+      .fillColor("#FFFFFF")
+      .text(userScore.toString(), currentX + 11.5, currentY + 11.8, {
+        width: 7,
+        align: "center",
+        lineBreak: false,
+      });
+
+    // Question title - more compact
+    const titleText = question.title.length > 28 ? question.title.substring(0, 28) + "..." : question.title;
+    doc
+      .font(fonts.semibold)
+      .fontSize(8)
+      .fillColor("#111827")
+      .text(titleText, currentX + 30, currentY + 8, {
+        width: columnWidth - 35,
+        lineBreak: false,
+        ellipsis: true,
+      });
+
+    // Selected answer - compact format
+    if (selectedOption) {
+      doc
+        .font(fonts.regular)
+        .fontSize(7)
+        .fillColor("#4B5563")
+        .text(`${selectedOption.label} (${selectedOption.value}/5)`, currentX + 30, currentY + 19, {
+          width: columnWidth - 35,
+          lineBreak: false,
+          ellipsis: true,
+        });
+
+      // Answer description - very compact
+      const descText = selectedOption.description.length > 45 ? selectedOption.description.substring(0, 45) + "..." : selectedOption.description;
+      doc
+        .font(fonts.regular)
+        .fontSize(6)
+        .fillColor("#6B7280")
+        .text(descText, currentX + 30, currentY + 30, {
+          width: columnWidth - 35,
+          lineBreak: false,
+          ellipsis: true,
+        });
+    }
+
+    // Update Y position for next question
+    if (isLeftColumn) {
+      leftY = currentY + questionHeight + 8;
+    } else {
+      rightY = currentY + questionHeight + 8;
+    }
+  });
+
+  // Summary section at the bottom - more compact and centered
+  const summaryY = Math.max(leftY, rightY) + 20;
+  const summaryHeight = 105;
+  const strengthRating = getStrengthRating(score);
+
+  // Summary box spanning full width but more compact
+  doc.roundedRect(PAGE.marginX, summaryY, PAGE.width - PAGE.marginX * 2, summaryHeight, 8).fill("#F8FAFC");
+
+  // Summary title - centered with equal top spacing
+  doc
+    .font(fonts.semibold)
+    .fontSize(14)
+    .fillColor("#111827")
+    .text("Assessment Summary", 0, summaryY + 12, {
+      width: PAGE.width,
+      align: "center",
+      lineBreak: false,
+    });
+
+  // Score and rating in a horizontal layout - better spacing
+  const scoreX = PAGE.marginX + 40;
+  const ratingX = PAGE.width / 2 + 40;
+
+  // Score section
+  doc
+    .font(fonts.regular)
+    .fontSize(10)
+    .fillColor("#6B7280")
+    .text("Total Score:", scoreX, summaryY + 35, { lineBreak: false });
+
+  doc
+    .font(fonts.bold)
+    .fontSize(18)
+    .fillColor("#2563EB")
+    .text(`${score}/50`, scoreX, summaryY + 49, { lineBreak: false });
+
+  // Rating section
+  doc
+    .font(fonts.regular)
+    .fontSize(10)
+    .fillColor("#6B7280")
+    .text("Business Strength Rating:", ratingX, summaryY + 35, { lineBreak: false });
+
+  // Rating badge - dynamic width with proper padding and rounded corners
+  doc.font(fonts.medium).fontSize(10);
+  const textWidth = doc.widthOfString(strengthRating.label);
+  const badgePadding = 20; // 10px on each side for better padding
+  const ratingBadgeWidth = textWidth + badgePadding;
+  const ratingBadgeHeight = 24;
+  const badgeRadius = 12; // Half of height for fully rounded corners
+
+  // Draw rounded rectangle with proper radius
+  doc.roundedRect(ratingX, summaryY + 47, ratingBadgeWidth, ratingBadgeHeight, badgeRadius).fill(strengthRating.bg);
+
+  // Center text properly within the badge
+  doc.fillColor(strengthRating.text).text(strengthRating.label, ratingX, summaryY + 54, {
+    width: ratingBadgeWidth,
+    align: "center",
+    lineBreak: false,
+  });
+
+  // Description text - centered with equal spacing (12px from top, 12px from bottom)
+  doc
+    .font(fonts.regular)
+    .fontSize(6)
+    .fillColor("#6B7280")
+    .text("This assessment determines your business strength factor used in the valuation multiple calculation.", 0, summaryY + 81, {
+      width: PAGE.width,
+      align: "center",
+      lineBreak: false,
+      ellipsis: true,
+    });
+
+  // Page number
+  const footerY = PAGE.height - PAGE.marginX - 20;
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("7", 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -1432,7 +1776,8 @@ export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer
       drawValuationSummaryPage(doc, data, fonts); // Page 3 - Well-formatted valuation summary
     }
     drawFinancialDataPage(doc, data, fonts); // Page 4 - Financial data with method-specific title
-    drawBusinessStrengthAssessmentPage(doc, data, fonts); // Page 5 - Business Strength Assessment
+    // drawBusinessStrengthAssessmentPage(doc, data, fonts); // Page 5 - Business Strength Assessment (temporarily hidden)
+    drawQuestionnaireQAPage(doc, data, fonts); // Page 6 - Questionnaire Q&A
 
     doc.end();
   });

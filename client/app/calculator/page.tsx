@@ -645,7 +645,7 @@ export default function CalculatorPage() {
         questionnaireCategory: multipleCategory,
         calculatedMultiple: effectiveProfitMultiple,
         multipleSource,
-        questionnaireScores: useQuestionnaireMultiple ? questionnaireScores : undefined,
+        questionnaireScores: questionnaireScores, // Always include questionnaire scores for PDF display
       };
 
       // Add method-specific data
