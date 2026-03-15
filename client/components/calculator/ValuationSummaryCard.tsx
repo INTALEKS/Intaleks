@@ -55,6 +55,7 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
 
   // Helper for Valuation Multiple metric card color based on score band
   const getValuationMultipleColor = (score?: number): MetricCardProps["color"] => {
+    // Follow official valuation multiple bands: green, yellow, orange, red
     if (!score) return "green";
     if (score >= 40) return "green"; // Excellent
     if (score >= 30) return "yellow"; // Good
@@ -109,10 +110,12 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
                 <>
                   <MetricCard label="Average Sales" value={formatCurrency(averageSales)} icon="💰" color="blue" />
                   <MetricCard label="Average COGS" value={formatCurrency(averageCOGS)} icon="📊" color="gray" />
-                  {/* Average EBIT stays fixed yellow regardless of rating */}
-                  <MetricCard label="Average EBIT" value={formatCurrency(averageEbit)} icon="📈" color="yellow" />
-                  <MetricCard label="Average Addbacks" value={formatCurrency(averageAddbacks)} icon="➕" color="purple" />
-                  <MetricCard label="Average Adjusted EBIT" value={formatCurrency(adjustedEbit)} icon="✨" color="indigo" />
+                  {/* Average EBIT uses distinct indigo scheme so it never clashes with Valuation Multiple bands */}
+                  <MetricCard label="Average EBIT" value={formatCurrency(averageEbit)} icon="📈" color="indigo" />
+                  {/* Average Addbacks now uses neutral gray */}
+                  <MetricCard label="Average Addbacks" value={formatCurrency(averageAddbacks)} icon="➕" color="gray" />
+                  {/* Average Adjusted EBIT gets a distinct purple scheme */}
+                  <MetricCard label="Average Adjusted EBIT" value={formatCurrency(adjustedEbit)} icon="✨" color="purple" />
                   <MetricCard
                     label="Valuation Multiple"
                     value={valuationMultiple ? `${valuationMultiple.toFixed(2)}x` : "N/A"}
