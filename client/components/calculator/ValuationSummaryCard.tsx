@@ -38,7 +38,7 @@ interface ValuationSummaryCardProps {
 }
 
 export function ValuationSummaryCard({ companyName, country, industry, averageSales, averageCOGS, averageEbit, averageAddbacks, adjustedEbit, valuationMethod, valuationMultiple, finalValuation, totalAssets, totalLiabilities, questionnaireScore, questionnaireCategory, isAuthenticated, hasActiveSubscription, showReport, onShowReport }: ValuationSummaryCardProps) {
-  // Helper function to get color based on score
+  // Helper function to get badge color based on score
   const getCategoryColor = (score?: number) => {
     if (!score) return { bg: "bg-gray-100", text: "text-gray-800", border: "border-gray-200" };
 
@@ -51,6 +51,15 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
     } else {
       return { bg: "bg-red-100", text: "text-red-800", border: "border-red-200" };
     }
+  };
+
+  // Helper for Valuation Multiple metric card color based on score band
+  const getValuationMultipleColor = (score?: number): MetricCardProps["color"] => {
+    if (!score) return "green";
+    if (score >= 40) return "green"; // Excellent
+    if (score >= 30) return "yellow"; // Good
+    if (score >= 20) return "orange"; // Average
+    return "red"; // Below Average
   };
 
   const categoryColors = getCategoryColor(questionnaireScore);
@@ -100,10 +109,16 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
                 <>
                   <MetricCard label="Average Sales" value={formatCurrency(averageSales)} icon="💰" color="blue" />
                   <MetricCard label="Average COGS" value={formatCurrency(averageCOGS)} icon="📊" color="gray" />
-                  <MetricCard label="Average EBIT" value={formatCurrency(averageEbit)} icon="📈" color="green" />
+                  {/* Average EBIT stays fixed yellow regardless of rating */}
+                  <MetricCard label="Average EBIT" value={formatCurrency(averageEbit)} icon="📈" color="yellow" />
                   <MetricCard label="Average Addbacks" value={formatCurrency(averageAddbacks)} icon="➕" color="purple" />
                   <MetricCard label="Average Adjusted EBIT" value={formatCurrency(adjustedEbit)} icon="✨" color="indigo" />
-                  <MetricCard label="Valuation Multiple" value={valuationMultiple ? `${valuationMultiple.toFixed(2)}x` : "N/A"} icon="🎯" color="orange" />
+                  <MetricCard
+                    label="Valuation Multiple"
+                    value={valuationMultiple ? `${valuationMultiple.toFixed(2)}x` : "N/A"}
+                    icon="🎯"
+                    color={getValuationMultipleColor(questionnaireScore)}
+                  />
                 </>
               )}
 
@@ -188,7 +203,7 @@ interface MetricCardProps {
   label: string;
   value: string;
   icon: string;
-  color: "blue" | "gray" | "green" | "purple" | "indigo" | "orange" | "red";
+  color: "blue" | "gray" | "green" | "purple" | "indigo" | "orange" | "red" | "yellow";
 }
 
 function MetricCard({ label, value, icon, color }: MetricCardProps) {
@@ -200,6 +215,7 @@ function MetricCard({ label, value, icon, color }: MetricCardProps) {
     indigo: "bg-indigo-50 border-indigo-200 text-indigo-700",
     orange: "bg-orange-50 border-orange-200 text-orange-700",
     red: "bg-red-50 border-red-200 text-red-700",
+    yellow: "bg-yellow-50 border-yellow-200 text-yellow-700",
   };
 
   return (
