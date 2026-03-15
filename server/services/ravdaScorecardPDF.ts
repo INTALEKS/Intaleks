@@ -597,13 +597,13 @@ function getStrengthRating(scoreOutOf50: number): StrengthRating {
 }
 
 function getValuationMultipleColors(scoreOutOf50: number): { bg: string; border: string; text: string } {
-  // Mirror the rating bands so the Valuation Multiple card visually tracks the strength rating
+  // Follow official valuation multiple bands: green, yellow, orange, red
   if (scoreOutOf50 >= 40) {
     // Excellent - green
     return { bg: "#DCFCE7", border: "#BBF7D0", text: "#166534" };
   }
   if (scoreOutOf50 >= 30) {
-    // Good - amber
+    // Good - yellow/amber
     return { bg: "#FEF3C7", border: "#FACC15", text: "#92400E" };
   }
   if (scoreOutOf50 >= 20) {
@@ -750,61 +750,88 @@ function drawBusinessStrengthAssessmentPanel(doc: PDFKit.PDFDocument, data: RAVD
 
   // Rating text centered inside the pill
   const ratingTextY = pillY + (pillHeight - 8) / 2; // 8 ≈ font size
-  doc
-    .font(fonts.medium)
-    .fontSize(8)
-    .fillColor(strengthRating.text)
-    .text(strengthRating.label, pillX, ratingTextY, { width: pillWidth, align: "center", lineBreak: false });
+  doc.font(fonts.medium).fontSize(8).fillColor(strengthRating.text).text(strengthRating.label, pillX, ratingTextY, { width: pillWidth, align: "center", lineBreak: false });
 }
 
-function drawMultipleCalculationFormulaSection(doc: PDFKit.PDFDocument, fonts: PdfFonts, boxY: number): void {
-  const boxX = PAGE.marginX;
-  const boxWidth = PAGE.width - PAGE.marginX * 2;
-  const boxHeight = 110;
+function drawMultipleCalculationFormulaSection(doc: PDFKit.PDFDocument, fonts: PdfFonts, topY: number): void {
+  const x = PAGE.marginX;
+  const width = PAGE.width - PAGE.marginX * 2;
 
-  doc.rect(boxX, boxY, boxWidth, boxHeight).fill("#F3F4F6");
+  // Title
+  doc.font(fonts.bold).fontSize(14).fillColor("#111827").text("Multiple Calculation Formula", x, topY, {
+    width,
+    lineBreak: false,
+  });
 
-  // Info icon and title
-  // Info icon
+  // Description line
+  const descY = topY + 26;
+  doc.font(fonts.regular).fontSize(11).fillColor("#111827").text("Your final multiple is calculated as: ", x, descY, { lineBreak: false, continued: true });
+  doc.font(fonts.bold).text("Base Multiple × Score Factor", { lineBreak: false });
+
+  // Table (4 columns, 2 rows) – Excellent / Good / Average / Below Average
+  const tableTop = descY + 26;
+  const tableHeight = 52;
+  const colCount = 4;
+  const colWidth = width / colCount;
+
+  doc.lineWidth(1).strokeColor("#000000");
+
+  // Outer border
+  doc.rect(x, tableTop, width, tableHeight).stroke();
+
+  // Vertical separators
+  for (let i = 1; i < colCount; i += 1) {
+    const colX = x + colWidth * i;
+    doc
+      .moveTo(colX, tableTop)
+      .lineTo(colX, tableTop + tableHeight)
+      .stroke();
+  }
+
+  // Horizontal mid-line
+  const midY = tableTop + tableHeight / 2;
   doc
-    .circle(boxX + 20, boxY + 25, 8)
-    .lineWidth(1.8)
-    .strokeColor("#1E78D7")
+    .moveTo(x, midY)
+    .lineTo(x + width, midY)
     .stroke();
-  doc
-    .font(FONT_BOLD in ({} as any) ? FONT_BOLD : fonts.bold)
-    .fontSize(11)
-    .fillColor("#1E78D7")
-    .text("i", boxX + 17.5, boxY + 20.5, { lineBreak: false });
 
-  // Title on same line as icon
-  doc
-    .font(fonts.bold)
-    .fontSize(11)
-    .fillColor("#111827")
-    .text("Multiple Calculation Formula", boxX + 34, boxY + 19, { lineBreak: false });
+  const headers = ["Excellent", "Good", "Average", "Below Average"];
+  const rows = ["40-50 points: 100% (1.0x)", "30-39 points: 80% (0.8x)", "20-29 points: 50% (0.5x)", "<20 points: 30% (0.3x)"];
 
-  // Description with inline bold text
-  const descY = boxY + 48;
-  doc
-    .font(fonts.regular)
-    .fontSize(10)
-    .fillColor("#111827")
-    .text("Your final multiple is calculated as: ", boxX + 14, descY, { lineBreak: false, continued: true });
-  doc.font(fonts.bold).text("Base Multiple x Score Factor", { lineBreak: false });
+  // Header row text
+  headers.forEach((label, idx) => {
+    const colX = x + colWidth * idx;
+    doc
+      .font(fonts.bold)
+      .fontSize(9.5)
+      .fillColor("#111827")
+      .text(label, colX + 8, tableTop + 8, {
+        width: colWidth - 16,
+        align: "center",
+        lineBreak: false,
+      });
+  });
 
-  // Legend row
-  drawLegendRow(doc, fonts, boxX + 14, descY + 20, boxWidth - 28);
+  // Value row text
+  rows.forEach((text, idx) => {
+    const colX = x + colWidth * idx;
+    doc
+      .font(fonts.regular)
+      .fontSize(8)
+      .fillColor("#111827")
+      .text(text, colX + 8, midY + 6, {
+        width: colWidth - 16,
+        align: "center",
+        lineBreak: true,
+      });
+  });
 
-  // Example text
-  doc
-    .font(fonts.regular)
-    .fontSize(8)
-    .fillColor("#9CA3AF")
-    .text("Example: If your industry base multiple is 5.0x and you score 35 points, your multiple = 5.0 x 0.8 = 4.0x", boxX + 14, descY + 45, {
-      width: boxWidth - 28,
-      lineBreak: true,
-    });
+  // Example line
+  const exampleY = tableTop + tableHeight + 20;
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("Example: If your industry base multiple is 5.0x and you score 35 points, your multiple = 5.0 × 0.8 = 4.0x", x, exampleY, {
+    width,
+    align: "left",
+  });
 }
 
 function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): void {
@@ -855,32 +882,20 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
   // Average COGS - Gray
   drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY1, cardW, "Average COGS", money(avgCogs), "📊", "#F9FAFB", "#E5E7EB", "#374151");
 
-  // Average EBIT - fixed yellow (matches calculator UI)
-  drawColoredMetricCard(doc, fonts, x0 + (cardW + gap) * 2, cardsY1, cardW, "Average EBIT", money(avgEbit), "📈", "#FFFBEB", "#FEF3C7", "#92400E");
+  // Average EBIT - fixed indigo (distinct from valuation multiple band colors)
+  drawColoredMetricCard(doc, fonts, x0 + (cardW + gap) * 2, cardsY1, cardW, "Average EBIT", money(avgEbit), "📈", "#EEF2FF", "#C7D2FE", "#4338CA");
 
   // Metric cards - Row 2
   const cardsY2 = cardsY1 + 74;
 
-  // Average Addbacks - Purple
-  drawColoredMetricCard(doc, fonts, x0, cardsY2, cardW, "Average Addbacks", money(avgAddbacks), "➕", "#FAF5FF", "#E9D5FF", "#7C3AED");
+  // Average Addbacks - Neutral gray
+  drawColoredMetricCard(doc, fonts, x0, cardsY2, cardW, "Average Addbacks", money(avgAddbacks), "➕", "#F9FAFB", "#E5E7EB", "#374151");
 
-  // Average Adjusted EBIT - Indigo
-  drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY2, cardW, "Average Adjusted EBIT", money(avgAdjustedEbit), "✨", "#EEF2FF", "#C7D2FE", "#4F46E5");
+  // Average Adjusted EBIT - Purple (distinct from both EBIT and Valuation Multiple)
+  drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY2, cardW, "Average Adjusted EBIT", money(avgAdjustedEbit), "✨", "#FAF5FF", "#E9D5FF", "#7C3AED");
 
   // Valuation Multiple - dynamic color following strength rating bands
-  drawColoredMetricCard(
-    doc,
-    fonts,
-    x0 + (cardW + gap) * 2,
-    cardsY2,
-    cardW,
-    "Valuation Multiple",
-    `${valuationMultiple.toFixed(2)}x`,
-    "🎯",
-    valuationMultipleColors.bg,
-    valuationMultipleColors.border,
-    valuationMultipleColors.text,
-  );
+  drawColoredMetricCard(doc, fonts, x0 + (cardW + gap) * 2, cardsY2, cardW, "Valuation Multiple", `${valuationMultiple.toFixed(2)}x`, "🎯", valuationMultipleColors.bg, valuationMultipleColors.border, valuationMultipleColors.text);
 
   // Business Strength Assessment
   const assessmentY = cardsY2 + 84;
@@ -935,7 +950,7 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
 
   // Page number
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("4", 0, footerY, {
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("3", 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -1063,7 +1078,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
         .font(fonts.regular)
         .fontSize(10)
         .fillColor("#111827")
-        .text(`$${moneyComma(value)}`, colX + 8, rowY + 10, { width: colW - 16, align: "center", lineBreak: false });
+        .text(moneyComma(value), colX + 8, rowY + 10, { width: colW - 16, align: "center", lineBreak: false });
     });
 
     rowY += rowHeight;
@@ -1092,7 +1107,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
       .font(fonts.bold)
       .fontSize(10)
       .fillColor("#1F2937")
-      .text(`$${moneyComma(ebitValue)}`, colX + 8, rowY + 11, { width: colW - 16, align: "center", lineBreak: false });
+      .text(moneyComma(ebitValue), colX + 8, rowY + 11, { width: colW - 16, align: "center", lineBreak: false });
   });
 
   // Addbacks section - add more space from the main table
@@ -1183,7 +1198,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
         .font(fonts.regular)
         .fontSize(10)
         .fillColor("#111827")
-        .text(`$${moneyComma(value)}`, colX + 8, addRowY + 10, { width: addYearColW - 16, align: "center", lineBreak: false });
+        .text(moneyComma(value), colX + 8, addRowY + 10, { width: addYearColW - 16, align: "center", lineBreak: false });
     });
 
     addRowY += rowHeight;
@@ -1211,11 +1226,11 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     .font(fonts.bold)
     .fontSize(10)
     .fillColor("#1F2937")
-    .text(`$${moneyComma(data.totalAddbacks || 0)}`, lastColX + 8, addRowY + 11, { width: addYearColW - 16, align: "center", lineBreak: false });
+    .text(moneyComma(data.totalAddbacks || 0), lastColX + 8, addRowY + 11, { width: addYearColW - 16, align: "center", lineBreak: false });
 
   // Page number
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("5", 0, footerY, {
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("4", 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -1409,7 +1424,7 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
     });
 
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("4", 0, footerY, {
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("3", 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -1604,7 +1619,7 @@ function drawBusinessStrengthAssessmentPage(doc: PDFKit.PDFDocument, data: RAVDA
   drawMultipleCalculationFormulaSection(doc, fonts, 550);
 
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("6", 0, footerY, {
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("5", 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -1740,7 +1755,7 @@ function drawQuestionnaireQAPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts
 
   // Page number
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("7", 0, footerY, {
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("5", 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
