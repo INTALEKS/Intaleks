@@ -45,15 +45,10 @@ export function PricingSection() {
   }, []);
 
   const formatPrice = (price: number): string => {
-    // If we have converted price and currency, use it
     if (pricing && !priceLoading) {
-      // Format with thousand separators
       const formattedAmount = pricing.amount.toLocaleString("en-US");
       return `${pricing.currency.symbol}${formattedAmount}`;
     }
-
-    // Fallback to AUD
-    if (price === 0) return "$0";
     const amount = price / 100;
     return `A$${Math.floor(amount)}`;
   };
@@ -126,15 +121,6 @@ export function PricingSection() {
       );
     }
 
-    // Free plan - show "Get Started"
-    if (plan.price === 0) {
-      return (
-        <Button className={secondaryStyle} onClick={() => router.push("/signup")} disabled={isOtherProcessing}>
-          Get Started
-        </Button>
-      );
-    }
-
     return (
       <Button className={primaryStyle} onClick={() => handleSubscribe(plan.id)} disabled={isProcessing || isOtherProcessing}>
         {isProcessing ? (
@@ -187,7 +173,6 @@ export function PricingSection() {
           {plans.map((plan, index) => {
             const isPopular = index === 1;
             const price = formatPrice(plan.price);
-            const isFree = plan.price === 0;
 
             return (
               <div key={plan.id} className={`relative bg-white rounded-3xl p-8 flex flex-col ${isPopular ? "ring-2 ring-blue-500 shadow-2xl" : "border border-gray-200 shadow-lg"} transition-all duration-300 hover:shadow-xl`}>
@@ -200,9 +185,9 @@ export function PricingSection() {
                 <div className="mb-8">
                   <div className="flex items-baseline mb-2">
                     <span className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900">{price}</span>
-                    <span className="text-gray-500 ml-2 text-lg">{isFree ? "/lifetime" : plan.billingPeriod === "ONE_TIME" ? "/one-time" : plan.billingPeriod === "YEARLY" ? "/year" : "/month"}</span>
+                    <span className="text-gray-500 ml-2 text-lg">{plan.billingPeriod === "ONE_TIME" ? "/one-time" : plan.billingPeriod === "YEARLY" ? "/year" : "/month"}</span>
                   </div>
-                  {pricing && pricing.currency.code !== "AUD" && !isFree && <p className="text-sm text-gray-500">≈ A$495 AUD</p>}
+                  {pricing && pricing.currency.code !== "AUD" && <p className="text-sm text-gray-500">≈ A$495 AUD</p>}
                 </div>
 
                 {/* Features */}

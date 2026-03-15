@@ -44,25 +44,22 @@ export const webhookRouter = Router();
 // Requirements: 3.1, 3.7
 webhookRouter.post("/stripe", async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    // Get the raw body and signature
     const payload = req.body as Buffer;
     const signature = req.headers["stripe-signature"] as string;
+    const isDev = process.env.NODE_ENV === "development";
 
-    if (!signature) {
+    // In development, skip signature verification entirely so the
+    // Stripe CLI secret doesn't need to match the container env var
+    if (!isDev && !signature) {
       res.status(400).json({
         success: false,
-        error: {
-          code: "MISSING_SIGNATURE",
-          message: "Missing Stripe signature header",
-        },
+        error: { code: "MISSING_SIGNATURE", message: "Missing Stripe signature header" },
       });
       return;
     }
 
-    // Process the webhook event
-    const result = await WebhookService.handleEvent(payload, signature);
+    const result = await WebhookService.handleEvent(payload, signature, isDev);
 
-    // Return 200 to acknowledge receipt (Requirement 3.7)
     res.status(200).json({
       success: result.success,
       eventType: result.eventType,
@@ -70,24 +67,16 @@ webhookRouter.post("/stripe", async (req: Request, res: Response, next: NextFunc
     });
   } catch (error) {
     if (isStripeError(error)) {
-      // Return 400 for invalid signatures (Requirement 3.6)
       res.status(error.statusCode).json({
         success: false,
-        error: {
-          code: error.code,
-          message: error.userMessage,
-        },
+        error: { code: error.code, message: error.userMessage },
       });
       return;
     }
-
     console.error("Webhook processing error:", error);
     res.status(500).json({
       success: false,
-      error: {
-        code: "WEBHOOK_ERROR",
-        message: "An error occurred while processing webhook",
-      },
+      error: { code: "WEBHOOK_ERROR", message: "An error occurred while processing webhook" },
     });
   }
 });

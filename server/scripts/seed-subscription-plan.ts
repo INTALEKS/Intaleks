@@ -7,18 +7,6 @@ import { BillingPeriod } from "@prisma/client";
  */
 export async function seedSubscriptionPlan(): Promise<void> {
   try {
-    // Delete the free plan if it exists
-    const freePlan = await prisma.subscriptionPlan.findUnique({
-      where: { name: "Free" },
-    });
-
-    if (freePlan) {
-      await prisma.subscriptionPlan.delete({
-        where: { name: "Free" },
-      });
-      console.log("✅ Removed Free plan");
-    }
-
     // Check if the One-Off plan already exists
     const existingPlan = await prisma.subscriptionPlan.findUnique({
       where: { name: "One-Off" },

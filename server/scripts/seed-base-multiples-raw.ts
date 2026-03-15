@@ -235,17 +235,6 @@ async function main() {
   // Seed subscription plan
   console.log("\n🌱 Seeding subscription plan...");
 
-  // Delete Free plan if exists
-  const freePlan = await prisma.subscriptionPlan.findUnique({
-    where: { name: "Free" },
-  });
-  if (freePlan) {
-    await prisma.subscriptionPlan.delete({
-      where: { name: "Free" },
-    });
-    console.log("✅ Removed Free plan");
-  }
-
   // Upsert One-Off plan
   const planData = {
     price: 49500, // AUD $495.00 in cents

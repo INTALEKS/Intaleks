@@ -1,6 +1,7 @@
 import { prisma } from "../config/db";
 import { NotFoundError } from "../errors";
 import { emailService } from "./email";
+import { getStripe } from "../config/stripe";
 import type { Invoice, Payment, User, SubscriptionPlan } from "@prisma/client";
 
 type InvoiceWithRelations = Invoice & {
@@ -118,6 +119,26 @@ class InvoiceService {
       throw new NotFoundError("Invoice not found");
     }
 
+    const isSuccess = invoice.status === "PAID";
+
+    // Try to fetch payment method details from Stripe
+    let paymentMethod: string | undefined;
+    try {
+      if (invoice.payment.stripePaymentId) {
+        const stripe = getStripe();
+        const paymentIntent = await stripe.paymentIntents.retrieve(invoice.payment.stripePaymentId, {
+          expand: ["payment_method"],
+        });
+        const pm = paymentIntent.payment_method as import("stripe").Stripe.PaymentMethod | null;
+        if (pm && pm.card) {
+          const brand = pm.card.brand.charAt(0).toUpperCase() + pm.card.brand.slice(1);
+          paymentMethod = `${brand} ending in ${pm.card.last4}`;
+        }
+      }
+    } catch {
+      // Non-critical — proceed without payment method details
+    }
+
     // Send email
     await emailService.sendInvoiceEmail({
       email: invoice.user.email,
@@ -127,8 +148,12 @@ class InvoiceService {
       amount: invoice.amount,
       currency: invoice.currency,
       planName: invoice.plan?.name || "Subscription",
+      billingPeriod: invoice.plan?.billingPeriod,
       paidAt: invoice.paidAt || invoice.createdAt,
       stripeInvoiceId: invoice.stripeInvoiceId || undefined,
+      paymentMethod,
+      nextRenewal: invoice.user.currentPeriodEnd,
+      status: isSuccess ? "success" : "failed",
     });
 
     // Mark email as sent

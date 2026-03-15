@@ -3,6 +3,7 @@ import { getStripe } from "../config/stripe";
 import { config } from "../config/environment";
 import { User, BillingPeriod, SubscriptionPlan } from "@prisma/client";
 import { NotFoundError, StripeError, STRIPE_ERROR_CODES, createStripeErrorFromApiError, isStripeApiError } from "../errors";
+import { invoiceService } from "./invoice";
 import Stripe from "stripe";
 
 /**
@@ -599,6 +600,25 @@ export class PaymentService {
         },
       }),
     ]);
+
+    // Create a $0 payment record and send invoice (non-blocking)
+    try {
+      const payment = await prisma.payment.create({
+        data: {
+          userId,
+          planId,
+          amount: 0,
+          currency: "usd",
+          status: "SUCCEEDED",
+          description: `Admin granted subscription: ${plan.name}`,
+        },
+      });
+      const invoice = await invoiceService.createInvoice(payment.id);
+      await invoiceService.sendInvoiceEmail(invoice.id);
+      console.log(`✅ Invoice ${invoice.invoiceNumber} sent to user ${userId} for admin-granted subscription`);
+    } catch (invoiceError) {
+      console.error("Failed to send invoice for admin-granted subscription:", invoiceError);
+    }
   }
 
   /**

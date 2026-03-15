@@ -31,8 +31,13 @@ interface InvoiceEmailData {
   amount: number;
   currency: string;
   planName: string;
+  billingPeriod?: string;
   paidAt: Date;
   stripeInvoiceId?: string;
+  paymentMethod?: string; // e.g. "Visa ending in 4242"
+  nextRenewal?: Date | null;
+  status?: "success" | "failed";
+  failureReason?: string;
 }
 
 class EmailService {
@@ -542,108 +547,254 @@ Trading as Intaleks
   }
 
   async sendInvoiceEmail(data: InvoiceEmailData): Promise<boolean> {
-    const { email, firstName, lastName, invoiceNumber, amount, currency, planName, paidAt, stripeInvoiceId } = data;
+    const { email, firstName, lastName, invoiceNumber, amount, currency, planName, billingPeriod, paidAt, stripeInvoiceId, paymentMethod, nextRenewal, status = "success", failureReason } = data;
     const displayName = firstName ? `${firstName}${lastName ? " " + lastName : ""}` : "there";
-    const formattedAmount = (amount / 100).toFixed(2);
-    const currencySymbol = currency.toUpperCase() === "USD" ? "$" : currency.toUpperCase();
-    const formattedDate = paidAt.toLocaleDateString("en-US", {
+    const isSuccess = status === "success";
+
+    // Format currency: AUD → A$, USD → $, etc.
+    const currencyUpper = currency.toUpperCase();
+    const currencyPrefix = currencyUpper === "AUD" ? "A$" : currencyUpper === "USD" ? "$" : `${currencyUpper} `;
+    const formattedAmount = `${currencyPrefix}${(amount / 100).toFixed(2)}`;
+
+    const formattedDate = paidAt.toLocaleDateString("en-AU", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
 
-    const invoicesUrl = `${this.frontendUrl}/settings`;
-    const stripeInvoiceUrl = stripeInvoiceId ? `https://invoice.stripe.com/i/${stripeInvoiceId}` : null;
+    const formattedNextRenewal = nextRenewal ? nextRenewal.toLocaleDateString("en-AU", { year: "numeric", month: "long", day: "numeric" }) : null;
 
-    const content = `
-      <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 24px;">Payment Receipt</h2>
-      <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.5;">
-        Hi ${displayName},
-      </p>
-      <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.5;">
-        Thank you for your payment! This email confirms your subscription payment has been processed successfully.
-      </p>
-      
-      <!-- Invoice Details -->
-      <div style="margin: 30px 0; padding: 25px; background-color: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
-        <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px; font-weight: bold;">Invoice Details</h3>
-        
-        <table role="presentation" style="width: 100%; border-collapse: collapse;">
-          <tr>
-            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Invoice Number:</td>
-            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; font-weight: bold; text-align: right;">${invoiceNumber}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Date:</td>
-            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${formattedDate}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">Plan:</td>
-            <td style="padding: 8px 0; color: #1f2937; font-size: 14px; text-align: right;">${planName}</td>
-          </tr>
-          <tr style="border-top: 2px solid #e5e7eb;">
-            <td style="padding: 15px 0 0 0; color: #1f2937; font-size: 16px; font-weight: bold;">Total Paid:</td>
-            <td style="padding: 15px 0 0 0; color: #10b981; font-size: 20px; font-weight: bold; text-align: right;">${currencySymbol}${formattedAmount}</td>
-          </tr>
-        </table>
-      </div>
-      
-      ${
-        stripeInvoiceUrl
-          ? `
-      <!-- View Invoice Button -->
-      <table role="presentation" style="margin: 30px 0;">
+    const billingLabel = billingPeriod === "YEARLY" ? "Annual plan" : billingPeriod === "MONTHLY" ? "Monthly plan" : "One-time";
+
+    // Receipt number: RCPT-YYYY-NNNNN derived from invoice number
+    const receiptNumber = invoiceNumber.replace("INV-", "RCPT-");
+
+    const statusIcon = isSuccess
+      ? `<div style="width:56px;height:56px;border-radius:50%;background:#dcfce7;margin:0 auto 16px auto;text-align:center;line-height:56px;">
+           <div style="width:40px;height:40px;border-radius:50%;background:#22c55e;display:inline-block;vertical-align:middle;line-height:40px;text-align:center;">
+             <span style="color:#fff;font-size:20px;line-height:40px;">✓</span>
+           </div>
+         </div>`
+      : `<div style="width:56px;height:56px;border-radius:50%;background:#fee2e2;margin:0 auto 16px auto;text-align:center;line-height:56px;">
+           <div style="width:40px;height:40px;border-radius:50%;background:#ef4444;display:inline-block;vertical-align:middle;line-height:40px;text-align:center;">
+             <span style="color:#fff;font-size:20px;line-height:40px;">✕</span>
+           </div>
+         </div>`;
+
+    const statusTitle = isSuccess ? "Payment Successful" : "Payment Failed";
+    const statusSubtitle = isSuccess ? `Hi ${firstName || displayName} — your subscription payment was received.<br>Here is your payment confirmation for your records.` : `Hi ${firstName || displayName} — we were unable to process your payment.<br>${failureReason || "Please update your payment method to continue your subscription."}`;
+
+    const amountBanner = isSuccess
+      ? `<table role="presentation" style="width:100%;margin:24px 0;border-collapse:collapse;">
+           <tr>
+             <td style="width:8px;background:linear-gradient(180deg,#2563eb,#1d4ed8);border-radius:10px 0 0 10px;">&nbsp;</td>
+             <td style="background:#0f172a;border-radius:0 10px 10px 0;padding:18px 24px;">
+               <table role="presentation" style="width:100%;border-collapse:collapse;">
+                 <tr>
+                   <td style="vertical-align:middle;">
+                     <span style="color:#fff;font-size:28px;font-weight:700;letter-spacing:-0.5px;">${formattedAmount}</span>
+                   </td>
+                   <td style="text-align:right;vertical-align:middle;">
+                     <span style="display:inline-block;border:1.5px solid #22c55e;color:#22c55e;font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 12px;border-radius:6px;">PAID</span>
+                   </td>
+                 </tr>
+               </table>
+             </td>
+           </tr>
+         </table>`
+      : `<table role="presentation" style="width:100%;margin:24px 0;border-collapse:collapse;">
+           <tr>
+             <td style="width:8px;background:linear-gradient(180deg,#ef4444,#dc2626);border-radius:10px 0 0 10px;">&nbsp;</td>
+             <td style="background:#0f172a;border-radius:0 10px 10px 0;padding:18px 24px;">
+               <table role="presentation" style="width:100%;border-collapse:collapse;">
+                 <tr>
+                   <td style="vertical-align:middle;">
+                     <span style="color:#fff;font-size:28px;font-weight:700;letter-spacing:-0.5px;">${formattedAmount}</span>
+                   </td>
+                   <td style="text-align:right;vertical-align:middle;">
+                     <span style="display:inline-block;border:1.5px solid #ef4444;color:#ef4444;font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 12px;border-radius:6px;">FAILED</span>
+                   </td>
+                 </tr>
+               </table>
+             </td>
+           </tr>
+         </table>`;
+
+    const lineItems = `
+      <table role="presentation" style="width:100%;border-collapse:collapse;margin:20px 0;">
         <tr>
-          <td style="border-radius: 6px; background-color: #3b82f6;">
-            <a href="${stripeInvoiceUrl}" target="_blank" style="display: inline-block; padding: 14px 32px; color: #ffffff; text-decoration: none; font-size: 16px; font-weight: bold; border-radius: 6px;">
-              View Full Invoice
-            </a>
+          <td style="padding:12px 0;border-bottom:1px dashed #e5e7eb;">
+            <div style="font-size:14px;font-weight:700;color:#111827;">${planName}</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:2px;">Full platform access · intaleks.com</div>
+          </td>
+          <td style="padding:12px 0;border-bottom:1px dashed #e5e7eb;text-align:right;vertical-align:top;">
+            <div style="font-size:14px;font-weight:700;color:#111827;">${formattedAmount}</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:2px;">${billingLabel}</div>
           </td>
         </tr>
-      </table>
-      `
-          : ""
-      }
-      
-      <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid #e5e7eb;">
-        <p style="margin: 0 0 10px 0; color: #4b5563; font-size: 14px; line-height: 1.5;">
-          You can view all your invoices and manage your subscription in your <a href="${invoicesUrl}" style="color: #3b82f6; text-decoration: none;">account settings</a>.
-        </p>
-        <p style="margin: 10px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.5;">
-          If you have any questions about this payment, please contact us at <a href="mailto:admin@intaleks.com" style="color: #3b82f6; text-decoration: none;">admin@intaleks.com</a>
-        </p>
-      </div>
-    `;
+        <tr>
+          <td style="padding:10px 0;color:#9ca3af;font-size:13px;">GST included (0%)</td>
+          <td style="padding:10px 0;color:#9ca3af;font-size:13px;text-align:right;">${currencyPrefix}0.00</td>
+        </tr>
+        <tr style="border-top:1px solid #e5e7eb;">
+          <td style="padding:12px 0;font-size:15px;font-weight:700;color:#111827;">Total charged</td>
+          <td style="padding:12px 0;font-size:15px;font-weight:700;color:#111827;text-align:right;">${formattedAmount}</td>
+        </tr>
+      </table>`;
 
-    const text = `
-Payment Receipt
+    const transactionRows = [{ label: "Date", value: formattedDate }, { label: "Receipt number", value: receiptNumber }, ...(paymentMethod ? [{ label: "Payment method", value: paymentMethod }] : []), { label: "Customer", value: `${firstName || ""}${lastName ? " " + lastName : ""}`.trim() || displayName }, { label: "Email", value: email }, ...(formattedNextRenewal && isSuccess ? [{ label: "Next renewal", value: formattedNextRenewal }] : [])];
+
+    const transactionTable = `
+      <div style="margin:24px 0;">
+        <div style="font-size:11px;font-weight:700;color:#6b7280;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">TRANSACTION DETAILS</div>
+        <table role="presentation" style="width:100%;border-collapse:collapse;background:#f9fafb;border-radius:8px;overflow:hidden;">
+          ${transactionRows
+            .map(
+              (row, i) => `
+          <tr style="border-bottom:${i < transactionRows.length - 1 ? "1px solid #e5e7eb" : "none"};">
+            <td style="padding:10px 14px;font-size:13px;color:#6b7280;">${row.label}</td>
+            <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#111827;text-align:right;">${row.value}</td>
+          </tr>`,
+            )
+            .join("")}
+        </table>
+      </div>`;
+
+    const thankYouBox = isSuccess
+      ? `<table role="presentation" style="width:100%;margin:24px 0;">
+           <tr>
+             <td style="width:4px;background:#2563eb;border-radius:4px 0 0 4px;">&nbsp;</td>
+             <td style="background:#eff6ff;padding:14px 16px;border-radius:0 8px 8px 0;">
+               <div style="font-size:14px;font-weight:700;color:#1e3a5f;">Thank you for choosing Intaleks Pty Ltd.</div>
+               <div style="font-size:13px;color:#374151;margin-top:4px;">Sign in at intaleks.com to start your business valuation.</div>
+             </td>
+           </tr>
+         </table>`
+      : `<table role="presentation" style="width:100%;margin:24px 0;">
+           <tr>
+             <td style="width:4px;background:#ef4444;border-radius:4px 0 0 4px;">&nbsp;</td>
+             <td style="background:#fef2f2;padding:14px 16px;border-radius:0 8px 8px 0;">
+               <div style="font-size:14px;font-weight:700;color:#7f1d1d;">Action required</div>
+               <div style="font-size:13px;color:#374151;margin-top:4px;">Please update your payment method at <a href="${this.frontendUrl}/settings" style="color:#2563eb;text-decoration:none;">intaleks.com</a> to restore access.</div>
+             </td>
+           </tr>
+         </table>`;
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${statusTitle} - Intaleks</title>
+</head>
+<body style="margin:0;padding:0;background:#e8eef7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;">
+  <table role="presentation" style="width:100%;border-collapse:collapse;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" style="width:100%;max-width:560px;border-collapse:collapse;">
+
+          <!-- Top accent bar -->
+          <tr>
+            <td style="height:5px;background:linear-gradient(90deg,#1d4ed8,#2563eb,#60a5fa);border-radius:8px 8px 0 0;"></td>
+          </tr>
+
+          <!-- Header: logo + receipt label -->
+          <tr>
+            <td style="background:#ffffff;padding:24px 32px 16px 32px;">
+              <table role="presentation" style="width:100%;">
+                <tr>
+                  <td>
+                    <div style="font-size:26px;font-weight:900;color:#111827;letter-spacing:-1px;">
+                      <span style="color:#111827;">intal</span><span style="color:#2563eb;">e</span><span style="color:#111827;">ks</span>
+                    </div>
+                    <div style="font-size:11px;color:#9ca3af;margin-top:2px;">Professional Business Valuation Calculator</div>
+                  </td>
+                  <td style="text-align:right;vertical-align:top;">
+                    <div style="font-size:15px;font-weight:700;color:#111827;">Payment Receipt</div>
+                    <div style="font-size:12px;color:#6b7280;margin-top:2px;">${receiptNumber}</div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main card -->
+          <tr>
+            <td style="background:#ffffff;padding:0 32px 32px 32px;">
+              <table role="presentation" style="width:100%;border:1px solid #e5e7eb;border-radius:12px;border-collapse:collapse;">
+                <tr>
+                  <td style="padding:28px 24px;">
+
+                    <!-- Status icon + title -->
+                    <div style="text-align:center;margin-bottom:8px;">
+                      ${statusIcon}
+                      <div style="font-size:22px;font-weight:800;color:#111827;margin-bottom:8px;">${statusTitle}</div>
+                      <div style="font-size:13px;color:#6b7280;line-height:1.6;">${statusSubtitle}</div>
+                    </div>
+
+                    <!-- Amount banner -->
+                    ${amountBanner}
+
+                    <!-- Line items -->
+                    ${lineItems}
+
+                    <!-- Transaction details -->
+                    ${transactionTable}
+
+                    <!-- Thank you / action box -->
+                    ${thankYouBox}
+
+                    <!-- Inner footer -->
+                    <div style="border-top:1px solid #e5e7eb;padding-top:16px;text-align:center;">
+                      <div style="font-size:12px;color:#9ca3af;">
+                        Intaleks Pty Ltd · info@intaleks.com · www.intaleks.com · Australia
+                      </div>
+                      <div style="font-size:11px;color:#9ca3af;margin-top:4px;">
+                        Secured &amp; processed by <span style="color:#635bff;font-weight:700;">Stripe</span>
+                      </div>
+                    </div>
+
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Outer footer -->
+          <tr>
+            <td style="background:#0f172a;padding:20px 32px;border-radius:0 0 8px 8px;text-align:center;">
+              <div style="font-size:12px;color:#94a3b8;">
+                Intaleks Pty Ltd · info@intaleks.com · www.intaleks.com · Australia
+              </div>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    const text = `${statusTitle}
 
 Hi ${displayName},
+${isSuccess ? `Your subscription payment of ${formattedAmount} was received.` : `We were unable to process your payment of ${formattedAmount}.`}
 
-Thank you for your payment! This email confirms your subscription payment has been processed successfully.
-
-Invoice Details:
-- Invoice Number: ${invoiceNumber}
-- Date: ${formattedDate}
-- Plan: ${planName}
-- Total Paid: ${currencySymbol}${formattedAmount}
-
-${stripeInvoiceUrl ? `View full invoice: ${stripeInvoiceUrl}\n` : ""}
-You can view all your invoices and manage your subscription in your account settings: ${invoicesUrl}
-
-If you have any questions about this payment, please contact us at admin@intaleks.com
+Receipt: ${receiptNumber}
+Date: ${formattedDate}
+Plan: ${planName} (${billingLabel})
+Amount: ${formattedAmount}
+${paymentMethod ? `Payment method: ${paymentMethod}\n` : ""}${formattedNextRenewal && isSuccess ? `Next renewal: ${formattedNextRenewal}\n` : ""}
+${isSuccess ? `Sign in at ${this.frontendUrl} to start your business valuation.` : `Update your payment method at ${this.frontendUrl}/settings`}
 
 ---
-Perth Business Evaluators Pty Ltd (ABN: 51 622 231 832)
-Trading as Intaleks
-    `.trim();
+Intaleks Pty Ltd · info@intaleks.com · www.intaleks.com · Australia
+Perth Business Evaluators Pty Ltd (ABN: 51 622 231 832)`.trim();
 
-    return this.sendEmail({
-      to: email,
-      subject: `Payment Receipt - Invoice ${invoiceNumber}`,
-      html: this.getEmailTemplate(content),
-      text,
-    });
+    const subject = isSuccess ? `Payment Receipt – ${receiptNumber}` : `Payment Failed – Action Required`;
+
+    return this.sendEmail({ to: email, subject, html, text });
   }
 }
 
