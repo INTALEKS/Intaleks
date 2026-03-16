@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Navbar, Footer } from "@/components/home";
 import { AccordionSection, MethodToggle, ValuationMethod, CountryIndustrySelector, FinancialDataTable, AddbacksTable, StepProgress, CompanyQuestionnaire, ValuationDocumentList, YearSelector, EarningCapacitySection, AddbacksExamplesSection, ValuationSummaryCard } from "@/components/calculator";
 import { AssetMethod } from "@/components/calculator/methods";
+import { CouponRedeemForm } from "@/components/calculator/CouponRedeemForm";
 import { calculateAverageAdjustedEBIT, formatCurrency, FinancialYearData } from "@/lib/calculator-utils";
 import { downloadValuationPDF, ValuationReportData } from "@/lib/valuation-api";
 import { useAuthState } from "@/app/hooks/useAuthState";
@@ -118,7 +119,7 @@ function SubscribeButton() {
 
 export default function CalculatorPage() {
   const router = useRouter();
-  const { isAuthenticated, hasActiveSubscription, subscriptionStatus, user } = useAuthState();
+  const { isAuthenticated, hasActiveSubscription, hasCouponAccess, hasCalculatorAccess, subscriptionStatus, user } = useAuthState();
   const queryClient = useQueryClient();
   const { getMultiple } = useValuationMultiples();
 
@@ -393,8 +394,8 @@ export default function CalculatorPage() {
       return;
     }
 
-    if (!hasActiveSubscription) {
-      toast.error("An active subscription is required to view valuation reports");
+    if (!hasCalculatorAccess) {
+      toast.error("An active subscription or coupon code is required to view valuation reports");
       router.push("/#pricing");
       return;
     }
@@ -540,9 +541,9 @@ export default function CalculatorPage() {
       return;
     }
 
-    // Check if user has active subscription
-    if (!hasActiveSubscription) {
-      toast.error("An active subscription is required to download valuation reports");
+    // Check if user has active subscription or coupon access
+    if (!hasCalculatorAccess) {
+      toast.error("An active subscription or coupon code is required to download valuation reports");
       router.push("/#pricing");
       return;
     }
@@ -719,8 +720,8 @@ export default function CalculatorPage() {
   const isStep4Complete = useMemo(() => {
     if (!isStep3Complete) return false;
 
-    // Require active subscription for step 4
-    if (!isAuthenticated || !hasActiveSubscription) return false;
+    // Require active subscription or coupon access for step 4
+    if (!isAuthenticated || !hasCalculatorAccess) return false;
 
     if (selectedMethod === "profit") {
       // For profit method, check if sales data exists for all years
@@ -736,7 +737,7 @@ export default function CalculatorPage() {
     }
 
     return false;
-  }, [isStep3Complete, isAuthenticated, hasActiveSubscription, selectedMethod, financialData, financialYears, assets]);
+  }, [isStep3Complete, isAuthenticated, hasCalculatorAccess, selectedMethod, financialData, financialYears, assets]);
 
   // Step 5 (Download) is complete when step 4 is done
   const isStep5Complete = isStep4Complete;
@@ -1124,8 +1125,8 @@ export default function CalculatorPage() {
         {/* STEP 4: Financial Data + Selected Method Calculation */}
         <AccordionSection title="Financial Data (Please enter your financial data below)" stepNumber={4} isOpen={openSections[4]} onToggle={() => toggleSection(4)}>
           <div className="relative">
-            {/* Overlay for users without active subscription */}
-            {(!isAuthenticated || !hasActiveSubscription) && (
+            {/* Overlay for users without active subscription or coupon access */}
+            {(!isAuthenticated || !hasCalculatorAccess) && (
               <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
                 <div className="text-center p-8">
                   <div className="w-20 h-20 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
@@ -1133,8 +1134,8 @@ export default function CalculatorPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{!isAuthenticated ? "Login Required" : "Active Subscription Required"}</h3>
-                  <p className="text-gray-600 mb-6 max-w-md">{!isAuthenticated ? "Please log in and subscribe to enter your financial data and calculate your business valuation" : "An active subscription is required to enter financial data and generate valuations"}</p>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{!isAuthenticated ? "Login Required" : "Access Required"}</h3>
+                  <p className="text-gray-600 mb-6 max-w-md">{!isAuthenticated ? "Please log in and subscribe to enter your financial data and calculate your business valuation" : "An active subscription or coupon code is required to enter financial data and generate valuations"}</p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     {!isAuthenticated ? (
                       <>
@@ -1156,13 +1157,14 @@ export default function CalculatorPage() {
                       </>
                     )}
                   </div>
+                  {isAuthenticated && !hasCalculatorAccess && <CouponRedeemForm />}
                 </div>
               </div>
             )}
 
             {selectedMethod === "profit" && (
               <>
-                <YearSelector selectedYears={selectedYears} onYearsChange={setSelectedYears} disabled={!isAuthenticated || !hasActiveSubscription} />
+                <YearSelector selectedYears={selectedYears} onYearsChange={setSelectedYears} disabled={!isAuthenticated || !hasCalculatorAccess} />
 
                 <div className="mt-6">
                   <FinancialDataTable
@@ -1175,12 +1177,12 @@ export default function CalculatorPage() {
                       label: "EBIT CALCULATED",
                       values: ebitValues,
                     }}
-                    disabled={!isAuthenticated || !hasActiveSubscription}
+                    disabled={!isAuthenticated || !hasCalculatorAccess}
                   />
                 </div>
 
                 <div className="mt-6">
-                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, formatCurrency(totalAddbacksByYear[year] || 0)]))} disabled={!isAuthenticated || !hasActiveSubscription} />
+                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, formatCurrency(totalAddbacksByYear[year] || 0)]))} disabled={!isAuthenticated || !hasCalculatorAccess} />
                 </div>
 
                 {/* <div className="mt-6">
@@ -1191,7 +1193,7 @@ export default function CalculatorPage() {
 
             {selectedMethod === "asset" && (
               <div className="mt-6">
-                <AssetMethod assets={assets} liabilities={liabilities} onAssetChange={(key, value) => setAssets((prev) => ({ ...prev, [key]: value }))} onLiabilityChange={(key, value) => setLiabilities((prev) => ({ ...prev, [key]: value }))} disabled={!isAuthenticated || !hasActiveSubscription} />
+                <AssetMethod assets={assets} liabilities={liabilities} onAssetChange={(key, value) => setAssets((prev) => ({ ...prev, [key]: value }))} onLiabilityChange={(key, value) => setLiabilities((prev) => ({ ...prev, [key]: value }))} disabled={!isAuthenticated || !hasCalculatorAccess} />
               </div>
             )}
           </div>
@@ -1201,7 +1203,7 @@ export default function CalculatorPage() {
         <AccordionSection title="Download Valuation Document (PDF)" stepNumber={5} isOpen={openSections[5]} onToggle={() => toggleSection(5)}>
           <div className="py-6 space-y-6">
             {/* Comprehensive Valuation Summary Card */}
-            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageSales : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageCOGS : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageEbit : financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} averageAddbacks={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageAddbacks : financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0) / financialYears.length} adjustedEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.adjustedEbit : averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.valuationMultiple : effectiveProfitMultiple} finalValuation={serverCalculatedValues?.finalValuation ?? finalValuation} totalAssets={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalAssets : selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalLiabilities : selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} hasActiveSubscription={hasActiveSubscription} showReport={showValuationReport} onShowReport={handleShowReport} />
+            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageSales : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageCOGS : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageEbit : financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} averageAddbacks={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageAddbacks : financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0) / financialYears.length} adjustedEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.adjustedEbit : averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.valuationMultiple : effectiveProfitMultiple} finalValuation={serverCalculatedValues?.finalValuation ?? finalValuation} totalAssets={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalAssets : selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalLiabilities : selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} hasActiveSubscription={hasCalculatorAccess} showReport={showValuationReport} onShowReport={handleShowReport} />
 
             <div className="text-center">
               {!isStep4Complete ? (
@@ -1214,7 +1216,7 @@ export default function CalculatorPage() {
                     Log in to Download
                   </Button>
                 </>
-              ) : !hasActiveSubscription ? (
+              ) : !hasCalculatorAccess ? (
                 <>
                   <div className="mb-6 p-6 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-start gap-4">
@@ -1236,6 +1238,7 @@ export default function CalculatorPage() {
                             </Button>
                           )}
                         </div>
+                        <CouponRedeemForm />
                       </div>
                     </div>
                   </div>

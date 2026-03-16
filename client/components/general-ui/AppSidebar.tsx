@@ -23,6 +23,7 @@ import Link from "next/link";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useAdminAuth } from "@/app/hooks/useAuth";
+import { isSuperAdmin } from "@/lib/role-utils";
 
 const PRIMARY_NAV_ITEMS = [
   { icon: DashboardIcon, text: "Dashboard", path: "/admin/dashboard" },
@@ -52,6 +53,7 @@ export default function AppSidebar() {
           {PRIMARY_NAV_ITEMS.map((item) => (
             <AppSidebarItem key={item.text} icon={item.icon} text={item.text} path={item.path} isActive={pathname === item.path || pathname.startsWith(item.path + "/")} />
           ))}
+          {isSuperAdmin(user?.role) && <AppSidebarItem icon={SubscribePlanIcon} text="Coupon Codes" path="/admin/coupons" isActive={pathname === "/admin/coupons"} />}
         </div>
       </div>
 

@@ -75,7 +75,7 @@ async function startupSeed() {
       await ensureStripePlan(plan);
     }
 
-    // Check and seed admin user
+    // Check and seed super admin user
     const email = process.env.ADMIN_EMAIL || "admin@intaleks.com";
     const password = process.env.ADMIN_PASSWORD || "Admin123!";
     const firstName = process.env.ADMIN_FIRST_NAME || "Admin";
@@ -84,26 +84,22 @@ async function startupSeed() {
     const existingUser = await prisma.user.findUnique({ where: { email } });
 
     if (!existingUser) {
-      const adminExists = await prisma.user.findFirst({ where: { role: UserRole.ADMIN } });
-
-      if (!adminExists) {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await prisma.user.create({
-          data: {
-            email,
-            password: hashedPassword,
-            firstName,
-            lastName,
-            role: UserRole.ADMIN,
-            termsAccepted: true,
-            termsAcceptedAt: new Date(),
-          },
-        });
-        console.log(`🔐 Created admin user: ${email}`);
-      }
-    } else if (existingUser.role !== UserRole.ADMIN) {
-      await prisma.user.update({ where: { email }, data: { role: UserRole.ADMIN } });
-      console.log(`🔐 Upgraded existing user to admin: ${email}`);
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          firstName,
+          lastName,
+          role: UserRole.SUPER_ADMIN,
+          termsAccepted: true,
+          termsAcceptedAt: new Date(),
+        },
+      });
+      console.log(`🔐 Created super admin user: ${email}`);
+    } else if (existingUser.role !== UserRole.SUPER_ADMIN) {
+      await prisma.user.update({ where: { email }, data: { role: UserRole.SUPER_ADMIN } });
+      console.log(`🔐 Upgraded existing user to super admin: ${email}`);
     }
   } catch (error) {
     console.error("⚠️  Startup seed error:", error);

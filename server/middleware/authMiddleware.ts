@@ -12,6 +12,7 @@ export interface AuthenticatedUser {
   lastName: string;
   role: UserRole;
   subscriptionStatus: SubscriptionStatus;
+  couponAccess: boolean;
   termsAccepted: boolean;
   termsAcceptedAt: Date | null;
   emailVerified: boolean;
@@ -69,6 +70,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         lastName: true,
         role: true,
         subscriptionStatus: true,
+        couponAccess: true,
         emailVerified: true,
         termsAccepted: true,
         termsAcceptedAt: true,
@@ -157,7 +159,7 @@ export const requireEmailVerified = (req: Request, res: Response, next: NextFunc
 };
 
 /**
- * Middleware to check if user has an active subscription
+ * Middleware to check if user has an active subscription or valid coupon access
  * Use this on routes that require a paid subscription
  */
 export const requireActiveSubscription = (req: Request, res: Response, next: NextFunction): void => {
@@ -172,10 +174,13 @@ export const requireActiveSubscription = (req: Request, res: Response, next: Nex
     return;
   }
 
-  if (req.user.subscriptionStatus !== SubscriptionStatus.ACTIVE) {
+  const hasSubscription = req.user.subscriptionStatus === SubscriptionStatus.ACTIVE;
+  const hasCouponAccess = req.user.couponAccess === true;
+
+  if (!hasSubscription && !hasCouponAccess) {
     res.status(403).json({
       error: "Active subscription required",
-      message: "This feature requires an active subscription. Please subscribe to continue.",
+      message: "This feature requires an active subscription. Please subscribe or redeem a coupon code to continue.",
       subscriptionStatus: req.user.subscriptionStatus,
     });
     return;

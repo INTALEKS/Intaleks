@@ -25,6 +25,7 @@ export interface User {
   avatar?: string | null;
   subscriptionStatus?: SubscriptionStatus;
   currentPeriodEnd?: string | null;
+  couponAccess?: boolean;
   termsAccepted?: boolean;
   termsAcceptedAt?: string | null;
   subscription?: {

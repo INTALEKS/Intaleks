@@ -14,9 +14,10 @@ interface DatePickerProps {
   onSelect: (date: Date | undefined) => void;
   placeholder?: string;
   className?: string;
+  disabled?: React.ComponentProps<typeof Calendar>["disabled"];
 }
 
-export function DatePicker({ date, onSelect, placeholder = "Pick a date", className }: DatePickerProps) {
+export function DatePicker({ date, onSelect, placeholder = "Pick a date", className, disabled }: DatePickerProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -26,7 +27,7 @@ export function DatePicker({ date, onSelect, placeholder = "Pick a date", classN
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={date} onSelect={onSelect} initialFocus />
+        <Calendar mode="single" selected={date} onSelect={onSelect} disabled={disabled} initialFocus />
       </PopoverContent>
     </Popover>
   );

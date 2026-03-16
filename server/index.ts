@@ -20,6 +20,7 @@ import invoiceRoutes from "./routes/invoice.routes";
 import profileRoutes from "./routes/profile.routes";
 import contactRoutes from "./routes/contact.routes";
 import calculatorRoutes from "./routes/calculator.routes";
+import { couponRouter, adminCouponRouter } from "./routes/coupon.routes";
 import startupSeed from "./scripts/startup-seed";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
@@ -89,6 +90,8 @@ app.use("/api/users", profileRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/upload", profileRoutes); // For avatar uploads
 app.use("/api/calculator", calculatorRoutes); // Calculator with server-side validation
+app.use("/api/coupons", couponRouter); // User coupon redemption
+app.use("/api/admin/coupons", adminCouponRouter); // Super Admin coupon management
 
 // Test database connection
 app.get("/db-test", async (req, res) => {

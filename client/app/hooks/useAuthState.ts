@@ -33,6 +33,8 @@ export const useAuthState = () => {
   // Extract subscription status from user data
   const subscriptionStatus: SubscriptionStatus = user?.subscriptionStatus || "NONE";
   const hasActiveSubscription = subscriptionStatus === "ACTIVE";
+  const hasCouponAccess = user?.couponAccess === true;
+  const hasCalculatorAccess = hasActiveSubscription || hasCouponAccess;
   const currentPeriodEnd = user?.currentPeriodEnd ? new Date(user.currentPeriodEnd) : null;
   const subscription = user?.subscription || null;
 
@@ -45,6 +47,8 @@ export const useAuthState = () => {
     // Subscription state
     subscriptionStatus,
     hasActiveSubscription,
+    hasCouponAccess,
+    hasCalculatorAccess,
     currentPeriodEnd,
     subscription,
 
