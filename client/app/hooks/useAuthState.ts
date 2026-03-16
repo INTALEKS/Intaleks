@@ -34,7 +34,9 @@ export const useAuthState = () => {
   const subscriptionStatus: SubscriptionStatus = user?.subscriptionStatus || "NONE";
   const hasActiveSubscription = subscriptionStatus === "ACTIVE";
   const hasCouponAccess = user?.couponAccess === true;
-  const hasCalculatorAccess = hasActiveSubscription || hasCouponAccess;
+  const couponUsed = user?.couponUsed === true;
+  // Coupon users lose access once they've downloaded (couponUsed = true)
+  const hasCalculatorAccess = hasActiveSubscription || (hasCouponAccess && !couponUsed);
   const currentPeriodEnd = user?.currentPeriodEnd ? new Date(user.currentPeriodEnd) : null;
   const subscription = user?.subscription || null;
 
@@ -48,6 +50,7 @@ export const useAuthState = () => {
     subscriptionStatus,
     hasActiveSubscription,
     hasCouponAccess,
+    couponUsed,
     hasCalculatorAccess,
     currentPeriodEnd,
     subscription,

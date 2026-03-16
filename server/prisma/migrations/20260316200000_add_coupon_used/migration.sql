@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "coupon_used" BOOLEAN NOT NULL DEFAULT false;

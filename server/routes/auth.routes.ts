@@ -219,6 +219,7 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
         subscriptionStatus: true,
         currentPeriodEnd: true,
         couponAccess: true,
+        couponUsed: true,
         termsAccepted: true,
         termsAcceptedAt: true,
         subscription: {

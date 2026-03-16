@@ -119,7 +119,7 @@ function SubscribeButton() {
 
 export default function CalculatorPage() {
   const router = useRouter();
-  const { isAuthenticated, hasActiveSubscription, hasCouponAccess, hasCalculatorAccess, subscriptionStatus, user } = useAuthState();
+  const { isAuthenticated, hasActiveSubscription, hasCouponAccess, couponUsed, hasCalculatorAccess, subscriptionStatus, user } = useAuthState();
   const queryClient = useQueryClient();
   const { getMultiple } = useValuationMultiples();
 
@@ -1134,30 +1134,42 @@ export default function CalculatorPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{!isAuthenticated ? "Login Required" : "Access Required"}</h3>
-                  <p className="text-gray-600 mb-6 max-w-md">{!isAuthenticated ? "Please log in and subscribe to enter your financial data and calculate your business valuation" : "An active subscription or coupon code is required to enter financial data and generate valuations"}</p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    {!isAuthenticated ? (
-                      <>
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push("/login?returnUrl=/calculator")}>
-                          Log In
-                        </Button>
-                        <Button variant="outline" onClick={() => router.push("/signup?returnUrl=/calculator")}>
-                          Sign Up
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <SubscribeButton />
-                        {subscriptionStatus && subscriptionStatus !== "NONE" && (
-                          <Button variant="outline" onClick={() => router.push("/settings")}>
-                            Manage Subscription
-                          </Button>
+                  {isAuthenticated && hasCouponAccess && couponUsed ? (
+                    <>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Coupon Already Used</h3>
+                      <p className="text-gray-600 mb-6 max-w-md">Your one-time coupon access has been used. Subscribe to continue using the calculator.</p>
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push("/#pricing")}>
+                        View Pricing Plans
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">{!isAuthenticated ? "Login Required" : "Access Required"}</h3>
+                      <p className="text-gray-600 mb-6 max-w-md">{!isAuthenticated ? "Please log in and subscribe to enter your financial data and calculate your business valuation" : "An active subscription or coupon code is required to enter financial data and generate valuations"}</p>
+                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                        {!isAuthenticated ? (
+                          <>
+                            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push("/login?returnUrl=/calculator")}>
+                              Log In
+                            </Button>
+                            <Button variant="outline" onClick={() => router.push("/signup?returnUrl=/calculator")}>
+                              Sign Up
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <SubscribeButton />
+                            {subscriptionStatus && subscriptionStatus !== "NONE" && (
+                              <Button variant="outline" onClick={() => router.push("/settings")}>
+                                Manage Subscription
+                              </Button>
+                            )}
+                          </>
                         )}
-                      </>
-                    )}
-                  </div>
-                  {isAuthenticated && !hasCalculatorAccess && <CouponRedeemForm />}
+                      </div>
+                      {isAuthenticated && !hasCalculatorAccess && <CouponRedeemForm />}
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -1226,23 +1238,35 @@ export default function CalculatorPage() {
                         </svg>
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-gray-900 mb-2">Premium Feature</h4>
-                        <p className="text-gray-600 mb-4">Downloading valuation reports requires an active subscription. Subscribe now to access professional PDF reports, unlimited downloads, and investor-ready documentation.</p>
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <Button className="bg-blue-500 hover:bg-blue-600" onClick={() => router.push("/#pricing")}>
-                            View Pricing Plans
-                          </Button>
-                          {subscriptionStatus && subscriptionStatus !== "NONE" && (
-                            <Button variant="outline" onClick={() => router.push("/settings")}>
-                              Manage Subscription
+                        {hasCouponAccess && couponUsed ? (
+                          <>
+                            <h4 className="font-semibold text-gray-900 mb-2">Coupon Already Used</h4>
+                            <p className="text-gray-600 mb-4">Your one-time coupon access has been used. Subscribe to download additional reports.</p>
+                            <Button className="bg-blue-500 hover:bg-blue-600" onClick={() => router.push("/#pricing")}>
+                              View Pricing Plans
                             </Button>
-                          )}
-                        </div>
-                        <CouponRedeemForm />
+                          </>
+                        ) : (
+                          <>
+                            <h4 className="font-semibold text-gray-900 mb-2">Premium Feature</h4>
+                            <p className="text-gray-600 mb-4">Downloading valuation reports requires an active subscription. Subscribe now to access professional PDF reports, unlimited downloads, and investor-ready documentation.</p>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                              <Button className="bg-blue-500 hover:bg-blue-600" onClick={() => router.push("/#pricing")}>
+                                View Pricing Plans
+                              </Button>
+                              {subscriptionStatus && subscriptionStatus !== "NONE" && (
+                                <Button variant="outline" onClick={() => router.push("/settings")}>
+                                  Manage Subscription
+                                </Button>
+                              )}
+                            </div>
+                            <CouponRedeemForm />
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
-                  {subscriptionStatus && subscriptionStatus !== "NONE" && (
+                  {!hasCouponAccess && subscriptionStatus && subscriptionStatus !== "NONE" && (
                     <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                       <p className="text-sm text-amber-800">
                         {subscriptionStatus === "CANCELED" && "Your subscription has been canceled. Renew to regain access to downloads."}

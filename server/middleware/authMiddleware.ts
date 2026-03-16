@@ -13,6 +13,7 @@ export interface AuthenticatedUser {
   role: UserRole;
   subscriptionStatus: SubscriptionStatus;
   couponAccess: boolean;
+  couponUsed: boolean;
   termsAccepted: boolean;
   termsAcceptedAt: Date | null;
   emailVerified: boolean;
@@ -71,6 +72,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         role: true,
         subscriptionStatus: true,
         couponAccess: true,
+        couponUsed: true,
         emailVerified: true,
         termsAccepted: true,
         termsAcceptedAt: true,
@@ -176,12 +178,23 @@ export const requireActiveSubscription = (req: Request, res: Response, next: Nex
 
   const hasSubscription = req.user.subscriptionStatus === SubscriptionStatus.ACTIVE;
   const hasCouponAccess = req.user.couponAccess === true;
+  const couponAlreadyUsed = req.user.couponUsed === true;
 
   if (!hasSubscription && !hasCouponAccess) {
     res.status(403).json({
       error: "Active subscription required",
       message: "This feature requires an active subscription. Please subscribe or redeem a coupon code to continue.",
       subscriptionStatus: req.user.subscriptionStatus,
+    });
+    return;
+  }
+
+  // Coupon users get exactly one use — block if already consumed
+  if (!hasSubscription && hasCouponAccess && couponAlreadyUsed) {
+    res.status(403).json({
+      error: "Coupon access expired",
+      message: "Your one-time coupon access has already been used. Please subscribe to continue.",
+      couponUsed: true,
     });
     return;
   }

@@ -4,6 +4,7 @@ import { valuationDocumentSchema, ValuationDocumentInput } from "../validation/v
 import { generateValuationPDF, ValuationPDFData } from "../services/pdf.service";
 import { StorageService } from "../services/storage";
 import { CalculatorService } from "../services/calculator";
+import { prisma } from "../config/db";
 
 /**
  * Create a new valuation document record
@@ -258,6 +259,20 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
     } catch (dbError) {
       console.error("Failed to save valuation document to database:", dbError);
       // Continue - user can still download the PDF
+    }
+
+    // Coupon users get exactly one download — mark as used after successful PDF generation
+    if (req.user?.couponAccess && !req.user?.couponUsed) {
+      try {
+        await prisma.user.update({
+          where: { id: userId },
+          data: { couponUsed: true },
+        });
+        console.log(`[COUPON] Marked coupon access as used for user ${userId}`);
+      } catch (couponErr) {
+        console.error("Failed to mark coupon as used:", couponErr);
+        // Non-fatal — PDF is already sent
+      }
     }
 
     // Generate filename in format: "Company Name - Intaleks Business Valuation Report.pdf"

@@ -26,6 +26,7 @@ export interface User {
   subscriptionStatus?: SubscriptionStatus;
   currentPeriodEnd?: string | null;
   couponAccess?: boolean;
+  couponUsed?: boolean;
   termsAccepted?: boolean;
   termsAcceptedAt?: string | null;
   subscription?: {
