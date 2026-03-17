@@ -23,6 +23,8 @@ const countries = [
   { value: "united states", label: "🇺🇸 United States" },
   { value: "united kingdom", label: "🇬🇧 United Kingdom" },
   { value: "canada", label: "🇨🇦 Canada" },
+  { value: "china", label: "🇨🇳 China" },
+  { value: "indonesia", label: "🇮🇩 Indonesia" },
 ];
 
 // Industry list (mapped to match database values)
