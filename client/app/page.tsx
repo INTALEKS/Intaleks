@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Navbar, HeroSection, TrustedCompanies, HowItWorks, WhyValuation, StatsSection, FoundersSay, WhySmallBusinessesLoveUs, UnderstandBusinessValue, PricingSection, FAQSection, AboutFounder, Newsletter, Footer } from "@/components/home";
+import { Navbar, HeroSection, TrustedCompanies, HowItWorks, WhyValuation, StatsSection, FoundersSay, WhySmallBusinessesLoveUs, UnderstandBusinessValue, PricingSection, FAQSection, AboutFounder, Footer } from "@/components/home";
 import { OrganizationJsonLd, WebApplicationJsonLd, FAQJsonLd } from "@/components/seo/JsonLd";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useCreateCheckout } from "@/app/hooks/usePayments";
