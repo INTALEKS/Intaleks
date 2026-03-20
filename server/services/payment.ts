@@ -228,6 +228,7 @@ export class PaymentService {
         },
         success_url: finalSuccessUrl,
         cancel_url: finalCancelUrl,
+        allow_promotion_codes: true, // Enable promo code support
         // For subscriptions, also add metadata to the subscription
         ...(mode === "subscription" && {
           subscription_data: {
