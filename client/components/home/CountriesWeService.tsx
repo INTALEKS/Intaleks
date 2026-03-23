@@ -1,11 +1,11 @@
 export function CountriesWeService() {
   const countries = [
-    { name: "Australia", flag: "🇦🇺" },
-    { name: "United States", flag: "🇺🇸" },
-    { name: "United Kingdom", flag: "🇬🇧" },
-    { name: "Canada", flag: "🇨🇦" },
-    { name: "China", flag: "🇨🇳" },
-    { name: "Indonesia", flag: "🇮🇩" },
+    { name: "Australia", code: "au" },
+    { name: "United States", code: "us" },
+    { name: "United Kingdom", code: "gb" },
+    { name: "Canada", code: "ca" },
+    { name: "China", code: "cn" },
+    { name: "Indonesia", code: "id" },
   ];
 
   return (
@@ -18,7 +18,7 @@ export function CountriesWeService() {
         <div className="flex flex-wrap justify-center gap-4">
           {countries.map((country) => (
             <div key={country.name} className="flex flex-col items-center gap-2 bg-white border border-gray-200 rounded-md px-2 py-2 w-[130px] hover:shadow-md transition-shadow duration-300">
-              <span className="text-4xl">{country.flag}</span>
+              <img src={`https://flagcdn.com/w80/${country.code}.png`} srcSet={`https://flagcdn.com/w160/${country.code}.png 2x`} width={80} height={60} alt={`${country.name} flag`} className="rounded-sm object-cover" />
               <span className="text-sm font-medium text-gray-700">{country.name}</span>
             </div>
           ))}
