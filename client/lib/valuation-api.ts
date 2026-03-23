@@ -62,6 +62,11 @@ export interface ValuationReportData {
   // Final Valuation
   finalValuation: number;
 
+  // Equity Value (China & Indonesia only)
+  totalDebt?: number;
+  cashEquivalents?: number;
+  equityValue?: number;
+
   // Extended fields for multi-page PDF with cover page (Requirements: 6.1)
   startedYear?: string;
   employees?: string;

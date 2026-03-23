@@ -56,6 +56,7 @@ export interface RAVDAData {
       netProfitAndLoss: number;
       interestExpense: number;
       interestIncome: number;
+      taxExpense: number;
       ebit: number;
     }
   >;
@@ -83,6 +84,10 @@ export interface RAVDAData {
   totalLiabilities?: number;
   averageEbit?: number;
   adjustedEbit?: number;
+  // Equity Value (China & Indonesia only)
+  totalDebt?: number;
+  cashEquivalents?: number;
+  equityValue?: number;
   drivers?: {
     strong: string[];
     average: string[];
@@ -713,7 +718,7 @@ function formatYearLabel(year: string): string {
   return match ? match[1] : year;
 }
 
-function financialValue(data: RAVDAData, year: string, key: "sales" | "grossProfit" | "cogs" | "operatingExpenses" | "netProfitAndLoss" | "interestExpense" | "interestIncome" | "ebit"): number {
+function financialValue(data: RAVDAData, year: string, key: "sales" | "grossProfit" | "cogs" | "operatingExpenses" | "netProfitAndLoss" | "interestExpense" | "interestIncome" | "taxExpense" | "ebit"): number {
   return data.financialData?.[year]?.[key] ?? 0;
 }
 
@@ -954,11 +959,59 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
   }
 
   const narrative = "This valuation estimate is generated from your financial performance, adjusted EBIT and selected valuation method. It is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
+
+  // Equity Value section — China & Indonesia only
+  const country = (data.country || "").toLowerCase();
+  const isEquityCountry = country === "china" || country === "indonesia";
+  let narrativeY = PAGE.height - 150;
+
+  if (isEquityCountry && data.valuationMethod === "profit" && typeof data.equityValue === "number") {
+    const eqPanelY = panelY + panelH + 14;
+    const eqPanelW = panelW;
+    const eqPanelH = 68;
+
+    // Header bar
+    doc.roundedRect(panelX, eqPanelY, eqPanelW, 22, 4).fill("#1D4ED8");
+    doc
+      .font(fonts.bold)
+      .fontSize(9)
+      .fillColor("#FFFFFF")
+      .text("CHINA & INDONESIA ONLY — EQUITY VALUE CALCULATION", panelX + 10, eqPanelY + 6, { lineBreak: false });
+
+    // Body
+    doc.roundedRect(panelX, eqPanelY + 22, eqPanelW, eqPanelH, 4).fillAndStroke("#EFF6FF", "#BFDBFE");
+
+    const ev = data.finalValuation ?? 0;
+    const debt = data.totalDebt ?? 0;
+    const cash = data.cashEquivalents ?? 0;
+    const sym = data.currencySymbol ?? "A$";
+
+    doc
+      .font(fonts.regular)
+      .fontSize(9)
+      .fillColor("#6B7280")
+      .text("= Equity Value", panelX + 12, eqPanelY + 30, { lineBreak: false });
+
+    doc
+      .font(fonts.bold)
+      .fontSize(20)
+      .fillColor("#1D4ED8")
+      .text(moneyComma(data.equityValue, sym), panelX + 12, eqPanelY + 42, { lineBreak: false });
+
+    doc
+      .font(fonts.regular)
+      .fontSize(8)
+      .fillColor("#6B7280")
+      .text(`EV (${moneyComma(ev, sym)}) − Total Debt (${moneyComma(debt, sym)}) + Cash (${moneyComma(cash, sym)})`, panelX + 12, eqPanelY + 78, { lineBreak: false });
+
+    narrativeY = eqPanelY + eqPanelH + 30;
+  }
+
   doc
     .font(fonts.regular)
     .fontSize(9)
     .fillColor("#111827")
-    .text(narrative, PAGE.marginX, PAGE.height - 150, {
+    .text(narrative, PAGE.marginX, narrativeY, {
       width: PAGE.width - PAGE.marginX * 2,
       align: "justify",
       lineGap: 1.4,
@@ -1059,6 +1112,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     { label: "Net Profit and Loss", key: "netProfitAndLoss" as const },
     { label: "Interest Expense", key: "interestExpense" as const },
     { label: "Interest Income", key: "interestIncome" as const },
+    { label: "Tax Expense", key: "taxExpense" as const },
   ];
 
   const rowHeight = 32;

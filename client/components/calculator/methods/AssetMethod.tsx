@@ -67,12 +67,12 @@ export function AssetMethod({ assets, liabilities, onAssetChange, onLiabilityCha
 
             {/* China-only: Land-Use Rights */}
             {isChina && (
-              <div className="border border-yellow-300 bg-yellow-50 rounded-lg p-3 sm:p-4 space-y-2">
-                <div>
+              <div className="border border-yellow-300 bg-yellow-50 rounded-lg p-3 sm:p-4 space-y-2 flex flex-col md:flex-row items-center gap-x-2">
+                <div className="flex-1">
                   <p className="text-xs sm:text-sm font-semibold text-yellow-800">Land-Use Rights (FMV) — China only</p>
-                  <p className="text-xs text-yellow-700 mt-0.5">Land is state-owned in China. Enter the independently appraised value of your land-use rights.</p>
+                  {/* <p className="text-xs text-yellow-700 mt-0.5">Land is state-owned in China. Enter the independently appraised value of your land-use rights.</p> */}
                 </div>
-                <div className="mt-2">
+                <div className="flex-1">
                   <input type="number" value={assets["landUseRights"] || ""} onChange={(e) => onAssetChange("landUseRights", e.target.value)} placeholder="0" className="w-full border border-yellow-300 rounded-md px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white" disabled={disabled} />
                 </div>
               </div>

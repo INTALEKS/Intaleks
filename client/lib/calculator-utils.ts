@@ -5,11 +5,12 @@ export interface FinancialYearData {
   sales: number;
   grossProfit: number; // Calculated: Sales - COGS
   cogs: number;
-  operatingExpenses: number; // Renamed from wagesAndCosts
+  operatingExpenses: number;
   netProfitAndLoss: number; // Calculated: Gross Profit - Operating Expenses
   interestExpense: number;
   interestIncome: number;
-  ebit: number; // Calculated: Net Profit + Interest Expense - Interest Income
+  taxExpense: number;
+  ebit: number; // Calculated: Net Profit + Interest Expense - Interest Income - Tax Expense
 }
 
 export interface Addback {

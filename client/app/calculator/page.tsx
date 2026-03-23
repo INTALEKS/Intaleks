@@ -41,6 +41,7 @@ const financialMetrics = [
   { key: "netProfitAndLoss", label: "Net profit and Loss", placeholder: "", isInput: false }, // Calculated: Gross Profit - Operating Expenses
   { key: "interestExpense", label: "Interest Expense", placeholder: "10", isInput: true },
   { key: "interestIncome", label: "Interest Income", placeholder: "5", isInput: true },
+  { key: "taxExpense", label: "Tax Expense", placeholder: "0", isInput: true },
 ];
 
 const currentYear = new Date().getFullYear();
@@ -243,6 +244,10 @@ export default function CalculatorPage() {
   const [assets, setAssets] = useState<Record<string, string>>(initialState?.assets || {});
   const [liabilities, setLiabilities] = useState<Record<string, string>>(initialState?.liabilities || {});
 
+  // Equity Value Calculation (China & Indonesia only)
+  const [totalDebt, setTotalDebt] = useState("");
+  const [cashEquivalents, setCashEquivalents] = useState("");
+
   // ============================================
   // UI State
   // ============================================
@@ -273,13 +278,14 @@ export default function CalculatorPage() {
       const operatingExpenses = parseFloat(financialData?.operatingExpenses?.[year] as string) || 0;
       const interestExpense = parseFloat(financialData?.interestExpense?.[year] as string) || 0;
       const interestIncome = parseFloat(financialData?.interestIncome?.[year] as string) || 0;
+      const taxExpense = parseFloat(financialData?.taxExpense?.[year] as string) || 0;
 
       // Calculated values
       const grossProfit = sales - cogs; // Gross Profit = Sales - COGS
       const netProfitAndLoss = grossProfit - operatingExpenses; // Net Profit = Gross Profit - Operating Expenses
 
-      // EBIT = Net Profit + Interest Expense - Interest Income
-      const ebit = netProfitAndLoss + interestExpense - interestIncome;
+      // EBIT = Net Profit + Interest Expense - Interest Income - Tax Expense
+      const ebit = netProfitAndLoss + interestExpense - interestIncome - taxExpense;
 
       metrics[year] = {
         sales,
@@ -289,6 +295,7 @@ export default function CalculatorPage() {
         netProfitAndLoss,
         interestExpense,
         interestIncome,
+        taxExpense,
         ebit,
       };
     });
@@ -385,6 +392,14 @@ export default function CalculatorPage() {
     return 0;
   }, [selectedMethod, assets, liabilities, averageAdjustedEbit, effectiveProfitMultiple]);
 
+  // Equity Value = Enterprise Value (finalValuation) - Total Debt + Cash & Equivalents
+  // Only relevant for China & Indonesia
+  const equityValue = useMemo(() => {
+    const debt = parseFloat(totalDebt) || 0;
+    const cash = parseFloat(cashEquivalents) || 0;
+    return finalValuation - debt + cash;
+  }, [finalValuation, totalDebt, cashEquivalents]);
+
   // ============================================
   // EVENT HANDLERS
   // ============================================
@@ -413,7 +428,7 @@ export default function CalculatorPage() {
 
       if (selectedMethod === "profit") {
         // Convert financial data to proper format
-        const formattedFinancialData: Record<string, { sales: number; cogs: number; operatingExpenses: number; interestExpense: number; interestIncome: number }> = {};
+        const formattedFinancialData: Record<string, { sales: number; cogs: number; operatingExpenses: number; interestExpense: number; interestIncome: number; taxExpense: number }> = {};
         financialYears.forEach((year) => {
           formattedFinancialData[year] = {
             sales: parseFloat((financialData?.sales?.[year] as string) || "0"),
@@ -421,6 +436,7 @@ export default function CalculatorPage() {
             operatingExpenses: parseFloat((financialData?.operatingExpenses?.[year] as string) || "0"),
             interestExpense: parseFloat((financialData?.interestExpense?.[year] as string) || "0"),
             interestIncome: parseFloat((financialData?.interestIncome?.[year] as string) || "0"),
+            taxExpense: parseFloat((financialData?.taxExpense?.[year] as string) || "0"),
           };
         });
 
@@ -656,6 +672,13 @@ export default function CalculatorPage() {
         calculatedMultiple: effectiveProfitMultiple,
         multipleSource,
         questionnaireScores: questionnaireScores, // Always include questionnaire scores for PDF display
+        // Equity Value for China & Indonesia
+        ...((country.toLowerCase() === "china" || country.toLowerCase() === "indonesia") &&
+          selectedMethod === "profit" && {
+            totalDebt: parseFloat(totalDebt) || 0,
+            cashEquivalents: parseFloat(cashEquivalents) || 0,
+            equityValue,
+          }),
       };
 
       // Add method-specific data
@@ -1209,6 +1232,35 @@ export default function CalculatorPage() {
                   <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, `${currencySymbol}${(totalAddbacksByYear[year] || 0).toLocaleString()}`]))} disabled={!isAuthenticated || !hasCalculatorAccess} currencySymbol={currencySymbol} />
                 </div>
 
+                {/* Equity Value Calculation — China & Indonesia only */}
+                {(country.toLowerCase() === "china" || country.toLowerCase() === "indonesia") && (
+                  <div className="mt-6 border border-blue-300 rounded-lg overflow-hidden">
+                    <div className="bg-blue-500 px-4 py-3">
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wide">Equity Value Calculation</h3>
+                    </div>
+                    <div className="p-4 space-y-3 bg-white">
+                      <div className="grid grid-cols-2 gap-4 items-center">
+                        <span className="text-sm text-gray-700">Total Debt</span>
+                        <input type="number" value={totalDebt} onChange={(e) => setTotalDebt(e.target.value)} placeholder="0" disabled={!isAuthenticated || !hasCalculatorAccess} className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-50" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 items-center">
+                        <span className="text-sm text-gray-700">Cash &amp; Equivalents</span>
+                        <input type="number" value={cashEquivalents} onChange={(e) => setCashEquivalents(e.target.value)} placeholder="0" disabled={!isAuthenticated || !hasCalculatorAccess} className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-50" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 items-center bg-gray-900 rounded-md px-4 py-3 mt-2">
+                        <span className="text-sm font-bold text-white">Equity Value</span>
+                        <span className="text-sm text-gray-300 text-right">
+                          Enterprise Value (EV) &minus; Total Debt + Cash &amp; Equivalents
+                          <span className="block font-bold text-white mt-1">
+                            {currencySymbol}
+                            {equityValue.toLocaleString()}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* <div className="mt-6">
                   <ProfitMethod averageEbit={averageEbit} totalAddbacks={totalAddbacks} capitalizationRate={capitalizationRate} onCapitalizationRateChange={setCapitalizationRate} />
                 </div> */}
@@ -1228,6 +1280,33 @@ export default function CalculatorPage() {
           <div className="py-6 space-y-6">
             {/* Comprehensive Valuation Summary Card */}
             <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageSales : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageCOGS : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageEbit : financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} averageAddbacks={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageAddbacks : financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0) / financialYears.length} adjustedEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.adjustedEbit : averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.valuationMultiple : effectiveProfitMultiple} finalValuation={serverCalculatedValues?.finalValuation ?? finalValuation} totalAssets={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalAssets : selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalLiabilities : selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} hasActiveSubscription={hasCalculatorAccess} showReport={showValuationReport} onShowReport={handleShowReport} />
+
+            {/* Equity Value Card — China & Indonesia only */}
+            {(country.toLowerCase() === "china" || country.toLowerCase() === "indonesia") && selectedMethod === "profit" && (
+              <div className="bg-linear-to-br from-blue-50 to-white border-2 border-blue-200 rounded-xl p-5 shadow-lg">
+                <p className="text-xs font-bold text-blue-700 uppercase tracking-wide mb-4">China &amp; Indonesia Only — Equity Value Calculation</p>
+                {/* Equity Value Result */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-semibold text-gray-800">= Equity Value</span>
+                      {/* <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">NEW FINAL OUTPUT</span> */}
+                    </div>
+                    <p className="text-3xl font-bold text-orange-500 mb-1">
+                      {currencySymbol}
+                      {equityValue.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      EV ({currencySymbol}
+                      {(serverCalculatedValues?.finalValuation ?? finalValuation).toLocaleString()}) &minus; Total Debt ({currencySymbol}
+                      {(parseFloat(totalDebt) || 0).toLocaleString()}) + Cash ({currencySymbol}
+                      {(parseFloat(cashEquivalents) || 0).toLocaleString()})
+                    </p>
+                  </div>
+                  <span className="text-4xl">📊</span>
+                </div>
+              </div>
+            )}
 
             <div className="text-center">
               {!isStep4Complete ? (

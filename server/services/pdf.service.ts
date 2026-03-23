@@ -16,6 +16,7 @@ export interface ValuationPDFData {
       netProfitAndLoss: number;
       interestExpense: number;
       interestIncome: number;
+      taxExpense: number;
       ebit: number;
     }
   >;
@@ -46,6 +47,11 @@ export interface ValuationPDFData {
   totalAddbacksPerYear?: Record<string, number>;
   valuationMethod: "profit" | "asset" | "dcf";
   finalValuation: number;
+
+  // Equity Value (China & Indonesia only)
+  totalDebt?: number;
+  cashEquivalents?: number;
+  equityValue?: number;
 
   // Optional fields
   startedYear?: string;
