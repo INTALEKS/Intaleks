@@ -44,6 +44,7 @@ export interface ValuationReportData {
     vehicles: number;
     goodwill: number;
     otherIntangible: number;
+    landUseRights?: number;
   };
   liabilities?: {
     loans: number;

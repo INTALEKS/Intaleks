@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import { Lock, Info } from "lucide-react";
 
 interface AssetMethodProps {
   assets: Record<string, string | number>;
@@ -8,14 +8,16 @@ interface AssetMethodProps {
   onAssetChange: (key: string, value: string) => void;
   onLiabilityChange: (key: string, value: string) => void;
   disabled?: boolean;
+  country?: string;
+  currencySymbol?: string;
 }
 
 const assetItems = [
-  { key: "plantEquipment", label: "Plant and Equipments(FMV)", placeholder: "150000" },
-  { key: "inventory", label: "Inventory(FMV)", placeholder: "75000" },
-  { key: "vehicles", label: "Vehicles(FMV)", placeholder: "50000" },
-  { key: "goodwill", label: "Goodwill(FMV)", placeholder: "200000" },
-  { key: "otherIntangible", label: "Other intangible Assets(FMV)", placeholder: "25000" },
+  { key: "plantEquipment", label: "Plant and Equipments (FMV)", placeholder: "150000" },
+  { key: "inventory", label: "Inventory (FMV)", placeholder: "75000" },
+  { key: "vehicles", label: "Vehicles (FMV)", placeholder: "50000" },
+  { key: "goodwill", label: "Goodwill (FMV)", placeholder: "200000" },
+  { key: "otherIntangible", label: "Other Intangible Assets (FMV)", placeholder: "25000" },
 ];
 
 const liabilityItems = [
@@ -25,12 +27,18 @@ const liabilityItems = [
   { key: "otherLiabilities", label: "Other Liabilities", placeholder: "5000" },
 ];
 
-export function AssetMethod({ assets, liabilities, onAssetChange, onLiabilityChange, disabled = false }: AssetMethodProps) {
-  const totalAssets = Object.values(assets).reduce<number>((sum, val) => sum + (parseFloat(String(val)) || 0), 0);
+export function AssetMethod({ assets, liabilities, onAssetChange, onLiabilityChange, disabled = false, country = "", currencySymbol = "$" }: AssetMethodProps) {
+  const isChina = country.toLowerCase() === "china";
+
+  // Include landUseRights in total only for China
+  const totalAssets = Object.entries(assets).reduce<number>((sum, [key, val]) => {
+    if (key === "landUseRights" && !isChina) return sum;
+    return sum + (parseFloat(String(val)) || 0);
+  }, 0);
   const totalLiabilities = Object.values(liabilities).reduce<number>((sum, val) => sum + (parseFloat(String(val)) || 0), 0);
   const netValue = totalAssets - totalLiabilities;
 
-  const formatCurrency = (value: number) => `${value.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+  const fmt = (value: number) => `${currencySymbol}${value.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -57,10 +65,24 @@ export function AssetMethod({ assets, liabilities, onAssetChange, onLiabilityCha
               </div>
             ))}
 
+            {/* China-only: Land-Use Rights */}
+            {isChina && (
+              <div className="border border-yellow-300 bg-yellow-50 rounded-lg p-3 sm:p-4 space-y-2">
+                <div>
+                  <p className="text-xs sm:text-sm font-semibold text-yellow-800">Land-Use Rights (FMV) — China only</p>
+                  <p className="text-xs text-yellow-700 mt-0.5">Land is state-owned in China. Enter the independently appraised value of your land-use rights.</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                  <span className="text-xs sm:text-sm text-yellow-800 font-medium">Land-Use Rights (FMV)</span>
+                  <input type="number" value={assets["landUseRights"] || ""} onChange={(e) => onAssetChange("landUseRights", e.target.value)} placeholder="0" className="border border-yellow-300 rounded-md px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white" disabled={disabled} />
+                </div>
+              </div>
+            )}
+
             {/* Total Assets */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 pt-2 sm:pt-3 border-t">
               <span className="text-xs sm:text-sm font-semibold text-gray-800">Total Assets</span>
-              <div className="text-xs sm:text-sm font-bold text-gray-900 sm:text-right sm:pr-3">${formatCurrency(totalAssets)}</div>
+              <div className="text-xs sm:text-sm font-bold text-gray-900 sm:text-right sm:pr-3">{fmt(totalAssets)}</div>
             </div>
           </div>
         </div>
@@ -79,7 +101,7 @@ export function AssetMethod({ assets, liabilities, onAssetChange, onLiabilityCha
             {/* Total Liabilities */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 pt-2 sm:pt-3 border-t">
               <span className="text-xs sm:text-sm font-semibold text-gray-800">Total Liabilities</span>
-              <div className="text-xs sm:text-sm font-bold text-gray-900 sm:text-right sm:pr-3">${formatCurrency(totalLiabilities)}</div>
+              <div className="text-xs sm:text-sm font-bold text-gray-900 sm:text-right sm:pr-3">{fmt(totalLiabilities)}</div>
             </div>
           </div>
         </div>
@@ -87,8 +109,16 @@ export function AssetMethod({ assets, liabilities, onAssetChange, onLiabilityCha
         {/* Net Business Valuation */}
         <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 sm:p-6 text-center">
           <p className="text-xs sm:text-sm text-gray-600 mb-2">Net Business Valuation (Asset Method)</p>
-          <p className="text-2xl sm:text-3xl font-bold text-gray-900">${formatCurrency(netValue)}</p>
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900">{fmt(netValue)}</p>
         </div>
+
+        {/* China info note */}
+        {isChina && (
+          <div className="flex gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700">
+            <Info className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>The Land-Use Rights field appears only when China is selected as the country. It feeds directly into Total Assets and the final Net Business Valuation. All other countries see the standard Asset Method form without this field.</span>
+          </div>
+        )}
       </div>
     </div>
   );

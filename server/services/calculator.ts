@@ -22,6 +22,7 @@ interface AssetData {
   vehicles: number;
   goodwill: number;
   otherIntangible: number;
+  landUseRights?: number;
 }
 
 interface LiabilityData {
@@ -145,8 +146,8 @@ export class CalculatorService {
    * Calculate asset-based valuation
    */
   static calculateAssetValuation(assets: AssetData, liabilities: LiabilityData): CalculationResult {
-    // Calculate total assets
-    const totalAssets = (Number(assets.plantEquipment) || 0) + (Number(assets.inventory) || 0) + (Number(assets.vehicles) || 0) + (Number(assets.goodwill) || 0) + (Number(assets.otherIntangible) || 0);
+    // Calculate total assets (landUseRights is China-only, included when present)
+    const totalAssets = (Number(assets.plantEquipment) || 0) + (Number(assets.inventory) || 0) + (Number(assets.vehicles) || 0) + (Number(assets.goodwill) || 0) + (Number(assets.otherIntangible) || 0) + (Number(assets.landUseRights) || 0);
 
     // Calculate total liabilities
     const totalLiabilities = (Number(liabilities.loans) || 0) + (Number(liabilities.annualLeave) || 0) + (Number(liabilities.longServiceLeave) || 0) + (Number(liabilities.otherLiabilities) || 0);

@@ -371,7 +371,11 @@ export default function CalculatorPage() {
   // Calculate final valuation based on method
   const finalValuation = useMemo(() => {
     if (selectedMethod === "asset") {
-      const totalAssets = Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+      const isChina = country.toLowerCase() === "china";
+      const totalAssets = Object.entries(assets).reduce((sum, [key, val]) => {
+        if (key === "landUseRights" && !isChina) return sum;
+        return sum + (parseFloat(val) || 0);
+      }, 0);
       const totalLiabilities = Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
       return totalAssets - totalLiabilities;
     } else if (selectedMethod === "profit") {
@@ -435,6 +439,7 @@ export default function CalculatorPage() {
         };
       } else {
         // Asset method
+        const isChina = country.toLowerCase() === "china";
         calculationData = {
           valuationMethod: "asset" as const,
           assets: {
@@ -443,6 +448,7 @@ export default function CalculatorPage() {
             vehicles: parseFloat(assets.vehicles) || 0,
             goodwill: parseFloat(assets.goodwill) || 0,
             otherIntangible: parseFloat(assets.otherIntangible) || 0,
+            ...(isChina && { landUseRights: parseFloat(assets.landUseRights as string) || 0 }),
           },
           liabilities: {
             loans: parseFloat(liabilities.loans) || 0,
@@ -654,12 +660,14 @@ export default function CalculatorPage() {
 
       // Add method-specific data
       if (selectedMethod === "asset") {
+        const isChina = country.toLowerCase() === "china";
         reportData.assets = {
           plantEquipment: parseFloat(assets.plantEquipment) || 0,
           inventory: parseFloat(assets.inventory) || 0,
           vehicles: parseFloat(assets.vehicles) || 0,
           goodwill: parseFloat(assets.goodwill) || 0,
           otherIntangible: parseFloat(assets.otherIntangible) || 0,
+          ...(isChina && { landUseRights: parseFloat(assets.landUseRights as string) || 0 }),
         };
         reportData.liabilities = {
           loans: parseFloat(liabilities.loans) || 0,
@@ -1209,7 +1217,7 @@ export default function CalculatorPage() {
 
             {selectedMethod === "asset" && (
               <div className="mt-6">
-                <AssetMethod assets={assets} liabilities={liabilities} onAssetChange={(key, value) => setAssets((prev) => ({ ...prev, [key]: value }))} onLiabilityChange={(key, value) => setLiabilities((prev) => ({ ...prev, [key]: value }))} disabled={!isAuthenticated || !hasCalculatorAccess} />
+                <AssetMethod assets={assets} liabilities={liabilities} onAssetChange={(key, value) => setAssets((prev) => ({ ...prev, [key]: value }))} onLiabilityChange={(key, value) => setLiabilities((prev) => ({ ...prev, [key]: value }))} disabled={!isAuthenticated || !hasCalculatorAccess} country={country} currencySymbol={currencySymbol} />
               </div>
             )}
           </div>

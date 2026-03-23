@@ -71,6 +71,7 @@ export interface RAVDAData {
     vehicles: number;
     goodwill: number;
     otherIntangible: number;
+    landUseRights?: number;
   };
   liabilities?: {
     loans: number;
@@ -1297,7 +1298,9 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
 
   const assets = data.assets || { plantEquipment: 0, inventory: 0, vehicles: 0, goodwill: 0, otherIntangible: 0 };
   const liabilities = data.liabilities || { loans: 0, annualLeave: 0, longServiceLeave: 0, otherLiabilities: 0 };
-  const totalAssets = typeof data.totalAssets === "number" ? data.totalAssets : assets.plantEquipment + assets.inventory + assets.vehicles + assets.goodwill + assets.otherIntangible;
+  const isChina = (data.country || "").toLowerCase() === "china";
+  const landUseRights = isChina ? assets.landUseRights || 0 : 0;
+  const totalAssets = typeof data.totalAssets === "number" ? data.totalAssets : assets.plantEquipment + assets.inventory + assets.vehicles + assets.goodwill + assets.otherIntangible + landUseRights;
   const totalLiabilities = typeof data.totalLiabilities === "number" ? data.totalLiabilities : liabilities.loans + liabilities.annualLeave + liabilities.longServiceLeave + liabilities.otherLiabilities;
   const netAssetValue = typeof data.finalValuation === "number" ? data.finalValuation : totalAssets - totalLiabilities;
   const strengthScore = getScoreOutOf50(data);
@@ -1367,8 +1370,94 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
     .fillColor("#111827")
     .text(moneyComma(netAssetValue, data.currencySymbol), x3, cardY + 32, { width: w, align: "center", lineBreak: false });
 
+  // Asset & Liability line-item breakdown table
+  const tableY = cardY + 82;
+  const tableX = PAGE.marginX;
+  const tableW = PAGE.width - PAGE.marginX * 2;
+  const labelColW = tableW * 0.65;
+  const valueColW = tableW - labelColW;
+  const rowH = 22;
+  const gridColor = "#E5E7EB";
+
+  // Assets header
+  doc.rect(tableX, tableY, tableW, 22).fill("#4C94D8");
+  doc
+    .font(fonts.bold)
+    .fontSize(9)
+    .fillColor("#FFFFFF")
+    .text("ASSETS (FAIR MARKET VALUE)", tableX + 10, tableY + 7, { lineBreak: false });
+
+  const assetRows: Array<{ label: string; value: number; highlight?: boolean }> = [
+    { label: "Plant and Equipment (FMV)", value: assets.plantEquipment },
+    { label: "Inventory (FMV)", value: assets.inventory },
+    { label: "Vehicles (FMV)", value: assets.vehicles },
+    { label: "Goodwill (FMV)", value: assets.goodwill },
+    { label: "Other Intangible Assets (FMV)", value: assets.otherIntangible },
+  ];
+
+  if (isChina) {
+    assetRows.push({ label: "Land-Use Rights (FMV) — China only", value: landUseRights });
+  }
+
+  assetRows.push({ label: "Total Assets", value: totalAssets, highlight: true });
+
+  let rowY = tableY + 22;
+  assetRows.forEach((row, idx) => {
+    const bg = row.highlight ? "#A5C9EB" : idx % 2 === 0 ? "#FFFFFF" : "#F9FAFB";
+    doc.rect(tableX, rowY, tableW, rowH).fill(bg);
+    doc.rect(tableX, rowY, labelColW, rowH).stroke(gridColor);
+    doc.rect(tableX + labelColW, rowY, valueColW, rowH).stroke(gridColor);
+    doc
+      .font(row.highlight ? fonts.bold : fonts.regular)
+      .fontSize(9)
+      .fillColor("#111827")
+      .text(row.label, tableX + 10, rowY + 7, { lineBreak: false });
+    doc
+      .font(row.highlight ? fonts.bold : fonts.regular)
+      .fontSize(9)
+      .fillColor("#111827")
+      .text(moneyComma(row.value, data.currencySymbol), tableX + labelColW + 8, rowY + 7, { width: valueColW - 16, align: "right", lineBreak: false });
+    rowY += rowH;
+  });
+
+  // Liabilities header
+  const liabHeaderY = rowY + 6;
+  doc.rect(tableX, liabHeaderY, tableW, 22).fill("#4C94D8");
+  doc
+    .font(fonts.bold)
+    .fontSize(9)
+    .fillColor("#FFFFFF")
+    .text("LIABILITIES", tableX + 10, liabHeaderY + 7, { lineBreak: false });
+
+  const liabilityRows: Array<{ label: string; value: number; highlight?: boolean }> = [
+    { label: "Loans", value: liabilities.loans },
+    { label: "Annual Leave Provision", value: liabilities.annualLeave },
+    { label: "Long Service Leave Provision", value: liabilities.longServiceLeave },
+    { label: "Other Liabilities", value: liabilities.otherLiabilities },
+    { label: "Total Liabilities", value: totalLiabilities, highlight: true },
+  ];
+
+  rowY = liabHeaderY + 22;
+  liabilityRows.forEach((row, idx) => {
+    const bg = row.highlight ? "#A5C9EB" : idx % 2 === 0 ? "#FFFFFF" : "#F9FAFB";
+    doc.rect(tableX, rowY, tableW, rowH).fill(bg);
+    doc.rect(tableX, rowY, labelColW, rowH).stroke(gridColor);
+    doc.rect(tableX + labelColW, rowY, valueColW, rowH).stroke(gridColor);
+    doc
+      .font(row.highlight ? fonts.bold : fonts.regular)
+      .fontSize(9)
+      .fillColor("#111827")
+      .text(row.label, tableX + 10, rowY + 7, { lineBreak: false });
+    doc
+      .font(row.highlight ? fonts.bold : fonts.regular)
+      .fontSize(9)
+      .fillColor("#111827")
+      .text(moneyComma(row.value, data.currencySymbol), tableX + labelColW + 8, rowY + 7, { width: valueColW - 16, align: "right", lineBreak: false });
+    rowY += rowH;
+  });
+
   // business strength assessment block
-  const assessmentY = 286;
+  const assessmentY = rowY + 12;
   const assessmentW = PAGE.width - PAGE.marginX * 2;
   const assessmentH = 52;
   doc.roundedRect(PAGE.marginX, assessmentY, assessmentW, assessmentH, 8).fillAndStroke("#FFFFFF", "#DBEAFE");
@@ -1395,7 +1484,7 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
     .text(strengthRating.label, PAGE.marginX + assessmentW - 78, assessmentY + 30, { width: 66, align: "center", lineBreak: false });
 
   const panelX = PAGE.marginX;
-  const panelY = 356;
+  const panelY = assessmentY + 64;
   const panelW = PAGE.width - PAGE.marginX * 2;
   const panelH = 110;
   doc.roundedRect(panelX, panelY, panelW, panelH, 12).fill("#2F80ED");
@@ -1432,7 +1521,7 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
     .font(fonts.regular)
     .fontSize(9)
     .fillColor("#111827")
-    .text(narrative, PAGE.marginX, 498, {
+    .text(narrative, PAGE.marginX, panelY + panelH + 12, {
       width: PAGE.width - PAGE.marginX * 2,
       align: "left",
       lineGap: 1.4,
