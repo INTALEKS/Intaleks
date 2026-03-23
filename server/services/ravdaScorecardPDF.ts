@@ -933,7 +933,10 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
     .font(fonts.bold)
     .fontSize(32)
     .fillColor("#FFFFFF")
-    .text(moneyComma(data.finalValuation, data.currencySymbol), panelX + 12, panelY + 34, { lineBreak: false });    .moveTo(panelX + 12, panelY + 80)
+    .text(moneyComma(data.finalValuation, data.currencySymbol), panelX + 12, panelY + 34, { lineBreak: false });
+
+  doc
+    .moveTo(panelX + 12, panelY + 80)
     .lineTo(panelX + panelW - 12, panelY + 80)
     .lineWidth(1)
     .strokeColor("#60A5FA")
