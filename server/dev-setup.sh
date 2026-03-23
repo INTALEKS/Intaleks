@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Development Setup Script for TheBizValuer Server
+# Development Setup Script for Intaleks Server
 # This script sets up Docker containers and initializes the database
 
 set -e
 
-echo "🚀 Starting TheBizValuer Development Setup..."
+echo "🚀 Starting Intaleks Development Setup..."
 
 # Check if .env.local exists
 if [ ! -f .env.local ]; then

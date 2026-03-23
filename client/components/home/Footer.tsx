@@ -24,7 +24,7 @@ const startLinks = [
 
 const socialLinks: Array<{ icon: string; href: string; label: string }> = [
   // { icon: "facebook", href: "https://facebook.com", label: "Facebook" },
-  // { icon: "linkedin", href: "https://linkedin.com", label: "LinkedIn" },
+  { icon: "linkedin", href: "https://wwww.linkedin.com/company/intaleks", label: "LinkedIn" },
   // { icon: "instagram", href: "https://instagram.com", label: "Instagram" },
   // { icon: "x", href: "https://x.com", label: "X" },
 ];
@@ -81,9 +81,10 @@ export function Footer() {
 
             {/* Social Icons */}
             <div className="flex gap-4">
-              {socialLinks.map((social) => (
+              {socialLinks.map((social, message) => (
                 <a key={social.icon} href={social.href} target="_blank" rel="noopener noreferrer" aria-label={social.label} className="text-gray-700 hover:text-gray-900 transition-colors">
                   <SocialIcon name={social.icon} />
+                  {message}
                 </a>
               ))}
             </div>

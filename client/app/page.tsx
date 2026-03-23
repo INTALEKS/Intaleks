@@ -211,6 +211,8 @@ export default function Home() {
 
       <TrustedCompanies />
 
+      <CountriesWeService />
+
       <HowItWorks steps={howItWorksSteps} />
 
       <WhyValuation />
@@ -235,8 +237,6 @@ export default function Home() {
       <FAQSection />
 
       <AboutFounder />
-
-      <CountriesWeService />
 
       {/* <Newsletter /> */}
 

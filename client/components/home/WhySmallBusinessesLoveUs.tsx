@@ -19,13 +19,13 @@ const features: Feature[] = [
   {
     number: "02",
     title: "Accurate and Reliable",
-    description: "BizValuer is built on proven valuation methods. Unlike guesswork or inflated claims, our platform gives you trustworthy insights based on real business data.",
+    description: "Intaleks is built on proven valuation methods. Unlike guesswork or inflated claims, our platform gives you trustworthy insights based on real business data.",
     image: "/accurate-and-reliable.png",
   },
   {
     number: "03",
     title: "Affordable and Accessible",
-    description: "Professional valuations can be expensive and time-consuming. BizValuer puts this power in your hands at a fraction of the cost, making it accessible for any small business owner.",
+    description: "Professional valuations can be expensive and time-consuming. Intaleks puts this power in your hands at a fraction of the cost, making it accessible for any small business owner.",
     image: "/affordable-and-accessible.png",
   },
 ];
