@@ -1571,11 +1571,54 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
   }
 
   const narrative = "This valuation estimate is generated from your financial performance, adjusted EBIT and selected valuation method. It is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
+
+  // Equity Value section — China & Indonesia only
+  const isEquityCountry = isChina || (data.country || "").toLowerCase() === "indonesia";
+  let narrativeY = panelY + panelH + 12;
+
+  if (isEquityCountry && typeof data.equityValue === "number") {
+    const eqPanelY = panelY + panelH + 10;
+    const eqPanelW = panelW;
+    const eqPanelH = 68;
+
+    doc.roundedRect(panelX, eqPanelY, eqPanelW, 22, 4).fill("#1D4ED8");
+    doc
+      .font(fonts.bold)
+      .fontSize(9)
+      .fillColor("#FFFFFF")
+      .text("CHINA & INDONESIA ONLY — EQUITY VALUE CALCULATION", panelX + 10, eqPanelY + 6, { lineBreak: false });
+
+    doc.roundedRect(panelX, eqPanelY + 22, eqPanelW, eqPanelH, 4).fillAndStroke("#EFF6FF", "#BFDBFE");
+
+    const ev = data.finalValuation ?? 0;
+    const debt = data.totalDebt ?? 0;
+    const cash = data.cashEquivalents ?? 0;
+    const sym = data.currencySymbol ?? "A$";
+
+    doc
+      .font(fonts.regular)
+      .fontSize(9)
+      .fillColor("#6B7280")
+      .text("= Equity Value", panelX + 12, eqPanelY + 30, { lineBreak: false });
+    doc
+      .font(fonts.bold)
+      .fontSize(20)
+      .fillColor("#1D4ED8")
+      .text(moneyComma(data.equityValue, sym), panelX + 12, eqPanelY + 42, { lineBreak: false });
+    doc
+      .font(fonts.regular)
+      .fontSize(8)
+      .fillColor("#6B7280")
+      .text(`EV (${moneyComma(ev, sym)}) − Total Debt (${moneyComma(debt, sym)}) + Cash (${moneyComma(cash, sym)})`, panelX + 12, eqPanelY + 78, { lineBreak: false });
+
+    narrativeY = eqPanelY + eqPanelH + 30;
+  }
+
   doc
     .font(fonts.regular)
     .fontSize(9)
     .fillColor("#111827")
-    .text(narrative, PAGE.marginX, panelY + panelH + 12, {
+    .text(narrative, PAGE.marginX, narrativeY, {
       width: PAGE.width - PAGE.marginX * 2,
       align: "left",
       lineGap: 1.4,
