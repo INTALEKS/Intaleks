@@ -672,12 +672,13 @@ export default function CalculatorPage() {
         calculatedMultiple: effectiveProfitMultiple,
         multipleSource,
         questionnaireScores: questionnaireScores, // Always include questionnaire scores for PDF display
-        // Equity Value for China & Indonesia (both profit and asset methods)
-        ...((country.toLowerCase() === "china" || country.toLowerCase() === "indonesia") && {
-          totalDebt: parseFloat(totalDebt) || 0,
-          cashEquivalents: parseFloat(cashEquivalents) || 0,
-          equityValue,
-        }),
+        // Equity Value for China & Indonesia
+        ...((country.toLowerCase() === "china" || country.toLowerCase() === "indonesia") &&
+          selectedMethod === "profit" && {
+            totalDebt: parseFloat(totalDebt) || 0,
+            cashEquivalents: parseFloat(cashEquivalents) || 0,
+            equityValue,
+          }),
       };
 
       // Add method-specific data
@@ -1281,7 +1282,7 @@ export default function CalculatorPage() {
             <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageSales : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageCOGS : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageEbit : financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} averageAddbacks={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageAddbacks : financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0) / financialYears.length} adjustedEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.adjustedEbit : averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.valuationMultiple : effectiveProfitMultiple} finalValuation={serverCalculatedValues?.finalValuation ?? finalValuation} totalAssets={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalAssets : selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalLiabilities : selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} hasActiveSubscription={hasCalculatorAccess} showReport={showValuationReport} onShowReport={handleShowReport} />
 
             {/* Equity Value Card — China & Indonesia only */}
-            {(country.toLowerCase() === "china" || country.toLowerCase() === "indonesia") && (
+            {(country.toLowerCase() === "china" || country.toLowerCase() === "indonesia") && selectedMethod === "profit" && (
               <div className="bg-linear-to-br from-blue-50 to-white border-2 border-blue-200 rounded-xl p-5 shadow-lg">
                 <p className="text-xs font-bold text-blue-700 uppercase tracking-wide mb-4">China &amp; Indonesia Only — Equity Value Calculation</p>
                 {/* Equity Value Result */}
