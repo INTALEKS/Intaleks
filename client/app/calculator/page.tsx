@@ -9,6 +9,7 @@ import { AssetMethod } from "@/components/calculator/methods";
 import { CouponRedeemForm } from "@/components/calculator/CouponRedeemForm";
 import { calculateAverageAdjustedEBIT, formatCurrency, FinancialYearData } from "@/lib/calculator-utils";
 import { downloadValuationPDF, ValuationReportData } from "@/lib/valuation-api";
+import { getCurrencyForCalculatorCountry } from "@/lib/currency-utils";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -350,6 +351,8 @@ export default function CalculatorPage() {
   }, [calculatedMetrics, financialYears, totalAddbacksByYear]);
 
   const baseIndustryMultiple = useMemo(() => getMultiple(country, industry) || 4.0, [country, industry, getMultiple]);
+
+  const currencySymbol = useMemo(() => getCurrencyForCalculatorCountry(country).symbol, [country]);
 
   // Single source of truth for the multiple used in server calculations and PDF generation
   const effectiveProfitMultiple = useMemo(() => {
@@ -1190,11 +1193,12 @@ export default function CalculatorPage() {
                       values: ebitValues,
                     }}
                     disabled={!isAuthenticated || !hasCalculatorAccess}
+                    currencySymbol={currencySymbol}
                   />
                 </div>
 
                 <div className="mt-6">
-                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, formatCurrency(totalAddbacksByYear[year] || 0)]))} disabled={!isAuthenticated || !hasCalculatorAccess} />
+                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, formatCurrency(totalAddbacksByYear[year] || 0)]))} disabled={!isAuthenticated || !hasCalculatorAccess} currencySymbol={currencySymbol} />
                 </div>
 
                 {/* <div className="mt-6">

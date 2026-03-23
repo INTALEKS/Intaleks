@@ -22,9 +22,10 @@ interface FinancialDataTableProps {
     values: Record<string, string | number>;
   };
   disabled?: boolean;
+  currencySymbol?: string;
 }
 
-export function FinancialDataTable({ title, metrics, years, values, onChange, calculatedRow, disabled = false }: FinancialDataTableProps) {
+export function FinancialDataTable({ title, metrics, years, values, onChange, calculatedRow, disabled = false, currencySymbol = "A$" }: FinancialDataTableProps) {
   return (
     <div className="mb-6">
       <div className="bg-blue-500 flex items-center justify-between">
@@ -56,7 +57,10 @@ export function FinancialDataTable({ title, metrics, years, values, onChange, ca
                   <td key={year} className="p-3">
                     {metric.isInput === false ? (
                       // Calculated field - read-only display
-                      <div className="bg-blue-50 border border-blue-200 rounded-md px-3 py-2 text-sm font-semibold text-blue-700">${values[metric.key]?.[year] || "0"}</div>
+                      <div className="bg-blue-50 border border-blue-200 rounded-md px-3 py-2 text-sm font-semibold text-blue-700">
+                        {currencySymbol}
+                        {values[metric.key]?.[year] || "0"}
+                      </div>
                     ) : (
                       // Input field
                       <Input type="number" value={values[metric.key]?.[year] || ""} onChange={(e) => onChange(metric.key, year, e.target.value)} placeholder={metric.placeholder || "Enter value"} className="bg-gray-50 border-gray-200" disabled={disabled} />
@@ -70,7 +74,8 @@ export function FinancialDataTable({ title, metrics, years, values, onChange, ca
                 <td className="p-3 text-sm font-semibold uppercase">{calculatedRow.label}</td>
                 {years.map((year) => (
                   <td key={year} className="p-3 text-sm font-bold">
-                    ${calculatedRow.values[year] || "0"}
+                    {currencySymbol}
+                    {calculatedRow.values[year] || "0"}
                   </td>
                 ))}
               </tr>

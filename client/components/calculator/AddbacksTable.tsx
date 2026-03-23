@@ -19,6 +19,7 @@ interface AddbacksTableProps {
   onAddAddback: () => void;
   totalValuesByYear: Record<string, string>;
   disabled?: boolean;
+  currencySymbol?: string;
 }
 
 // Predefined addback reasons organized by category
@@ -84,7 +85,7 @@ const ADDBACK_REASONS = [
   { value: "owner-multiple-roles", label: "Owner performing multiple roles" },
 ];
 
-export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAddAddback, totalValuesByYear, disabled = false }: AddbacksTableProps) {
+export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAddAddback, totalValuesByYear, disabled = false, currencySymbol = "A$" }: AddbacksTableProps) {
   const handleYearValueChange = (addbackId: string, year: string, value: string) => {
     const addback = addbacks.find((a) => a.id === addbackId);
     if (!addback) return;
@@ -146,7 +147,7 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
               <td className="p-3 text-sm font-semibold text-gray-700 uppercase">Total Addbacks</td>
               {financialYears.map((year) => (
                 <td key={year} className="p-3 text-sm font-semibold text-gray-900 text-center">
-                  {totalValuesByYear[year] || "$0"}
+                  {totalValuesByYear[year] || `${currencySymbol}0`}
                 </td>
               ))}
             </tr>
@@ -194,7 +195,7 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
               {financialYears.map((year) => (
                 <div key={year} className="text-center">
                   <div className="text-xs text-gray-600 mb-1">{year}</div>
-                  <div className="text-sm font-semibold text-gray-900">{totalValuesByYear[year] || "$0"}</div>
+                  <div className="text-sm font-semibold text-gray-900">{totalValuesByYear[year] || `${currencySymbol}0`}</div>
                 </div>
               ))}
             </div>

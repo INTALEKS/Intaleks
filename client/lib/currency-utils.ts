@@ -65,6 +65,23 @@ const COUNTRY_TO_CURRENCY: Record<string, CurrencyInfo> = {
 // Default currency (Australian Dollar)
 const DEFAULT_CURRENCY: CurrencyInfo = { code: "AUD", symbol: "A$", name: "Australian Dollar" };
 
+// Map of calculator country names (lowercase) to currency info
+const CALCULATOR_COUNTRY_TO_CURRENCY: Record<string, CurrencyInfo> = {
+  australia: { code: "AUD", symbol: "A$", name: "Australian Dollar" },
+  "united states": { code: "USD", symbol: "$", name: "US Dollar" },
+  "united kingdom": { code: "GBP", symbol: "£", name: "British Pound" },
+  canada: { code: "CAD", symbol: "C$", name: "Canadian Dollar" },
+  china: { code: "CNY", symbol: "¥", name: "Chinese Yuan" },
+  indonesia: { code: "IDR", symbol: "Rp", name: "Indonesian Rupiah" },
+};
+
+/**
+ * Get currency info for a calculator country name (e.g. "australia", "united states")
+ */
+export function getCurrencyForCalculatorCountry(countryName: string): CurrencyInfo {
+  return CALCULATOR_COUNTRY_TO_CURRENCY[countryName.toLowerCase()] || DEFAULT_CURRENCY;
+}
+
 // Base price in AUD cents
 const BASE_PRICE_AUD = 49500; // $495 AUD
 

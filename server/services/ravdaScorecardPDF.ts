@@ -19,9 +19,24 @@ type PdfFonts = {
   bold: string;
 };
 
+const COUNTRY_CURRENCY_MAP: Record<string, string> = {
+  australia: "A$",
+  "united states": "$",
+  "united kingdom": "£",
+  canada: "C$",
+  china: "¥",
+  indonesia: "Rp",
+};
+
+function getCurrencySymbolForCountry(country?: string): string {
+  if (!country) return "A$";
+  return COUNTRY_CURRENCY_MAP[country.toLowerCase()] ?? "A$";
+}
+
 export interface RAVDAData {
   companyName: string;
   country?: string;
+  currencySymbol?: string;
   industry?: string;
   generatedDate?: string;
   calculatedMultiple?: number;
@@ -658,14 +673,14 @@ function drawLegendRow(doc: PDFKit.PDFDocument, fonts: PdfFonts, x: number, y: n
   });
 }
 
-function money(value: number | undefined): string {
+function money(value: number | undefined, currencySymbol: string = "A$"): string {
   const safe = Number.isFinite(value) ? Number(value) : 0;
-  return `$${Math.round(safe)}`;
+  return `${currencySymbol}${Math.round(safe)}`;
 }
 
-function moneyComma(value: number | undefined): string {
+function moneyComma(value: number | undefined, currencySymbol: string = "A$"): string {
   const safe = Number.isFinite(value) ? Number(value) : 0;
-  return `$${Math.round(safe).toLocaleString("en-US")}`;
+  return `${currencySymbol}${Math.round(safe).toLocaleString("en-US")}`;
 }
 
 function drawInputRow(doc: PDFKit.PDFDocument, fonts: PdfFonts, y: number, label: string, value: number | undefined): void {
@@ -877,22 +892,22 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
   const x0 = PAGE.marginX;
 
   // Average Sales - Blue
-  drawColoredMetricCard(doc, fonts, x0, cardsY1, cardW, "Average Sales", money(avgSales), "💰", "#EFF6FF", "#BFDBFE", "#1E40AF");
+  drawColoredMetricCard(doc, fonts, x0, cardsY1, cardW, "Average Sales", money(avgSales, data.currencySymbol), "💰", "#EFF6FF", "#BFDBFE", "#1E40AF");
 
   // Average COGS - Gray
-  drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY1, cardW, "Average COGS", money(avgCogs), "📊", "#F9FAFB", "#E5E7EB", "#374151");
+  drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY1, cardW, "Average COGS", money(avgCogs, data.currencySymbol), "📊", "#F9FAFB", "#E5E7EB", "#374151");
 
   // Average EBIT - fixed indigo (distinct from valuation multiple band colors)
-  drawColoredMetricCard(doc, fonts, x0 + (cardW + gap) * 2, cardsY1, cardW, "Average EBIT", money(avgEbit), "📈", "#EEF2FF", "#C7D2FE", "#4338CA");
+  drawColoredMetricCard(doc, fonts, x0 + (cardW + gap) * 2, cardsY1, cardW, "Average EBIT", money(avgEbit, data.currencySymbol), "📈", "#EEF2FF", "#C7D2FE", "#4338CA");
 
   // Metric cards - Row 2
   const cardsY2 = cardsY1 + 74;
 
   // Average Addbacks - Neutral gray
-  drawColoredMetricCard(doc, fonts, x0, cardsY2, cardW, "Average Addbacks", money(avgAddbacks), "➕", "#F9FAFB", "#E5E7EB", "#374151");
+  drawColoredMetricCard(doc, fonts, x0, cardsY2, cardW, "Average Addbacks", money(avgAddbacks, data.currencySymbol), "➕", "#F9FAFB", "#E5E7EB", "#374151");
 
   // Average Adjusted EBIT - Purple (distinct from both EBIT and Valuation Multiple)
-  drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY2, cardW, "Average Adjusted EBIT", money(avgAdjustedEbit), "✨", "#FAF5FF", "#E9D5FF", "#7C3AED");
+  drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY2, cardW, "Average Adjusted EBIT", money(avgAdjustedEbit, data.currencySymbol), "✨", "#FAF5FF", "#E9D5FF", "#7C3AED");
 
   // Valuation Multiple - dynamic color following strength rating bands
   drawColoredMetricCard(doc, fonts, x0 + (cardW + gap) * 2, cardsY2, cardW, "Valuation Multiple", `${valuationMultiple.toFixed(2)}x`, "🎯", valuationMultipleColors.bg, valuationMultipleColors.border, valuationMultipleColors.text);
@@ -918,10 +933,7 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
     .font(fonts.bold)
     .fontSize(32)
     .fillColor("#FFFFFF")
-    .text(moneyComma(data.finalValuation), panelX + 12, panelY + 34, { lineBreak: false });
-
-  doc
-    .moveTo(panelX + 12, panelY + 80)
+    .text(moneyComma(data.finalValuation, data.currencySymbol), panelX + 12, panelY + 34, { lineBreak: false });    .moveTo(panelX + 12, panelY + 80)
     .lineTo(panelX + panelW - 12, panelY + 80)
     .lineWidth(1)
     .strokeColor("#60A5FA")
@@ -1078,7 +1090,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
         .font(fonts.regular)
         .fontSize(10)
         .fillColor("#111827")
-        .text(moneyComma(value), colX + 8, rowY + 10, { width: colW - 16, align: "center", lineBreak: false });
+        .text(moneyComma(value, data.currencySymbol), colX + 8, rowY + 10, { width: colW - 16, align: "center", lineBreak: false });
     });
 
     rowY += rowHeight;
@@ -1107,7 +1119,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
       .font(fonts.bold)
       .fontSize(10)
       .fillColor("#1F2937")
-      .text(moneyComma(ebitValue), colX + 8, rowY + 11, { width: colW - 16, align: "center", lineBreak: false });
+      .text(moneyComma(ebitValue, data.currencySymbol), colX + 8, rowY + 11, { width: colW - 16, align: "center", lineBreak: false });
   });
 
   // Addbacks section - add more space from the main table
@@ -1198,7 +1210,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
         .font(fonts.regular)
         .fontSize(10)
         .fillColor("#111827")
-        .text(moneyComma(value), colX + 8, addRowY + 10, { width: addYearColW - 16, align: "center", lineBreak: false });
+        .text(moneyComma(value, data.currencySymbol), colX + 8, addRowY + 10, { width: addYearColW - 16, align: "center", lineBreak: false });
     });
 
     addRowY += rowHeight;
@@ -1226,7 +1238,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     .font(fonts.bold)
     .fontSize(10)
     .fillColor("#1F2937")
-    .text(moneyComma(data.totalAddbacks || 0), lastColX + 8, addRowY + 11, { width: addYearColW - 16, align: "center", lineBreak: false });
+    .text(moneyComma(data.totalAddbacks || 0, data.currencySymbol), lastColX + 8, addRowY + 11, { width: addYearColW - 16, align: "center", lineBreak: false });
 
   // Page number
   const footerY = PAGE.height - PAGE.marginX - 20;
@@ -1334,8 +1346,8 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
   const cardY = 210;
   const gap = 12;
   const x0 = PAGE.marginX + 26;
-  drawMetricCard(doc, fonts, x0, cardY, "Total Assets", moneyComma(totalAssets));
-  drawMetricCard(doc, fonts, x0 + 150 + gap, cardY, "Total Liabilities", moneyComma(totalLiabilities));
+  drawMetricCard(doc, fonts, x0, cardY, "Total Assets", moneyComma(totalAssets, data.currencySymbol));
+  drawMetricCard(doc, fonts, x0 + 150 + gap, cardY, "Total Liabilities", moneyComma(totalLiabilities, data.currencySymbol));
 
   const w = 150;
   const h = 62;
@@ -1350,7 +1362,7 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
     .font(fonts.bold)
     .fontSize(16)
     .fillColor("#111827")
-    .text(moneyComma(netAssetValue), x3, cardY + 32, { width: w, align: "center", lineBreak: false });
+    .text(moneyComma(netAssetValue, data.currencySymbol), x3, cardY + 32, { width: w, align: "center", lineBreak: false });
 
   // business strength assessment block
   const assessmentY = 286;
@@ -1393,7 +1405,7 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
     .font(fonts.bold)
     .fontSize(32)
     .fillColor("#FFFFFF")
-    .text(moneyComma(netAssetValue), panelX + 12, panelY + 34, { lineBreak: false });
+    .text(moneyComma(netAssetValue, data.currencySymbol), panelX + 12, panelY + 34, { lineBreak: false });
   doc
     .moveTo(panelX + 12, panelY + 80)
     .lineTo(panelX + panelW - 12, panelY + 80)
@@ -1763,6 +1775,12 @@ function drawQuestionnaireQAPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts
 }
 
 export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer> {
+  // Resolve currency symbol from country if not explicitly provided
+  const resolvedData: RAVDAData = {
+    ...data,
+    currencySymbol: data.currencySymbol ?? getCurrencySymbolForCountry(data.country),
+  };
+
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: PAGE.marginX, size: "A4" });
     const buffers: Buffer[] = [];
@@ -1780,16 +1798,16 @@ export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer
     });
 
     const fonts = registerInterFonts(doc);
-    drawCenteredIntroPage(doc, data, fonts); // Page 1
-    drawEarlyDisclaimerPage(doc, data, fonts); // Page 2 - Early disclaimer
-    if (data.valuationMethod === "asset") {
-      drawAssetSummaryPage(doc, data, fonts); // Page 3 - Asset summary
-    } else if (data.valuationMethod === "profit") {
-      drawValuationSummaryPage(doc, data, fonts); // Page 3 - Well-formatted valuation summary
+    drawCenteredIntroPage(doc, resolvedData, fonts); // Page 1
+    drawEarlyDisclaimerPage(doc, resolvedData, fonts); // Page 2 - Early disclaimer
+    if (resolvedData.valuationMethod === "asset") {
+      drawAssetSummaryPage(doc, resolvedData, fonts); // Page 3 - Asset summary
+    } else if (resolvedData.valuationMethod === "profit") {
+      drawValuationSummaryPage(doc, resolvedData, fonts); // Page 3 - Well-formatted valuation summary
     }
-    drawFinancialDataPage(doc, data, fonts); // Page 4 - Financial data with method-specific title
-    // drawBusinessStrengthAssessmentPage(doc, data, fonts); // Page 5 - Business Strength Assessment (temporarily hidden)
-    drawQuestionnaireQAPage(doc, data, fonts); // Page 6 - Questionnaire Q&A
+    drawFinancialDataPage(doc, resolvedData, fonts); // Page 4 - Financial data with method-specific title
+    // drawBusinessStrengthAssessmentPage(doc, resolvedData, fonts); // Page 5 - Business Strength Assessment (temporarily hidden)
+    drawQuestionnaireQAPage(doc, resolvedData, fonts); // Page 6 - Questionnaire Q&A
 
     doc.end();
   });
