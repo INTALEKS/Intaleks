@@ -118,8 +118,6 @@ process.on("SIGINT", async () => {
 app.listen(PORT, "0.0.0.0", async () => {
   console.log(`🚀 Server running on port ${PORT}`);
 
-  // Auto-seed database on startup (only seeds missing data)
-  if (process.env.NODE_ENV === "development") {
-    await startupSeed();
-  }
+  // Auto-seed database on startup (seeds missing data and syncs existing records)
+  await startupSeed();
 });
