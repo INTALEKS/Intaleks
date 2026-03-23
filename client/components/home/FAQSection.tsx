@@ -45,12 +45,12 @@ export function FAQSection() {
         <div className="mb-10 text-center">
           <p className="text-base md:text-lg text-gray-700">
             Need a formal certified valuation, visit{" "}
-            <a href="https://www.executivebusinessvaluers.com.au" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">
+            <a href="https://www.executivebusinessvaluers.com.au/#intaleks" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">
               www.executivebusinessvaluers.com.au
             </a>
             .
           </p>
-          <a href="https://www.executivebusinessvaluers.com.au" target="_blank" rel="noopener noreferrer" className="inline-block mt-3 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors">
+          <a href="https://www.executivebusinessvaluers.com.au/#intaleks" target="_blank" rel="noopener noreferrer" className="inline-block mt-3 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors">
             Request a Quote
           </a>
         </div>
