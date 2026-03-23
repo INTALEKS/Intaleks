@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, Info } from "lucide-react";
+import { Lock } from "lucide-react";
 
 interface AssetMethodProps {
   assets: Record<string, string | number>;
@@ -72,9 +72,8 @@ export function AssetMethod({ assets, liabilities, onAssetChange, onLiabilityCha
                   <p className="text-xs sm:text-sm font-semibold text-yellow-800">Land-Use Rights (FMV) — China only</p>
                   <p className="text-xs text-yellow-700 mt-0.5">Land is state-owned in China. Enter the independently appraised value of your land-use rights.</p>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-                  <span className="text-xs sm:text-sm text-yellow-800 font-medium">Land-Use Rights (FMV)</span>
-                  <input type="number" value={assets["landUseRights"] || ""} onChange={(e) => onAssetChange("landUseRights", e.target.value)} placeholder="0" className="border border-yellow-300 rounded-md px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white" disabled={disabled} />
+                <div className="mt-2">
+                  <input type="number" value={assets["landUseRights"] || ""} onChange={(e) => onAssetChange("landUseRights", e.target.value)} placeholder="0" className="w-full border border-yellow-300 rounded-md px-2 sm:px-3 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white" disabled={disabled} />
                 </div>
               </div>
             )}
@@ -111,14 +110,6 @@ export function AssetMethod({ assets, liabilities, onAssetChange, onLiabilityCha
           <p className="text-xs sm:text-sm text-gray-600 mb-2">Net Business Valuation (Asset Method)</p>
           <p className="text-2xl sm:text-3xl font-bold text-gray-900">{fmt(netValue)}</p>
         </div>
-
-        {/* China info note */}
-        {isChina && (
-          <div className="flex gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700">
-            <Info className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>The Land-Use Rights field appears only when China is selected as the country. It feeds directly into Total Assets and the final Net Business Valuation. All other countries see the standard Asset Method form without this field.</span>
-          </div>
-        )}
       </div>
     </div>
   );

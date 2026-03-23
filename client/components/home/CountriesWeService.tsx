@@ -20,7 +20,7 @@ export function CountriesWeService() {
         <div className="flex flex-wrap justify-center gap-4">
           {countries.map((country) => (
             <div key={country.name} className="flex flex-col items-center gap-2 bg-white border border-gray-200 rounded-md px-2 py-2 w-[130px] hover:shadow-md transition-shadow duration-300">
-              <div className="relative w-[80px] h-[54px] flex-shrink-0">
+              <div className="relative w-[80px] h-[54px] shrink-0">
                 <Image src={`https://flagcdn.com/w80/${country.code}.png`} fill alt={`${country.name} flag`} className="rounded-sm object-cover shadow-sm" />
               </div>
               <span className="text-sm font-medium text-gray-700">{country.name}</span>
