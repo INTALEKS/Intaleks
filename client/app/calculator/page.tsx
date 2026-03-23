@@ -1198,7 +1198,7 @@ export default function CalculatorPage() {
                 </div>
 
                 <div className="mt-6">
-                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, formatCurrency(totalAddbacksByYear[year] || 0)]))} disabled={!isAuthenticated || !hasCalculatorAccess} currencySymbol={currencySymbol} />
+                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, `${currencySymbol}${(totalAddbacksByYear[year] || 0).toLocaleString()}`]))} disabled={!isAuthenticated || !hasCalculatorAccess} currencySymbol={currencySymbol} />
                 </div>
 
                 {/* <div className="mt-6">
