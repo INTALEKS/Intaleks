@@ -56,6 +56,8 @@ async function startupSeed() {
     // Check and seed subscription plan
     let plan = await prisma.subscriptionPlan.findUnique({ where: { name: "One-Off" } });
 
+    const planFeatures = ["Worldwide Industry Multiples (US, Canada, UK, Australia, China, Indonesia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking", "Unlimited Valuations", "Export to Excel/PDF"];
+
     if (!plan) {
       console.log("🌱 Seeding subscription plan...");
       plan = await prisma.subscriptionPlan.create({
@@ -63,9 +65,15 @@ async function startupSeed() {
           name: "One-Off",
           price: 49500,
           billingPeriod: BillingPeriod.ONE_TIME,
-          features: ["Worldwide Industry Multiples (US, Canada, UK, Australia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking", "Unlimited Valuations", "Export to Excel/PDF"],
+          features: planFeatures,
           active: true,
         },
+      });
+    } else {
+      // Always keep features in sync
+      plan = await prisma.subscriptionPlan.update({
+        where: { name: "One-Off" },
+        data: { features: planFeatures },
       });
     }
 
