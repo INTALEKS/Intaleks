@@ -5,7 +5,7 @@ export function CountriesWeService() {
     { name: "United Kingdom", flag: "🇬🇧" },
     { name: "Canada", flag: "🇨🇦" },
     { name: "China", flag: "🇨🇳" },
-    // { name: "Indonesia", flag: "🇮🇩" },
+    { name: "Indonesia", flag: "🇮🇩" },
   ];
 
   return (
