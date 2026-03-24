@@ -227,6 +227,12 @@ export async function generateValuationPDF(data: ValuationPDFData): Promise<Buff
     liabilities: data.liabilities,
     totalAssets: data.totalAssets,
     totalLiabilities: data.totalLiabilities,
+
+    // Equity value data (China & Indonesia only)
+    totalDebt: data.totalDebt,
+    cashEquivalents: data.cashEquivalents,
+    equityValue: data.equityValue,
+    currencySymbol: data.currencySymbol,
   };
 
   return generateRAVDAScorecardPDF(ravdaData);
