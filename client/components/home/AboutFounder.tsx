@@ -37,9 +37,9 @@ export function AboutFounder() {
 
           {/* Right Column - Content */}
           <div className="flex flex-col justify-center space-y-6 col-span-2">
-            <p className="text-gray-700 leading-relaxed">I'm Aleks Todorovic, an accountant and business valuation specialist with more than 25 years of experience across corporate finance, commercial advisory, and professional valuation work. Through my firm, Executive Business Valuers, I've supported business owners, legal professionals, and advisors with valuations for complex commercial, strategic, and legal matters.</p>
+            <p className="text-gray-700 leading-relaxed">I&apos;m Aleks Todorovic, an accountant and business valuation specialist with more than 25 years of experience across corporate finance, commercial advisory, and professional valuation work. Through my firm, Executive Business Valuers, I&apos;ve supported business owners, legal professionals, and advisors with valuations for complex commercial, strategic, and legal matters.</p>
 
-            <p className="text-gray-700 leading-relaxed">Throughout my career, I've seen how difficult it is for small business owners to access clear, reliable valuation guidance. Traditional valuations can be costly, time‑consuming, and filled with technical language that makes the process inaccessible to many.</p>
+            <p className="text-gray-700 leading-relaxed">Throughout my career, I&apos;ve seen how difficult it is for small business owners to access clear, reliable valuation guidance. Traditional valuations can be costly, time‑consuming, and filled with technical language that makes the process inaccessible to many.</p>
 
             <p className="text-gray-700 leading-relaxed">I created Intaleks to change that.</p>
 
