@@ -13,3 +13,4 @@ export { AboutFounder } from "./AboutFounder";
 export { CountriesWeService } from "./CountriesWeService";
 export { Newsletter } from "./Newsletter";
 export { Footer } from "./Footer";
+export { ExecutiveBusinessValuers } from "./ExecutiveBusinessValuers";

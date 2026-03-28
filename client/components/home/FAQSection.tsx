@@ -42,7 +42,7 @@ export function FAQSection() {
     <section id="faq" className="py-16 px-4 bg-white">
       <div className="max-w-3xl mx-auto">
         {/* Certified valuation referral banner */}
-        <div className="mb-10 text-center">
+        {/* <div className="mb-10 text-center">
           <p className="text-base md:text-lg text-gray-700">
             Need a formal certified valuation, visit{" "}
             <a href="https://www.executivebusinessvaluers.com.au/#intaleks" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">
@@ -53,7 +53,7 @@ export function FAQSection() {
           <a href="https://www.executivebusinessvaluers.com.au/#intaleks" target="_blank" rel="noopener noreferrer" className="inline-block mt-3 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors">
             Request a Quote
           </a>
-        </div>
+        </div> */}
 
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Frequently Asked Questions</h2>
 
