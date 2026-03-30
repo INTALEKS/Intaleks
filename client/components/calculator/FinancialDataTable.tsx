@@ -42,11 +42,15 @@ export function FinancialDataTable({ title, metrics, years, values, onChange, ca
           <thead>
             <tr className="bg-gray-50">
               <th className="text-left text-xs font-semibold text-gray-600 uppercase p-3 w-[180px]">Metric</th>
-              {years.map((year) => (
-                <th key={year} className="text-left text-xs font-semibold text-gray-600 uppercase p-3">
-                  {year}
-                </th>
-              ))}
+              {years.map((year) => {
+                const [colType, colDate] = year.split(" - ");
+                return (
+                  <th key={year} className="text-left text-xs font-semibold text-gray-600 uppercase p-3">
+                    <span className="block">{colType}</span>
+                    {colDate && <span className="block font-normal normal-case text-gray-400">{colDate}</span>}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>

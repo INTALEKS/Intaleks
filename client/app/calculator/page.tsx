@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Download, Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar, Footer } from "@/components/home";
-import { AccordionSection, MethodToggle, ValuationMethod, CountryIndustrySelector, FinancialDataTable, AddbacksTable, StepProgress, CompanyQuestionnaire, ValuationDocumentList, YearSelector, EarningCapacitySection, AddbacksExamplesSection, ValuationSummaryCard } from "@/components/calculator";
+import { AccordionSection, MethodToggle, ValuationMethod, CountryIndustrySelector, FinancialDataTable, AddbacksTable, StepProgress, CompanyQuestionnaire, ValuationDocumentList, EarningCapacitySection, AddbacksExamplesSection, ValuationSummaryCard, FinancialInfoSelector, columnsToYearLabels, type FinancialColumn } from "@/components/calculator";
 import { AssetMethod } from "@/components/calculator/methods";
 import { CouponRedeemForm } from "@/components/calculator/CouponRedeemForm";
 import { calculateAverageAdjustedEBIT, formatCurrency, FinancialYearData } from "@/lib/calculator-utils";
@@ -44,8 +44,6 @@ const financialMetrics = [
   { key: "taxExpense", label: "Tax Expense", placeholder: "0", isInput: true },
 ];
 
-const currentYear = new Date().getFullYear();
-
 // Type for persisted calculator state
 interface CalculatorState {
   companyName: string;
@@ -60,7 +58,7 @@ interface CalculatorState {
   multipleCategory?: string;
   totalScore?: number;
   useQuestionnaireMultiple: boolean;
-  selectedYears: number[];
+  selectedYears: FinancialColumn[];
   financialData: Record<string, Record<string, string>>;
   addbacks: Array<{ id: string; reason: string; values: Record<string, string> }>;
   selectedMethod: ValuationMethod | "";
@@ -218,13 +216,22 @@ export default function CalculatorPage() {
   // ============================================
   // STEP 2: Financial Data State
   // ============================================
-  // Year selection state - default to last 3 years excluding current year
-  const [selectedYears, setSelectedYears] = useState<number[]>(initialState?.selectedYears || [currentYear - 3, currentYear - 2, currentYear - 1]);
+  // Financial column selection state — replaces raw year numbers
+  const [selectedYears, setSelectedYears] = useState<FinancialColumn[]>(
+    initialState?.selectedYears && Array.isArray(initialState.selectedYears) && initialState.selectedYears.length > 0 && typeof (initialState.selectedYears[0] as unknown) !== "number"
+      ? (initialState.selectedYears as FinancialColumn[]).map((col) => ({
+          ...col,
+          periodDate: col.periodDate ? new Date(col.periodDate) : undefined,
+        }))
+      : [
+          { type: "1Yr Prev" as const, daysInPeriod: 365, periodDate: undefined },
+          { type: "Last FY" as const, daysInPeriod: 365, periodDate: undefined },
+          { type: "Forecast Yr" as const, daysInPeriod: 365, periodDate: undefined },
+        ],
+  );
 
-  // Generate financial years array based on selected years
-  const financialYears = useMemo(() => {
-    return selectedYears.map((year) => `Year ${year}`);
-  }, [selectedYears]);
+  // Derive year label strings from the column definitions
+  const financialYears = useMemo(() => columnsToYearLabels(selectedYears), [selectedYears]);
 
   const [financialData, setFinancialData] = useState<Record<string, Record<string, string>>>(initialState?.financialData || {});
   const [addbacks, setAddbacks] = useState(
@@ -666,6 +673,7 @@ export default function CalculatorPage() {
           day: "numeric",
           year: "numeric",
         }),
+        daysInPeriod: Object.fromEntries(selectedYears.map((col, i) => [financialYears[i], col.daysInPeriod])),
         // Questionnaire data for RAVDA Scorecard
         questionnaireScore: totalScore,
         questionnaireCategory: multipleCategory,
@@ -1010,7 +1018,14 @@ export default function CalculatorPage() {
               setMultipleCategory(parsed.multipleCategory);
               setTotalScore(parsed.totalScore);
               setUseQuestionnaireMultiple(parsed.useQuestionnaireMultiple || false);
-              setSelectedYears(parsed.selectedYears || [currentYear - 3, currentYear - 2, currentYear - 1]);
+              if (parsed.selectedYears && Array.isArray(parsed.selectedYears) && parsed.selectedYears.length > 0 && typeof (parsed.selectedYears[0] as unknown) !== "number") {
+                setSelectedYears(
+                  (parsed.selectedYears as FinancialColumn[]).map((col) => ({
+                    ...col,
+                    periodDate: col.periodDate ? new Date(col.periodDate) : undefined,
+                  })),
+                );
+              }
               setFinancialData(parsed.financialData || {});
               setAddbacks(
                 parsed.addbacks || [
@@ -1210,7 +1225,7 @@ export default function CalculatorPage() {
 
             {selectedMethod === "profit" && (
               <>
-                <YearSelector selectedYears={selectedYears} onYearsChange={setSelectedYears} disabled={!isAuthenticated || !hasCalculatorAccess} />
+                <FinancialInfoSelector columns={selectedYears} onColumnsChange={setSelectedYears} disabled={!isAuthenticated || !hasCalculatorAccess} />
 
                 <div className="mt-6">
                   <FinancialDataTable

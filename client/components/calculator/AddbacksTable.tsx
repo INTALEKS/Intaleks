@@ -112,11 +112,15 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
           <thead>
             <tr className="bg-gray-50">
               <th className="text-left text-xs font-semibold text-gray-600 uppercase p-3">Addback Reason</th>
-              {financialYears.map((year) => (
-                <th key={year} className="text-center text-xs font-semibold text-gray-600 uppercase p-3 w-[150px]">
-                  {year}
-                </th>
-              ))}
+              {financialYears.map((year) => {
+                const [colType, colDate] = year.split(" - ");
+                return (
+                  <th key={year} className="text-center text-xs font-semibold text-gray-600 uppercase p-3 w-[150px]">
+                    <span className="block">{colType}</span>
+                    {colDate && <span className="block font-normal normal-case text-gray-400">{colDate}</span>}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>

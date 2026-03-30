@@ -60,6 +60,8 @@ export interface ValuationPDFData {
   logoBase64?: string;
   logoMimeType?: string;
   generatedDate?: string;
+  /** Days in each reporting period, keyed by the year label string */
+  daysInPeriod?: Record<string, number>;
 
   // Questionnaire data
   questionnaireScore?: number;
@@ -233,6 +235,7 @@ export async function generateValuationPDF(data: ValuationPDFData): Promise<Buff
     cashEquivalents: data.cashEquivalents,
     equityValue: data.equityValue,
     currencySymbol: data.currencySymbol,
+    daysInPeriod: data.daysInPeriod,
   };
 
   return generateRAVDAScorecardPDF(ravdaData);

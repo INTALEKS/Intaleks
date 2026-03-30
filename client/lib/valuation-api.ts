@@ -74,6 +74,8 @@ export interface ValuationReportData {
   logoBase64?: string; // Base64 encoded logo image
   logoMimeType?: string; // 'image/png' | 'image/jpeg' | 'image/svg+xml'
   generatedDate?: string;
+  /** Days in each reporting period, keyed by the year label string */
+  daysInPeriod?: Record<string, number>;
 
   // Questionnaire data for RAVDA Scorecard
   questionnaireScore?: number;

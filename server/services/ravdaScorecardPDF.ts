@@ -95,6 +95,8 @@ export interface RAVDAData {
   };
   logoBase64?: string;
   logoMimeType?: string;
+  /** Days in each reporting period, keyed by the year label string */
+  daysInPeriod?: Record<string, number>;
   questionnaireResponses?: {
     ownerDependence: number;
     recurringRevenue: number;
@@ -713,9 +715,30 @@ function drawInputRow(doc: PDFKit.PDFDocument, fonts: PdfFonts, y: number, label
     });
 }
 
+/**
+ * Returns a short two-line header for a financial column.
+ *
+ * New format:  "Last FY - 31/03/2026"  → line1="Last FY"  line2="31/03/2026"
+ * New format:  "1Yr Prev"              → line1="1Yr Prev" line2=""
+ * Legacy format: "Year 2023"           → line1="2023"     line2=""
+ */
+function parseColumnHeader(year: string): { line1: string; line2: string } {
+  // New format: "ColumnType - DD/MM/YYYY"
+  const newFmt = year.match(/^(.+?)\s*-\s*(\d{2}\/\d{2}\/\d{4})$/);
+  if (newFmt) return { line1: newFmt[1].trim(), line2: newFmt[2].trim() };
+
+  // Legacy format: "Year 2023"
+  const legacyFmt = year.match(/^Year\s+(\d{4})$/);
+  if (legacyFmt) return { line1: legacyFmt[1], line2: "" };
+
+  // Fallback: use as-is
+  return { line1: year, line2: "" };
+}
+
+/** @deprecated use parseColumnHeader */
 function formatYearLabel(year: string): string {
-  const match = year.match(/(\d{4})/);
-  return match ? match[1] : year;
+  const { line1 } = parseColumnHeader(year);
+  return line1;
 }
 
 function financialValue(data: RAVDAData, year: string, key: "sales" | "grossProfit" | "cogs" | "operatingExpenses" | "netProfitAndLoss" | "interestExpense" | "interestIncome" | "taxExpense" | "ebit"): number {
@@ -1034,28 +1057,30 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   // Title should always be "Valuation Method"
   doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Method", PAGE.marginX, 76, { lineBreak: false });
 
-  // Year selection section - show just the years
+  // Year selection section - show column type and period date
   const years = (data.financialYears || []).slice(0, 3);
   let yearY = 136;
 
   years.forEach((year, idx) => {
-    const label = `Year ${idx + 1}:`;
+    const { line1, line2 } = parseColumnHeader(year);
+    const days = data.daysInPeriod?.[year];
+    const label = `Column ${idx + 1}:`;
     doc
       .font(fonts.regular)
       .fontSize(12)
       .fillColor("#111827")
       .text(label, PAGE.marginX, yearY + 8, { lineBreak: false });
 
-    // Year input box - show the year inside the box
-    doc.roundedRect(PAGE.marginX + 68, yearY, PAGE.width - PAGE.marginX * 2 - 68, 32, 4).fillAndStroke("#FFFFFF", "#E2E2E2");
+    // Column info box
+    doc.roundedRect(PAGE.marginX + 80, yearY, PAGE.width - PAGE.marginX * 2 - 80, 32, 4).fillAndStroke("#FFFFFF", "#E2E2E2");
 
-    // Add year text inside the box
-    const yearOnly = formatYearLabel(year).replace("Year ", "");
+    const parts = [line1, line2, days ? `${days} days` : ""].filter(Boolean);
+    const displayText = parts.join("  •  ");
     doc
       .font(fonts.regular)
       .fontSize(12)
       .fillColor("#111827")
-      .text(yearOnly, PAGE.marginX + 78, yearY + 10, { lineBreak: false });
+      .text(displayText, PAGE.marginX + 90, yearY + 10, { lineBreak: false });
 
     yearY += 38;
   });
@@ -1095,12 +1120,13 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
 
   years.forEach((year, idx) => {
     const colX = tableX + metricW + idx * colW;
-    const yearOnly = formatYearLabel(year).replace("Year ", "");
+    const { line1, line2 } = parseColumnHeader(year);
+    const headerText = line2 ? `${line1}\n${line2}` : line1;
     doc
       .font(fonts.bold)
-      .fontSize(10)
+      .fontSize(9)
       .fillColor("#374151")
-      .text(`Year ${yearOnly}`, colX + 8, headerY + 12, { width: colW - 16, align: "center", lineBreak: false });
+      .text(headerText, colX + 4, headerY + (line2 ? 6 : 12), { width: colW - 8, align: "center", lineBreak: false });
   });
 
   // Financial data rows
@@ -1219,12 +1245,13 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
 
   years.forEach((year, idx) => {
     const colX = tableX + addbackW + reasonW + idx * addYearColW;
-    const yearOnly = formatYearLabel(year).replace("Year ", "");
+    const { line1, line2 } = parseColumnHeader(year);
+    const headerText = line2 ? `${line1}\n${line2}` : line1;
     doc
       .font(fonts.bold)
-      .fontSize(10)
+      .fontSize(9)
       .fillColor("#374151")
-      .text(`Year ${yearOnly}`, colX + 8, addHeaderY + 12, { width: addYearColW - 16, align: "center", lineBreak: false });
+      .text(headerText, colX + 4, addHeaderY + (line2 ? 6 : 12), { width: addYearColW - 8, align: "center", lineBreak: false });
   });
 
   // Addback rows
