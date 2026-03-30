@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+// import Image from "next/image";
 
 export function ExecutiveBusinessValuers() {
   return (
@@ -11,11 +11,12 @@ export function ExecutiveBusinessValuers() {
           {/* Left Side - Title */}
           <div className="flex flex-col justify-center items-center lg:text-left">
             {/* <Image src="/Executive-Business-Valuers.png" alt="Executive Business Valuers" width={200} height={200} className="w-full h-auto" /> */}
-            <h2 className="text-4xl md:text-5xl text-primary leading-tight text-center mt-5">Need a Formal, Certified Business Valuation, contact Executive Business Valuers</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Need a Formal, Certified Business Valuation, contact Executive Business Valuers</h2>
           </div>
 
           {/* Right Side - Features List */}
           <div className="space-y-3">
+            <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-8">Why Choose Executive Business Valuer</h2>
             {/* Feature 1 - APES 225 */}
             <div className="flex overflow-hidden rounded-lg">
               <div className="shrink-0 w-12 bg-(--primary-border-typing) flex items-center justify-center">
