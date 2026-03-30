@@ -16,7 +16,7 @@ export function ExecutiveBusinessValuers() {
 
           {/* Right Side - Features List */}
           <div className="space-y-3">
-            <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-8">Why Choose Executive Business Valuer</h2>
+            <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-8">Why Choose Executive Business Valuers</h2>
             {/* Feature 1 - APES 225 */}
             <div className="flex overflow-hidden rounded-lg">
               <div className="shrink-0 w-12 bg-(--primary-border-typing) flex items-center justify-center">
