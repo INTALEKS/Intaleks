@@ -232,8 +232,6 @@ export default function Home() {
 
       <UnderstandBusinessValue />
 
-      <ExecutiveBusinessValuers />
-
       <PricingSection />
 
       <FAQSection />
@@ -241,6 +239,7 @@ export default function Home() {
       <AboutFounder />
 
       {/* <Newsletter /> */}
+      <ExecutiveBusinessValuers />
 
       <Footer />
     </div>

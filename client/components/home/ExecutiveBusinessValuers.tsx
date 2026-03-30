@@ -10,14 +10,8 @@ export function ExecutiveBusinessValuers() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left Side - Title */}
           <div className="flex flex-col justify-center items-center lg:text-left">
-            <Image src="/Executive-Business-Valuers.png" alt="Executive Business Valuers" width={200} height={200} className="w-full h-auto" />
-            <h2 className="text-4xl md:text-5xl font-serif text-primary leading-tight text-center mt-5">
-              Why Choose
-              <br />
-              Executive Business
-              <br />
-              Valuers
-            </h2>
+            {/* <Image src="/Executive-Business-Valuers.png" alt="Executive Business Valuers" width={200} height={200} className="w-full h-auto" /> */}
+            <h2 className="text-4xl md:text-5xl text-primary leading-tight text-center mt-5">Need a Formal, Certified Business Valuation, contact Executive Business Valuers</h2>
           </div>
 
           {/* Right Side - Features List */}
