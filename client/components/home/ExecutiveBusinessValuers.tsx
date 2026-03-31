@@ -7,11 +7,17 @@ export function ExecutiveBusinessValuers() {
   return (
     <section className="py-12 md:py-16 px-4">
       <div className="w-full md:w-[90%] p-6 md:p-8 rounded-md mx-auto bg-gray-100">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-start">
           {/* Left Side - Title */}
-          <div className="flex flex-col justify-between lg:text-left h-[80%]">
+          <div className="flex flex-col gap-6 lg:text-left items-start">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Need a Formal, Certified Business Valuation, contact Executive Business Valuers</h2>
-            <Image src="/Executive-Business-Valuers.png" alt="Executive Business Valuers" width={160} height={160} className="w-full h-auto" />
+            <Image
+              src="/Executive-Business-Valuers.png"
+              alt="Executive Business Valuers"
+              width={960}
+              height={240}
+              className="w-full max-w-[80%] h-auto"
+            />
           </div>
 
           {/* Right Side - Features List */}
