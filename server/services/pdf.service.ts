@@ -52,6 +52,7 @@ export interface ValuationPDFData {
   totalDebt?: number;
   cashEquivalents?: number;
   equityValue?: number;
+  currencySymbol?: string;
 
   // Optional fields
   startedYear?: string;
