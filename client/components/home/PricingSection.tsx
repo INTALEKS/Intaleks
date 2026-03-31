@@ -47,10 +47,12 @@ export function PricingSection() {
   const formatPrice = (price: number): string => {
     if (pricing && !priceLoading) {
       const formattedAmount = pricing.amount.toLocaleString("en-US");
-      return `${pricing.currency.symbol}${formattedAmount}`;
+      const dollarCurrencies = ["AUD", "USD", "CAD", "NZD", "SGD", "HKD"];
+      const suffix = dollarCurrencies.includes(pricing.currency.code) ? ` ${pricing.currency.code}` : "";
+      return `${pricing.currency.symbol}${formattedAmount}${suffix}`;
     }
     const amount = price / 100;
-    return `A$${Math.floor(amount)}`;
+    return `$${Math.floor(amount)} AUD`;
   };
 
   const handleSubscribe = (planId: string) => {
@@ -165,7 +167,7 @@ export function PricingSection() {
             <span>
               Prices shown in {pricing.currency.name} ({pricing.currency.code})
             </span>
-            <span className="text-gray-400">• Converted from A$495 AUD</span>
+            <span className="text-gray-400">• Converted from $495 AUD</span>
           </div>
         )}
 
@@ -187,7 +189,7 @@ export function PricingSection() {
                     <span className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900">{price}</span>
                     <span className="text-gray-500 ml-2 text-lg">{plan.billingPeriod === "ONE_TIME" ? "/one-time" : plan.billingPeriod === "YEARLY" ? "/year" : "/month"}</span>
                   </div>
-                  {pricing && pricing.currency.code !== "AUD" && <p className="text-sm text-gray-500">≈ A$495 AUD</p>}
+                  {pricing && pricing.currency.code !== "AUD" && <p className="text-sm text-gray-500">≈ $495 AUD</p>}
                 </div>
 
                 {/* Features */}

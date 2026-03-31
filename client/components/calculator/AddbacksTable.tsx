@@ -20,6 +20,7 @@ interface AddbacksTableProps {
   totalValuesByYear: Record<string, string>;
   disabled?: boolean;
   currencySymbol?: string;
+  currencyCode?: string;
 }
 
 // Predefined addback reasons organized by category
@@ -85,7 +86,10 @@ const ADDBACK_REASONS = [
   { value: "owner-multiple-roles", label: "Owner performing multiple roles" },
 ];
 
-export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAddAddback, totalValuesByYear, disabled = false, currencySymbol = "A$" }: AddbacksTableProps) {
+export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAddAddback, totalValuesByYear, disabled = false, currencySymbol = "$", currencyCode = "AUD" }: AddbacksTableProps) {
+  const dollarCurrencies = ["AUD", "USD", "CAD", "NZD", "SGD", "HKD"];
+  const codeSuffix = dollarCurrencies.includes(currencyCode) ? ` ${currencyCode}` : "";
+  const fmt = (val: string | number) => `${currencySymbol}${val || "0"}${codeSuffix}`;
   const handleYearValueChange = (addbackId: string, year: string, value: string) => {
     const addback = addbacks.find((a) => a.id === addbackId);
     if (!addback) return;
@@ -151,7 +155,7 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
               <td className="p-3 text-sm font-semibold text-gray-700 uppercase">Total Addbacks</td>
               {financialYears.map((year) => (
                 <td key={year} className="p-3 text-sm font-semibold text-gray-900 text-center">
-                  {totalValuesByYear[year] || `${currencySymbol}0`}
+                  {fmt(totalValuesByYear[year] || "0")}
                 </td>
               ))}
             </tr>

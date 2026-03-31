@@ -367,6 +367,7 @@ export default function CalculatorPage() {
   const baseIndustryMultiple = useMemo(() => getMultiple(country, industry) || 4.0, [country, industry, getMultiple]);
 
   const currencySymbol = useMemo(() => getCurrencyForCalculatorCountry(country).symbol, [country]);
+  const currencyCode = useMemo(() => getCurrencyForCalculatorCountry(country).code, [country]);
 
   // Single source of truth for the multiple used in server calculations and PDF generation
   const effectiveProfitMultiple = useMemo(() => {
@@ -674,6 +675,7 @@ export default function CalculatorPage() {
           year: "numeric",
         }),
         daysInPeriod: Object.fromEntries(selectedYears.map((col, i) => [financialYears[i], col.daysInPeriod])),
+        currencyCode: getCurrencyForCalculatorCountry(country).code,
         // Questionnaire data for RAVDA Scorecard
         questionnaireScore: totalScore,
         questionnaireCategory: multipleCategory,
@@ -1240,11 +1242,12 @@ export default function CalculatorPage() {
                     }}
                     disabled={!isAuthenticated || !hasCalculatorAccess}
                     currencySymbol={currencySymbol}
+                    currencyCode={currencyCode}
                   />
                 </div>
 
                 <div className="mt-6">
-                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, `${currencySymbol}${(totalAddbacksByYear[year] || 0).toLocaleString()}`]))} disabled={!isAuthenticated || !hasCalculatorAccess} currencySymbol={currencySymbol} />
+                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, (totalAddbacksByYear[year] || 0).toLocaleString()]))} disabled={!isAuthenticated || !hasCalculatorAccess} currencySymbol={currencySymbol} currencyCode={currencyCode} />
                 </div>
 
                 {/* Equity Value Calculation — China & Indonesia only */}

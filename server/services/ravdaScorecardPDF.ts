@@ -19,24 +19,40 @@ type PdfFonts = {
   bold: string;
 };
 
-const COUNTRY_CURRENCY_MAP: Record<string, string> = {
-  australia: "A$",
-  "united states": "$",
-  "united kingdom": "£",
-  canada: "C$",
-  china: "¥",
-  indonesia: "Rp",
+const COUNTRY_CURRENCY_MAP: Record<string, { symbol: string; code: string }> = {
+  australia: { symbol: "$", code: "AUD" },
+  "united states": { symbol: "$", code: "USD" },
+  "united kingdom": { symbol: "£", code: "GBP" },
+  canada: { symbol: "$", code: "CAD" },
+  china: { symbol: "¥", code: "CNY" },
+  indonesia: { symbol: "Rp", code: "IDR" },
 };
 
+/** Returns a formatted currency string, e.g. "$50 AUD", "£50", "¥50" */
+function formatMoney(value: number, symbol: string, code: string): string {
+  const safe = Number.isFinite(value) ? Math.round(value) : 0;
+  const formatted = safe.toLocaleString("en-US");
+  // Append ISO code for dollar currencies to disambiguate
+  const suffix = code === "AUD" || code === "CAD" || code === "USD" ? ` ${code}` : "";
+  return `${symbol}${formatted}${suffix}`;
+}
+
 function getCurrencySymbolForCountry(country?: string): string {
-  if (!country) return "A$";
-  return COUNTRY_CURRENCY_MAP[country.toLowerCase()] ?? "A$";
+  if (!country) return "$";
+  return COUNTRY_CURRENCY_MAP[country.toLowerCase()]?.symbol ?? "$";
+}
+
+function getCurrencyCodeForCountry(country?: string): string {
+  if (!country) return "AUD";
+  return COUNTRY_CURRENCY_MAP[country.toLowerCase()]?.code ?? "AUD";
 }
 
 export interface RAVDAData {
   companyName: string;
   country?: string;
   currencySymbol?: string;
+  /** ISO 4217 currency code, e.g. "AUD", "USD", "CAD" */
+  currencyCode?: string;
   industry?: string;
   generatedDate?: string;
   calculatedMultiple?: number;
@@ -681,14 +697,14 @@ function drawLegendRow(doc: PDFKit.PDFDocument, fonts: PdfFonts, x: number, y: n
   });
 }
 
-function money(value: number | undefined, currencySymbol: string = "A$"): string {
+function money(value: number | undefined, currencySymbol: string = "$", currencyCode: string = "AUD"): string {
   const safe = Number.isFinite(value) ? Number(value) : 0;
-  return `${currencySymbol}${Math.round(safe)}`;
+  return formatMoney(safe, currencySymbol, currencyCode);
 }
 
-function moneyComma(value: number | undefined, currencySymbol: string = "A$"): string {
+function moneyComma(value: number | undefined, currencySymbol: string = "$", currencyCode: string = "AUD"): string {
   const safe = Number.isFinite(value) ? Number(value) : 0;
-  return `${currencySymbol}${Math.round(safe).toLocaleString("en-US")}`;
+  return formatMoney(safe, currencySymbol, currencyCode);
 }
 
 function drawInputRow(doc: PDFKit.PDFDocument, fonts: PdfFonts, y: number, label: string, value: number | undefined): void {
@@ -921,22 +937,22 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
   const x0 = PAGE.marginX;
 
   // Average Sales - Blue
-  drawColoredMetricCard(doc, fonts, x0, cardsY1, cardW, "Average Sales", money(avgSales, data.currencySymbol), "💰", "#EFF6FF", "#BFDBFE", "#1E40AF");
+  drawColoredMetricCard(doc, fonts, x0, cardsY1, cardW, "Average Sales", money(avgSales, data.currencySymbol, data.currencyCode), "💰", "#EFF6FF", "#BFDBFE", "#1E40AF");
 
   // Average COGS - Gray
-  drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY1, cardW, "Average COGS", money(avgCogs, data.currencySymbol), "📊", "#F9FAFB", "#E5E7EB", "#374151");
+  drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY1, cardW, "Average COGS", money(avgCogs, data.currencySymbol, data.currencyCode), "📊", "#F9FAFB", "#E5E7EB", "#374151");
 
   // Average EBIT - fixed indigo (distinct from valuation multiple band colors)
-  drawColoredMetricCard(doc, fonts, x0 + (cardW + gap) * 2, cardsY1, cardW, "Average EBIT", money(avgEbit, data.currencySymbol), "📈", "#EEF2FF", "#C7D2FE", "#4338CA");
+  drawColoredMetricCard(doc, fonts, x0 + (cardW + gap) * 2, cardsY1, cardW, "Average EBIT", money(avgEbit, data.currencySymbol, data.currencyCode), "📈", "#EEF2FF", "#C7D2FE", "#4338CA");
 
   // Metric cards - Row 2
   const cardsY2 = cardsY1 + 74;
 
   // Average Addbacks - Neutral gray
-  drawColoredMetricCard(doc, fonts, x0, cardsY2, cardW, "Average Addbacks", money(avgAddbacks, data.currencySymbol), "➕", "#F9FAFB", "#E5E7EB", "#374151");
+  drawColoredMetricCard(doc, fonts, x0, cardsY2, cardW, "Average Addbacks", money(avgAddbacks, data.currencySymbol, data.currencyCode), "➕", "#F9FAFB", "#E5E7EB", "#374151");
 
   // Average Adjusted EBIT - Purple (distinct from both EBIT and Valuation Multiple)
-  drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY2, cardW, "Average Adjusted EBIT", money(avgAdjustedEbit, data.currencySymbol), "✨", "#FAF5FF", "#E9D5FF", "#7C3AED");
+  drawColoredMetricCard(doc, fonts, x0 + cardW + gap, cardsY2, cardW, "Average Adjusted EBIT", money(avgAdjustedEbit, data.currencySymbol, data.currencyCode), "✨", "#FAF5FF", "#E9D5FF", "#7C3AED");
 
   // Valuation Multiple - dynamic color following strength rating bands
   drawColoredMetricCard(doc, fonts, x0 + (cardW + gap) * 2, cardsY2, cardW, "Valuation Multiple", `${valuationMultiple.toFixed(2)}x`, "🎯", valuationMultipleColors.bg, valuationMultipleColors.border, valuationMultipleColors.text);
@@ -962,7 +978,7 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
     .font(fonts.bold)
     .fontSize(32)
     .fillColor("#FFFFFF")
-    .text(moneyComma(data.finalValuation, data.currencySymbol), panelX + 12, panelY + 34, { lineBreak: false });
+    .text(moneyComma(data.finalValuation, data.currencySymbol, data.currencyCode), panelX + 12, panelY + 34, { lineBreak: false });
 
   doc
     .moveTo(panelX + 12, panelY + 80)
@@ -1007,7 +1023,8 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
     const ev = data.finalValuation ?? 0;
     const debt = data.totalDebt ?? 0;
     const cash = data.cashEquivalents ?? 0;
-    const sym = data.currencySymbol ?? "A$";
+    const sym = data.currencySymbol ?? "$";
+    const code = data.currencyCode ?? "AUD";
 
     doc
       .font(fonts.regular)
@@ -1019,13 +1036,13 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
       .font(fonts.bold)
       .fontSize(20)
       .fillColor("#1D4ED8")
-      .text(moneyComma(data.equityValue, sym), panelX + 12, eqPanelY + 42, { lineBreak: false });
+      .text(moneyComma(data.equityValue, sym, code), panelX + 12, eqPanelY + 42, { lineBreak: false });
 
     doc
       .font(fonts.regular)
       .fontSize(8)
       .fillColor("#6B7280")
-      .text(`EV (${moneyComma(ev, sym)}) − Total Debt (${moneyComma(debt, sym)}) + Cash (${moneyComma(cash, sym)})`, panelX + 12, eqPanelY + 78, { lineBreak: false });
+      .text(`EV (${moneyComma(ev, sym, code)}) − Total Debt (${moneyComma(debt, sym, code)}) + Cash (${moneyComma(cash, sym, code)})`, panelX + 12, eqPanelY + 78, { lineBreak: false });
 
     narrativeY = eqPanelY + eqPanelH + 30;
   }
@@ -1174,7 +1191,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
         .font(fonts.regular)
         .fontSize(10)
         .fillColor("#111827")
-        .text(moneyComma(value, data.currencySymbol), colX + 8, rowY + 10, { width: colW - 16, align: "center", lineBreak: false });
+        .text(moneyComma(value, data.currencySymbol, data.currencyCode), colX + 8, rowY + 10, { width: colW - 16, align: "center", lineBreak: false });
     });
 
     rowY += rowHeight;
@@ -1203,7 +1220,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
       .font(fonts.bold)
       .fontSize(10)
       .fillColor("#1F2937")
-      .text(moneyComma(ebitValue, data.currencySymbol), colX + 8, rowY + 11, { width: colW - 16, align: "center", lineBreak: false });
+      .text(moneyComma(ebitValue, data.currencySymbol, data.currencyCode), colX + 8, rowY + 11, { width: colW - 16, align: "center", lineBreak: false });
   });
 
   // Addbacks section - add more space from the main table
@@ -1295,7 +1312,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
         .font(fonts.regular)
         .fontSize(10)
         .fillColor("#111827")
-        .text(moneyComma(value, data.currencySymbol), colX + 8, addRowY + 10, { width: addYearColW - 16, align: "center", lineBreak: false });
+        .text(moneyComma(value, data.currencySymbol, data.currencyCode), colX + 8, addRowY + 10, { width: addYearColW - 16, align: "center", lineBreak: false });
     });
 
     addRowY += rowHeight;
@@ -1323,7 +1340,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     .font(fonts.bold)
     .fontSize(10)
     .fillColor("#1F2937")
-    .text(moneyComma(data.totalAddbacks || 0, data.currencySymbol), lastColX + 8, addRowY + 11, { width: addYearColW - 16, align: "center", lineBreak: false });
+    .text(moneyComma(data.totalAddbacks || 0, data.currencySymbol, data.currencyCode), lastColX + 8, addRowY + 11, { width: addYearColW - 16, align: "center", lineBreak: false });
 
   // Page number
   const footerY = PAGE.height - PAGE.marginX - 20;
@@ -1433,8 +1450,8 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
   const cardY = 210;
   const gap = 12;
   const x0 = PAGE.marginX + 26;
-  drawMetricCard(doc, fonts, x0, cardY, "Total Assets", moneyComma(totalAssets, data.currencySymbol));
-  drawMetricCard(doc, fonts, x0 + 150 + gap, cardY, "Total Liabilities", moneyComma(totalLiabilities, data.currencySymbol));
+  drawMetricCard(doc, fonts, x0, cardY, "Total Assets", moneyComma(totalAssets, data.currencySymbol, data.currencyCode));
+  drawMetricCard(doc, fonts, x0 + 150 + gap, cardY, "Total Liabilities", moneyComma(totalLiabilities, data.currencySymbol, data.currencyCode));
 
   const w = 150;
   const h = 62;
@@ -1449,7 +1466,7 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
     .font(fonts.bold)
     .fontSize(16)
     .fillColor("#111827")
-    .text(moneyComma(netAssetValue, data.currencySymbol), x3, cardY + 32, { width: w, align: "center", lineBreak: false });
+    .text(moneyComma(netAssetValue, data.currencySymbol, data.currencyCode), x3, cardY + 32, { width: w, align: "center", lineBreak: false });
 
   // Asset & Liability line-item breakdown table
   const tableY = cardY + 82;
@@ -1497,7 +1514,7 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
       .font(row.highlight ? fonts.bold : fonts.regular)
       .fontSize(9)
       .fillColor("#111827")
-      .text(moneyComma(row.value, data.currencySymbol), tableX + labelColW + 8, rowY + 7, { width: valueColW - 16, align: "right", lineBreak: false });
+      .text(moneyComma(row.value, data.currencySymbol, data.currencyCode), tableX + labelColW + 8, rowY + 7, { width: valueColW - 16, align: "right", lineBreak: false });
     rowY += rowH;
   });
 
@@ -1533,7 +1550,7 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
       .font(row.highlight ? fonts.bold : fonts.regular)
       .fontSize(9)
       .fillColor("#111827")
-      .text(moneyComma(row.value, data.currencySymbol), tableX + labelColW + 8, rowY + 7, { width: valueColW - 16, align: "right", lineBreak: false });
+      .text(moneyComma(row.value, data.currencySymbol, data.currencyCode), tableX + labelColW + 8, rowY + 7, { width: valueColW - 16, align: "right", lineBreak: false });
     rowY += rowH;
   });
 
@@ -1578,7 +1595,7 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
     .font(fonts.bold)
     .fontSize(32)
     .fillColor("#FFFFFF")
-    .text(moneyComma(netAssetValue, data.currencySymbol), panelX + 12, panelY + 34, { lineBreak: false });
+    .text(moneyComma(netAssetValue, data.currencySymbol, data.currencyCode), panelX + 12, panelY + 34, { lineBreak: false });
   doc
     .moveTo(panelX + 12, panelY + 80)
     .lineTo(panelX + panelW - 12, panelY + 80)
@@ -1952,6 +1969,7 @@ export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer
   const resolvedData: RAVDAData = {
     ...data,
     currencySymbol: data.currencySymbol ?? getCurrencySymbolForCountry(data.country),
+    currencyCode: data.currencyCode ?? getCurrencyCodeForCountry(data.country),
   };
 
   return new Promise((resolve, reject) => {

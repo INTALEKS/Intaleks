@@ -11,17 +11,17 @@ export interface CurrencyInfo {
 
 // Map of country codes to currencies
 const COUNTRY_TO_CURRENCY: Record<string, CurrencyInfo> = {
-  AU: { code: "AUD", symbol: "A$", name: "Australian Dollar" },
+  AU: { code: "AUD", symbol: "$", name: "Australian Dollar" },
   US: { code: "USD", symbol: "$", name: "US Dollar" },
   GB: { code: "GBP", symbol: "£", name: "British Pound" },
   EU: { code: "EUR", symbol: "€", name: "Euro" },
   CN: { code: "CNY", symbol: "¥", name: "Chinese Yuan" },
   JP: { code: "JPY", symbol: "¥", name: "Japanese Yen" },
   IN: { code: "INR", symbol: "₹", name: "Indian Rupee" },
-  CA: { code: "CAD", symbol: "C$", name: "Canadian Dollar" },
-  NZ: { code: "NZD", symbol: "NZ$", name: "New Zealand Dollar" },
-  SG: { code: "SGD", symbol: "S$", name: "Singapore Dollar" },
-  HK: { code: "HKD", symbol: "HK$", name: "Hong Kong Dollar" },
+  CA: { code: "CAD", symbol: "$", name: "Canadian Dollar" },
+  NZ: { code: "NZD", symbol: "$", name: "New Zealand Dollar" },
+  SG: { code: "SGD", symbol: "$", name: "Singapore Dollar" },
+  HK: { code: "HKD", symbol: "$", name: "Hong Kong Dollar" },
   KR: { code: "KRW", symbol: "₩", name: "South Korean Won" },
   TH: { code: "THB", symbol: "฿", name: "Thai Baht" },
   MY: { code: "MYR", symbol: "RM", name: "Malaysian Ringgit" },
@@ -67,10 +67,10 @@ const DEFAULT_CURRENCY: CurrencyInfo = { code: "AUD", symbol: "A$", name: "Austr
 
 // Map of calculator country names (lowercase) to currency info
 const CALCULATOR_COUNTRY_TO_CURRENCY: Record<string, CurrencyInfo> = {
-  australia: { code: "AUD", symbol: "A$", name: "Australian Dollar" },
+  australia: { code: "AUD", symbol: "$", name: "Australian Dollar" },
   "united states": { code: "USD", symbol: "$", name: "US Dollar" },
   "united kingdom": { code: "GBP", symbol: "£", name: "British Pound" },
-  canada: { code: "CAD", symbol: "C$", name: "Canadian Dollar" },
+  canada: { code: "CAD", symbol: "$", name: "Canadian Dollar" },
   china: { code: "CNY", symbol: "¥", name: "Chinese Yuan" },
   indonesia: { code: "IDR", symbol: "Rp", name: "Indonesian Rupiah" },
 };
@@ -279,20 +279,22 @@ export async function convertPrice(targetCurrency: string): Promise<{ amount: nu
 }
 
 /**
- * Format price with currency symbol
+ * Format price with currency symbol and ISO code suffix for dollar currencies.
+ * e.g. "$50 AUD", "$50 USD", "$50 CAD", "£50", "¥50"
  */
 export function formatPrice(amount: number, currency: CurrencyInfo): string {
-  // For currencies that typically don't show decimals (JPY, KRW, etc.)
   const noDecimalCurrencies = ["JPY", "KRW", "VND", "IDR"];
   const decimals = noDecimalCurrencies.includes(currency.code) ? 0 : 0;
 
-  // Format with proper thousand separators
   const formattedNumber = amount.toLocaleString("en-US", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
 
-  return `${currency.symbol}${formattedNumber}`;
+  const dollarCurrencies = ["AUD", "USD", "CAD", "NZD", "SGD", "HKD"];
+  const suffix = dollarCurrencies.includes(currency.code) ? ` ${currency.code}` : "";
+
+  return `${currency.symbol}${formattedNumber}${suffix}`;
 }
 
 /**

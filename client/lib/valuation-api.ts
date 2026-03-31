@@ -76,6 +76,8 @@ export interface ValuationReportData {
   generatedDate?: string;
   /** Days in each reporting period, keyed by the year label string */
   daysInPeriod?: Record<string, number>;
+  /** ISO 4217 currency code, e.g. "AUD", "USD", "CAD" */
+  currencyCode?: string;
 
   // Questionnaire data for RAVDA Scorecard
   questionnaireScore?: number;

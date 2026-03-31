@@ -53,6 +53,8 @@ export interface ValuationPDFData {
   cashEquivalents?: number;
   equityValue?: number;
   currencySymbol?: string;
+  /** ISO 4217 currency code, e.g. "AUD", "USD", "CAD" */
+  currencyCode?: string;
 
   // Optional fields
   startedYear?: string;
@@ -237,6 +239,7 @@ export async function generateValuationPDF(data: ValuationPDFData): Promise<Buff
     equityValue: data.equityValue,
     currencySymbol: data.currencySymbol,
     daysInPeriod: data.daysInPeriod,
+    currencyCode: data.currencyCode,
   };
 
   return generateRAVDAScorecardPDF(ravdaData);
