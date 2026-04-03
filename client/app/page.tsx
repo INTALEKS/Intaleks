@@ -226,7 +226,7 @@ export default function Home() {
         stats={stats}
       />
 
-      <FoundersSay />
+      {/* <FoundersSay /> */}
 
       <WhySmallBusinessesLoveUs />
 
