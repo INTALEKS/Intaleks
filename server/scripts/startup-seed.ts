@@ -56,7 +56,7 @@ async function startupSeed() {
     // Check and seed subscription plan
     let plan = await prisma.subscriptionPlan.findUnique({ where: { name: "One-Off" } });
 
-    const planFeatures = ["Worldwide Industry Multiples (US, Canada, UK, Australia, China, Indonesia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking", "Unlimited Valuations", "Export to Excel/PDF"];
+    const planFeatures = ["Worldwide Industry Multiples (US, Canada, UK, Australia, China, Indonesia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking", "Unlimited Valuations", "Export to PDF"];
 
     if (!plan) {
       console.log("🌱 Seeding subscription plan...");

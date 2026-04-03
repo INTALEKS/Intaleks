@@ -1,5 +1,9 @@
 import Image from "next/image";
 
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 const cards = [
   {
     icon: (
@@ -58,11 +62,11 @@ export function BusinessValuationFeatures() {
             <span className="flex items-center gap-1.5 text-gray-700">
               <span className="text-blue-500 font-bold">✓</span> No spreadsheets
             </span>
-            <span className="flex items-center gap-1.5 text-gray-500">
-              <span className="text-gray-400 font-bold">✓</span> No complex formulas
+            <span className="flex items-center gap-1.5 text-gray-700">
+              <span className="text-blue-500 font-bold">✓</span> No complex formulas
             </span>
-            <span className="flex items-center gap-1.5 text-gray-500">
-              <span className="text-gray-400 font-bold">✓</span> No financial jargon
+            <span className="flex items-center gap-1.5 text-gray-700">
+              <span className="text-blue-500 font-bold">✓</span> No financial jargon
             </span>
           </div>
         </div>
@@ -114,7 +118,7 @@ export function BusinessValuationFeatures() {
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="text-center mb-6">
-            <h2 className="text-2xl md:text-3xl font-bold mb-3">Never undersell or overpay again</h2>
+            <h2 className="text-2xl md:text-3xl font-bold mb-3">Never Undersell or Overpay Again</h2>
             <p className="text-gray-600 text-sm max-w-xl mx-auto">When your valuation is clear, every decision becomes easier — whether you&apos;re buying, selling, or planning ahead.</p>
           </div>
 
@@ -135,13 +139,18 @@ export function BusinessValuationFeatures() {
           </div>
 
           {/* CTA buttons */}
-          <div className="flex flex-wrap justify-center gap-4 mt-10">
-            <a href="/calculator" className="px-6 py-3 bg-white hover:bg-gray-50 text-blue-600 text-sm font-semibold rounded-lg transition-colors shadow-sm">
-              Access Calculator
-            </a>
-            <a href="/valuation-sample.pdf" className="px-6 py-3 bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold rounded-lg border border-blue-400 transition-colors flex items-center gap-1">
-              View Valuation Sample <span>›</span>
-            </a>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-6">
+            <Link href="/calculator">
+              <Button className="bg-black hover:bg-gray-800 px-6 py-5 text-base">
+                Access Calculator
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+            <Link href="/valuation-sample.pdf" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" className="border-blue-500 text-blue-500 hover:bg-blue-50 px-6 py-5 text-base">
+                View Valuation Sample
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
