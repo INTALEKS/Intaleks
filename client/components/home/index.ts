@@ -11,6 +11,7 @@ export { PricingSection } from "./PricingSection";
 export { FAQSection } from "./FAQSection";
 export { AboutFounder } from "./AboutFounder";
 export { CountriesWeService } from "./CountriesWeService";
+export { BusinessValuationFeatures } from "./BusinessValuationFeatures";
 export { Newsletter } from "./Newsletter";
 export { Footer } from "./Footer";
 export { ExecutiveBusinessValuers } from "./ExecutiveBusinessValuers";
