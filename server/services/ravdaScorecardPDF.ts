@@ -1149,9 +1149,9 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   // Financial data rows
   const financialRows = [
     { label: "Sales", key: "sales" as const },
-    { label: "Gross Profit", key: "grossProfit" as const },
     { label: "COGS", key: "cogs" as const },
-    { label: "Wages & on Costs", key: "operatingExpenses" as const },
+    { label: "Gross Profit", key: "grossProfit" as const },
+    { label: "Operating Expenses", key: "operatingExpenses" as const },
     { label: "Net Profit and Loss", key: "netProfitAndLoss" as const },
     { label: "Interest Expense", key: "interestExpense" as const },
     { label: "Interest Income", key: "interestIncome" as const },
