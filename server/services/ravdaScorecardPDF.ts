@@ -82,6 +82,16 @@ export interface RAVDAData {
     values: Record<string, number>;
   }>;
   totalAddbacks?: number;
+  /**
+   * Per-year Adjusted EBIT values.
+   * adjustedEbitPerYear[yearLabel] = EBIT_year + Addbacks_year for that year.
+   */
+  adjustedEbitPerYear?: Record<string, number>;
+  /**
+   * Per-year total add-backs.
+   * totalAddbacksPerYear[yearLabel] = sum of all add-back items for that year.
+   */
+  totalAddbacksPerYear?: Record<string, number>;
   assets?: {
     plantEquipment: number;
     inventory: number;
@@ -734,20 +744,23 @@ function drawInputRow(doc: PDFKit.PDFDocument, fonts: PdfFonts, y: number, label
 /**
  * Returns a short two-line header for a financial column.
  *
- * New format:  "Last FY - 31/03/2026"  → line1="Last FY"  line2="31/03/2026"
- * New format:  "1Yr Prev"              → line1="1Yr Prev" line2=""
- * Legacy format: "Year 2023"           → line1="2023"     line2=""
+ * Supported formats:
+ * - With date: "2Yr Prev - 31/03/2026"  → line1="2Yr Prev"  line2="31/03/2026"
+ * - With date: "Year 1 - 31/03/2026"    → line1="Year 1"    line2="31/03/2026"
+ * - Without date: "2Yr Prev"            → line1="2Yr Prev"  line2=""
+ * - Without date: "Year 1"              → line1="Year 1"    line2=""
+ * - Legacy: "Year 2023"                 → line1="2023"      line2=""
  */
 function parseColumnHeader(year: string): { line1: string; line2: string } {
-  // New format: "ColumnType - DD/MM/YYYY"
-  const newFmt = year.match(/^(.+?)\s*-\s*(\d{2}\/\d{2}\/\d{4})$/);
-  if (newFmt) return { line1: newFmt[1].trim(), line2: newFmt[2].trim() };
+  // Format with date: "ColumnType - DD/MM/YYYY"
+  const withDate = year.match(/^(.+?)\s*-\s*(\d{2}\/\d{2}\/\d{4})$/);
+  if (withDate) return { line1: withDate[1].trim(), line2: withDate[2].trim() };
 
-  // Legacy format: "Year 2023"
-  const legacyFmt = year.match(/^Year\s+(\d{4})$/);
-  if (legacyFmt) return { line1: legacyFmt[1], line2: "" };
+  // Legacy format: "Year 2023" → extract just the year number
+  const legacy = year.match(/^Year\s+(\d{4})$/);
+  if (legacy) return { line1: legacy[1], line2: "" };
 
-  // Fallback: use as-is
+  // Default: use column type as-is (e.g., "2Yr Prev", "Year 1", "Year 2", "Year 3")
   return { line1: year, line2: "" };
 }
 
@@ -930,8 +943,41 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
     .fillColor("#6B7280")
     .text(`${toDisplayLabel(data.industry) || "Retail"} • ${sanitizeCountry(data.country)}`, PAGE.marginX, 150, { lineBreak: false });
 
-  // Metric cards - Row 1 (increased spacing from industry line)
-  const cardsY1 = 190;
+  // Method description box - positioned below industry line
+  const methodDescY = 172;
+  const methodDescW = PAGE.width - PAGE.marginX * 2;
+  const methodDescH = 64;
+
+  // Determine method title and text based on valuation method
+  const methodTitle = data.valuationMethod === "asset" ? "Asset Method" : "Profit Method";
+  const methodText = data.valuationMethod === "asset" ? "This asset method is effective because it values a business based on verifiable assets and liabilities." : "This method is effective because it reflects the earning capacity and operational performance of the business.";
+
+  doc.roundedRect(PAGE.marginX, methodDescY, methodDescW, methodDescH, 8).fillAndStroke("#F0F9FF", "#BFDBFE");
+
+  // Method title
+  doc
+    .font(fonts.semibold)
+    .fontSize(12)
+    .fillColor("#1E40AF")
+    .text(methodTitle, PAGE.marginX + 16, methodDescY + 12, {
+      width: methodDescW - 32,
+      align: "center",
+      lineBreak: false,
+    });
+
+  // Method description
+  doc
+    .font(fonts.regular)
+    .fontSize(9)
+    .fillColor("#1E40AF")
+    .text(methodText, PAGE.marginX + 16, methodDescY + 32, {
+      width: methodDescW - 32,
+      align: "center",
+      lineGap: 1.5,
+    });
+
+  // Metric cards - Row 1 (increased spacing from method description)
+  const cardsY1 = 250;
   const cardW = 160;
   const gap = 10;
   const x0 = PAGE.marginX;
@@ -1271,15 +1317,68 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
       .text(headerText, colX + 4, addHeaderY + (line2 ? 6 : 12), { width: addYearColW - 8, align: "center", lineBreak: false });
   });
 
-  // Addback rows
-  const addbacks = (data.addbacks || []).slice(0, 2);
-  let addRowY = addHeaderY + 32;
+  // Addback rows - only show addbacks with actual data (non-zero values or reasons)
+  const allAddbacks = data.addbacks || [];
+  const addbacks = allAddbacks.filter((addback) => {
+    // Check if addback has a reason
+    if (addback.reason && addback.reason.trim().length > 0) return true;
 
-  addbacks.forEach((addback, idx) => {
-    // Fill row background
-    doc.rect(tableX, addRowY, tableW, rowHeight).fill(idx % 2 === 0 ? "#FFFFFF" : "#F9FAFB");
+    // Check if addback has any non-zero values
+    const hasNonZeroValue = Object.values(addback.values || {}).some((val) => val > 0);
+    return hasNonZeroValue;
+  });
 
-    // Draw all cell borders
+  // Only render addback rows if there are any
+  if (addbacks.length > 0) {
+    let addRowY = addHeaderY + 32;
+
+    addbacks.forEach((addback, idx) => {
+      // Fill row background
+      doc.rect(tableX, addRowY, tableW, rowHeight).fill(idx % 2 === 0 ? "#FFFFFF" : "#F9FAFB");
+
+      // Draw all cell borders
+      doc.rect(tableX, addRowY, addbackW, rowHeight).stroke(gridColor);
+      doc.rect(tableX + addbackW, addRowY, reasonW, rowHeight).stroke(gridColor);
+      years.forEach((year, yearIdx) => {
+        const colX = tableX + addbackW + reasonW + yearIdx * addYearColW;
+        doc.rect(colX, addRowY, addYearColW, rowHeight).stroke(gridColor);
+      });
+
+      doc
+        .font(fonts.regular)
+        .fontSize(10)
+        .fillColor("#111827")
+        .text(`Addback ${idx + 1}`, tableX + 12, addRowY + 10, { lineBreak: false });
+
+      const reason = (addback?.reason || "")
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(" ");
+
+      const fontSize = reason.length > 15 ? 9 : 10;
+      doc
+        .font(fonts.regular)
+        .fontSize(fontSize)
+        .fillColor("#111827")
+        .text(reason, tableX + addbackW + 12, addRowY + 10, { width: reasonW - 24, lineBreak: false, ellipsis: true });
+
+      years.forEach((year, yearIdx) => {
+        const colX = tableX + addbackW + reasonW + yearIdx * addYearColW;
+        const value = addback?.values?.[year] || 0;
+        doc
+          .font(fonts.regular)
+          .fontSize(10)
+          .fillColor("#111827")
+          .text(moneyComma(value, data.currencySymbol, data.currencyCode), colX + 8, addRowY + 10, { width: addYearColW - 16, align: "center", lineBreak: false });
+      });
+
+      addRowY += rowHeight;
+    });
+
+    // Total addbacks row
+    doc.rect(tableX, addRowY, tableW, rowHeight).fill("#A5C9EB");
+
+    // Draw all cell borders for total row
     doc.rect(tableX, addRowY, addbackW, rowHeight).stroke(gridColor);
     doc.rect(tableX + addbackW, addRowY, reasonW, rowHeight).stroke(gridColor);
     years.forEach((year, yearIdx) => {
@@ -1288,59 +1387,31 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     });
 
     doc
-      .font(fonts.regular)
+      .font(fonts.bold)
       .fontSize(10)
-      .fillColor("#111827")
-      .text(`Addback ${idx + 1}`, tableX + 12, addRowY + 10, { lineBreak: false });
+      .fillColor("#1F2937")
+      .text("TOTAL ADDBACKS", tableX + 12, addRowY + 11, { lineBreak: false });
 
-    const reason = (addback?.reason || "")
-      .split("-")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
-
-    const fontSize = reason.length > 15 ? 9 : 10;
-    doc
-      .font(fonts.regular)
-      .fontSize(fontSize)
-      .fillColor("#111827")
-      .text(reason, tableX + addbackW + 12, addRowY + 10, { width: reasonW - 24, lineBreak: false, ellipsis: true });
-
+    // Show total for each year
     years.forEach((year, yearIdx) => {
       const colX = tableX + addbackW + reasonW + yearIdx * addYearColW;
-      const value = addback?.values?.[year] || 0;
+      const yearTotal = data.totalAddbacksPerYear?.[year] || 0;
       doc
-        .font(fonts.regular)
+        .font(fonts.bold)
         .fontSize(10)
-        .fillColor("#111827")
-        .text(moneyComma(value, data.currencySymbol, data.currencyCode), colX + 8, addRowY + 10, { width: addYearColW - 16, align: "center", lineBreak: false });
+        .fillColor("#1F2937")
+        .text(moneyComma(yearTotal, data.currencySymbol, data.currencyCode), colX + 8, addRowY + 11, { width: addYearColW - 16, align: "center", lineBreak: false });
     });
-
-    addRowY += rowHeight;
-  });
-
-  // Total addbacks row
-  doc.rect(tableX, addRowY, tableW, rowHeight).fill("#A5C9EB");
-
-  // Draw all cell borders for total row
-  doc.rect(tableX, addRowY, addbackW, rowHeight).stroke(gridColor);
-  doc.rect(tableX + addbackW, addRowY, reasonW, rowHeight).stroke(gridColor);
-  years.forEach((year, yearIdx) => {
-    const colX = tableX + addbackW + reasonW + yearIdx * addYearColW;
-    doc.rect(colX, addRowY, addYearColW, rowHeight).stroke(gridColor);
-  });
-
-  doc
-    .font(fonts.bold)
-    .fontSize(10)
-    .fillColor("#1F2937")
-    .text("TOTAL ADDBACKS", tableX + 12, addRowY + 11, { lineBreak: false });
-
-  const lastColX = tableX + addbackW + reasonW + (years.length - 1) * addYearColW;
-  doc
-    .font(fonts.bold)
-    .fontSize(10)
-    .fillColor("#1F2937")
-    .text(moneyComma(data.totalAddbacks || 0, data.currencySymbol, data.currencyCode), lastColX + 8, addRowY + 11, { width: addYearColW - 16, align: "center", lineBreak: false });
+  } else {
+    // If no addbacks, show a message
+    const noAddbackY = addHeaderY + 32;
+    doc.rect(tableX, noAddbackY, tableW, rowHeight).fill("#F9FAFB");
+    doc
+      .font(fonts.regular)
+      .fontSize(10)
+      .fillColor("#6B7280")
+      .text("No addbacks provided", tableX + 12, noAddbackY + 10, { width: tableW - 24, align: "center", lineBreak: false });
+  }
 
   // Page number
   const footerY = PAGE.height - PAGE.marginX - 20;
@@ -1405,7 +1476,6 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
   const strengthRating = getStrengthRating(strengthScore);
 
   doc.font(fonts.semibold).fontSize(14).fillColor("#111827").text("Asset Method Summary", PAGE.marginX, 94, { lineBreak: false });
-  // doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Business Valuation Report", 0, 135, { width: PAGE.width, align: "center", lineBreak: false });
 
   // Company info line with justified spacing
   const infoY = 175;
@@ -1447,7 +1517,36 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
     .text(`Industry: ${toDisplayLabel(data.industry) || "N/A"}`, industryX, infoY, { lineBreak: false, continued: true });
   doc.font(fonts.regular).fontSize(13).fillColor("#9CA3AF").text(`(Base: ${baseMultiple}x)`, { lineBreak: false });
 
-  const cardY = 210;
+  // Method description box - positioned below company info line
+  const methodDescY = 197;
+  const methodDescW = PAGE.width - PAGE.marginX * 2;
+  const methodDescH = 64;
+
+  doc.roundedRect(PAGE.marginX, methodDescY, methodDescW, methodDescH, 8).fillAndStroke("#F0F9FF", "#BFDBFE");
+
+  // Method title
+  doc
+    .font(fonts.semibold)
+    .fontSize(12)
+    .fillColor("#1E40AF")
+    .text("Asset Method", PAGE.marginX + 16, methodDescY + 12, {
+      width: methodDescW - 32,
+      align: "center",
+      lineBreak: false,
+    });
+
+  // Method description
+  doc
+    .font(fonts.regular)
+    .fontSize(9)
+    .fillColor("#1E40AF")
+    .text("This asset method is effective because it values a business based on verifiable assets and liabilities.", PAGE.marginX + 16, methodDescY + 32, {
+      width: methodDescW - 32,
+      align: "center",
+      lineGap: 1.5,
+    });
+
+  const cardY = 275;
   const gap = 12;
   const x0 = PAGE.marginX + 26;
   drawMetricCard(doc, fonts, x0, cardY, "Total Assets", moneyComma(totalAssets, data.currencySymbol, data.currencyCode));

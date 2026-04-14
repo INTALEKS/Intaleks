@@ -192,10 +192,10 @@ export default function Home() {
         <HeroSection
           title={
             <>
-              Business <span className="text-blue-500 italic">valuation</span> in a few clicks 🎯
+              Your <span className="text-blue-500 italic">Business Valuation</span> in just a few clicks
             </>
           }
-          subtitle="Find out how much your business is worth, make informed decisions"
+          subtitle="Find out what your business is worth"
           ctaText="Access Calculator"
           ctaHref="/calculator"
           secondaryCtaText="View Valuation Sample"

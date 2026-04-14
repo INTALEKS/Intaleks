@@ -58,7 +58,7 @@ export function BusinessValuationFeatures() {
             Know Your <span className="text-blue-500 italic">Business valuation</span> — Instantly
           </h2>
           <p className="text-gray-600 mb-6">With just five key numbers, instantly understand what your business is worth.</p>
-          <div className="flex flex-wrap justify-center gap-6 text-sm font-medium">
+          {/* <div className="flex flex-wrap justify-center gap-6 text-sm font-medium">
             <span className="flex items-center gap-1.5 text-gray-700">
               <span className="text-blue-500 font-bold">✓</span> No spreadsheets
             </span>
@@ -68,7 +68,7 @@ export function BusinessValuationFeatures() {
             <span className="flex items-center gap-1.5 text-gray-700">
               <span className="text-blue-500 font-bold">✓</span> No financial jargon
             </span>
-          </div>
+          </div> */}
         </div>
 
         {/* Simple Business Valuation card */}
@@ -83,7 +83,7 @@ export function BusinessValuationFeatures() {
             <p className="text-sm text-gray-600 mb-6">
               Intaleks is built for business owners, not analysts.
               <br />
-              Get fast, reliable insights without unnecessary complexity.
+              Get fast, reliable insights without the hassle—no spreadsheets, no complicated formulas, and no confusing financial jargon.
             </p>
             <ul className="space-y-3">
               {[
@@ -107,9 +107,9 @@ export function BusinessValuationFeatures() {
           </div>
 
           {/* Right — illustration */}
-          <div className="flex-1 flex items-center justify-center min-h-[240px]">
+          {/* <div className="flex-1 flex items-center justify-center min-h-[240px]">
             <Image src="/business_report.svg" alt="Business valuation report" width={400} height={300} className="w-full max-w-sm" />
-          </div>
+          </div> */}
         </div>
       </section>
 
@@ -119,21 +119,21 @@ export function BusinessValuationFeatures() {
           {/* Header */}
           <div className="text-center mb-6">
             <h2 className="text-2xl md:text-3xl font-bold mb-3">Never Undersell or Overpay Again</h2>
-            <p className="text-gray-600 text-sm max-w-xl mx-auto">When your valuation is clear, every decision becomes easier — whether you&apos;re buying, selling, or planning ahead.</p>
+            <p className="text-gray-600 max-w-xl mx-auto">When your valuation is clear, every decision becomes easier — whether you&apos;re buying, selling, or planning ahead.</p>
           </div>
 
           {/* Illustration placeholder */}
-          <div className="flex justify-center mb-10">
+          {/* <div className="flex justify-center mb-10">
             <Image src="/handshake.svg" alt="..." width={320} height={220} />
-          </div>
+          </div> */}
 
           {/* Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {cards.map((card, i) => (
               <div key={i} className="bg-white rounded-xl p-5 flex flex-col gap-3 shadow-sm">
                 <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center shrink-0">{card.icon}</div>
-                <p className="font-semibold text-gray-900 text-sm">{card.title}</p>
-                <p className="text-xs text-gray-500 leading-relaxed">{card.description}</p>
+                <p className="font-semibold text-gray-900">{card.title}</p>
+                <p className="text-sm text-gray-500 leading-relaxed">{card.description}</p>
               </div>
             ))}
           </div>

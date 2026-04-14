@@ -1,16 +1,14 @@
 "use client";
 
-import { format } from "date-fns";
-import { CalendarIcon, Info } from "lucide-react";
+import { format, parse } from "date-fns";
+import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useState } from "react";
 
-export const COLUMN_TYPES = ["2Yr Prev", "1Yr Prev", "Last FY", "Forecast Yr"] as const;
+export const COLUMN_TYPES = ["2Yr Prev", "Year 1", "Year 2", "Year 3"] as const;
 export type ColumnType = (typeof COLUMN_TYPES)[number];
 
 export interface FinancialColumn {
@@ -26,6 +24,51 @@ interface FinancialInfoSelectorProps {
 }
 
 const MAX_COLUMNS = 3;
+
+// Date input component with DD/MM/YYYY format
+function DateInput({ value, onChange, disabled }: { value: Date | undefined; onChange: (date: Date | undefined) => void; disabled: boolean }) {
+  const [inputValue, setInputValue] = useState(value ? format(value, "dd/MM/yyyy") : "");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+
+    // Only allow digits and slashes
+    const cleaned = newValue.replace(/[^\d/]/g, "");
+
+    // Limit length
+    if (cleaned.length > 10) return;
+
+    setInputValue(cleaned);
+
+    // Try to parse when we have a complete date
+    if (cleaned.length === 10) {
+      try {
+        const parsed = parse(cleaned, "dd/MM/yyyy", new Date());
+        if (!isNaN(parsed.getTime())) {
+          // Validate the date is reasonable
+          const year = parsed.getFullYear();
+          if (year >= 1900 && year <= 2100) {
+            onChange(parsed);
+          }
+        }
+      } catch {
+        // Invalid date, don't update
+      }
+    }
+  };
+
+  const handleBlur = () => {
+    // Reset to formatted value on blur if we have a valid date
+    if (value) {
+      setInputValue(format(value, "dd/MM/yyyy"));
+    } else if (inputValue.length < 10) {
+      // Clear incomplete input
+      setInputValue("");
+    }
+  };
+
+  return <Input type="text" placeholder="DD/MM/YYYY" value={inputValue} onChange={handleChange} onBlur={handleBlur} disabled={disabled} maxLength={10} className="w-full h-10 text-sm bg-white border-gray-300 text-center font-mono tracking-wide" />;
+}
 
 export function FinancialInfoSelector({ columns, onColumnsChange, disabled = false }: FinancialInfoSelectorProps) {
   const selectedTypes = new Set(columns.map((c) => c.type));
@@ -65,7 +108,6 @@ export function FinancialInfoSelector({ columns, onColumnsChange, disabled = fal
           {/* Checkbox header row */}
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50">
-              {/* <th className="px-4 py-3" /> */}
               <td className="px-4 py-3">
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-medium text-gray-700">Select most relevant years</span>
@@ -158,21 +200,7 @@ export function FinancialInfoSelector({ columns, onColumnsChange, disabled = fal
                 const col = columns.find((c) => c.type === type);
                 return (
                   <td key={type} className="px-3 py-3">
-                    {col ? (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" disabled={disabled} className={cn("w-full h-10 justify-start text-left font-normal text-sm bg-white border-gray-300 hover:bg-gray-50 px-3", !col.periodDate && "text-gray-400")}>
-                            <CalendarIcon className="mr-2 h-4 w-4 shrink-0 text-gray-500" />
-                            <span className="truncate">{col.periodDate ? format(col.periodDate, "dd/MM/yyyy") : "Pick date"}</span>
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={col.periodDate} onSelect={(date) => updateColumn(type, { periodDate: date })} initialFocus />
-                        </PopoverContent>
-                      </Popover>
-                    ) : (
-                      <div className="w-full h-10 bg-gray-100 rounded-md border border-gray-200" />
-                    )}
+                    {col ? <DateInput value={col.periodDate} onChange={(date) => updateColumn(type, { periodDate: date })} disabled={disabled} /> : <div className="w-full h-10 bg-gray-100 rounded-md border border-gray-200" />}
                   </td>
                 );
               })}
@@ -186,14 +214,14 @@ export function FinancialInfoSelector({ columns, onColumnsChange, disabled = fal
 
 /**
  * Converts FinancialColumn[] into the year label strings used throughout the calculator.
- * Label format: "Last FY - 31/03/2026" when a date is set, otherwise just "Last FY".
+ * Label format: "Year 1 - 31/03/2026" when a date is set, otherwise just "Year 1".
  */
 export function columnsToYearLabels(columns: FinancialColumn[]): string[] {
   return columns.map((col) => (col.periodDate ? `${col.type} - ${format(col.periodDate, "dd/MM/yyyy")}` : col.type));
 }
 
 /**
- * Returns a short display label for PDF headers (e.g. "Last FY\n31/03/2026").
+ * Returns a short display label for PDF headers (e.g. "Year 1\n31/03/2026").
  */
 export function columnToShortLabel(col: FinancialColumn): string {
   return col.periodDate ? `${col.type}\n${format(col.periodDate, "dd/MM/yyyy")}` : col.type;

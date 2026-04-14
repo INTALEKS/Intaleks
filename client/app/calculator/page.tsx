@@ -224,9 +224,9 @@ export default function CalculatorPage() {
           periodDate: col.periodDate ? new Date(col.periodDate) : undefined,
         }))
       : [
-          { type: "1Yr Prev" as const, daysInPeriod: 365, periodDate: undefined },
-          { type: "Last FY" as const, daysInPeriod: 365, periodDate: undefined },
-          { type: "Forecast Yr" as const, daysInPeriod: 365, periodDate: undefined },
+          { type: "2Yr Prev" as const, daysInPeriod: 365, periodDate: undefined },
+          { type: "Year 1" as const, daysInPeriod: 365, periodDate: undefined },
+          { type: "Year 2" as const, daysInPeriod: 365, periodDate: undefined },
         ],
   );
 
