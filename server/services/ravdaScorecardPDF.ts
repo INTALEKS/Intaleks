@@ -1120,9 +1120,103 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   // Title should always be "Valuation Method"
   doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Method", PAGE.marginX, 76, { lineBreak: false });
 
+  // Subtitle text
+  doc.font(fonts.regular).fontSize(12).fillColor("#111827").text("Based on your results the following valuation method is being used:", PAGE.marginX, 110, { lineBreak: false });
+
+  // Method toggle cards section
+  const toggleY = 140;
+  const cardWidth = 220;
+  const cardHeight = 90;
+  const cardGap = 30;
+  const totalWidth = cardWidth * 2 + cardGap;
+  const startX = (PAGE.width - totalWidth) / 2;
+
+  const isAssetMethod = data.valuationMethod === "asset";
+  const isProfitMethod = data.valuationMethod === "profit";
+
+  // Asset Method Card (left)
+  const assetCardX = startX;
+  if (isAssetMethod) {
+    // Selected state - white background with black border
+    doc.roundedRect(assetCardX, toggleY, cardWidth, cardHeight, 8).fillAndStroke("#FFFFFF", "#000000");
+    doc.lineWidth(2);
+    doc.roundedRect(assetCardX, toggleY, cardWidth, cardHeight, 8).stroke("#000000");
+  } else {
+    // Unselected state - white background with gray border
+    doc.roundedRect(assetCardX, toggleY, cardWidth, cardHeight, 8).fillAndStroke("#FFFFFF", "#D1D5DB");
+  }
+
+  // Asset Method radio button (circle)
+  const radioX = assetCardX + 20;
+  const radioY = toggleY + 20;
+  const radioRadius = 8;
+  doc.circle(radioX, radioY, radioRadius).stroke(isAssetMethod ? "#000000" : "#D1D5DB");
+  if (!isAssetMethod) {
+    // Empty circle for unselected
+    doc.circle(radioX, radioY, radioRadius).fillAndStroke("#FFFFFF", "#D1D5DB");
+  }
+
+  // Asset Method title
+  doc
+    .font(fonts.bold)
+    .fontSize(12)
+    .fillColor(isAssetMethod ? "#000000" : "#6B7280")
+    .text("Asset Method", assetCardX + 40, toggleY + 14, { lineBreak: false });
+
+  // Asset Method description
+  doc
+    .font(fonts.regular)
+    .fontSize(9)
+    .fillColor(isAssetMethod ? "#000000" : "#6B7280")
+    .text("This asset method is effective because it values a business based on verifiable assets and liabilities.", assetCardX + 15, toggleY + 38, {
+      width: cardWidth - 30,
+      align: "left",
+      lineGap: 1.2,
+    });
+
+  // Profit Method Card (right)
+  const profitCardX = startX + cardWidth + cardGap;
+  if (isProfitMethod) {
+    // Selected state - black background
+    doc.roundedRect(profitCardX, toggleY, cardWidth, cardHeight, 8).fill("#000000");
+  } else {
+    // Unselected state - white background with gray border
+    doc.roundedRect(profitCardX, toggleY, cardWidth, cardHeight, 8).fillAndStroke("#FFFFFF", "#D1D5DB");
+  }
+
+  // Profit Method radio button (circle)
+  const profitRadioX = profitCardX + 20;
+  const profitRadioY = toggleY + 20;
+  if (isProfitMethod) {
+    // Filled circle for selected
+    doc.circle(profitRadioX, profitRadioY, radioRadius).fillAndStroke("#FFFFFF", "#FFFFFF");
+    doc.circle(profitRadioX, profitRadioY, radioRadius - 3).fill("#FFFFFF");
+  } else {
+    // Empty circle for unselected
+    doc.circle(profitRadioX, profitRadioY, radioRadius).fillAndStroke("#FFFFFF", "#D1D5DB");
+  }
+
+  // Profit Method title
+  doc
+    .font(fonts.bold)
+    .fontSize(12)
+    .fillColor(isProfitMethod ? "#FFFFFF" : "#6B7280")
+    .text("Profit Method", profitCardX + 40, toggleY + 14, { lineBreak: false });
+
+  // Profit Method description
+  doc
+    .font(fonts.regular)
+    .fontSize(9)
+    .fillColor(isProfitMethod ? "#FFFFFF" : "#6B7280")
+    .text("This method is effective because it reflects the earning capacity and operational performance of the business.", profitCardX + 15, toggleY + 38, {
+      width: cardWidth - 30,
+      align: "left",
+      lineGap: 1.2,
+    });
+
   // Year selection section - show column type and period date
   const years = (data.financialYears || []).slice(0, 3);
-  let yearY = 136;
+  let yearY = toggleY + cardHeight + 40;
 
   years.forEach((year, idx) => {
     const { line1, line2 } = parseColumnHeader(year);
