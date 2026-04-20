@@ -213,6 +213,13 @@ export default function CalculatorPage() {
 
   const calculatePreviewMutation = useCalculatePreview();
 
+  // Auto-select Australia as default country if no country is selected
+  useEffect(() => {
+    if (!country && isInitialMount) {
+      setCountry("australia");
+    }
+  }, [country, isInitialMount]);
+
   // ============================================
   // STEP 2: Financial Data State
   // ============================================
