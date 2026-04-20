@@ -1257,6 +1257,53 @@ export default function CalculatorPage() {
                   <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, (totalAddbacksByYear[year] || 0).toLocaleString()]))} adjustedEbitByYear={adjustedEbitByYear} disabled={!isAuthenticated || !hasCalculatorAccess} currencySymbol={currencySymbol} currencyCode={currencyCode} />
                 </div>
 
+                {/* Adjusted EBIT Calculation Breakdown */}
+                <div className="mt-6 border border-blue-300 rounded-lg overflow-hidden">
+                  <div className="bg-blue-500 px-4 py-3">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wide">Adjusted EBIT Calculation</h3>
+                  </div>
+                  <div className="p-4 bg-white">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {financialYears.map((year) => {
+                        const ebit = calculatedMetrics[year]?.ebit || 0;
+                        const addbacks = totalAddbacksByYear[year] || 0;
+                        const adjustedEbit = adjustedEbitByYear[year] || 0;
+
+                        return (
+                          <div key={year} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <div className="text-sm font-semibold text-gray-700 mb-3 text-center">{year}</div>
+                            <div className="space-y-2 text-sm">
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-600">EBIT:</span>
+                                <span className="font-medium text-gray-900">
+                                  {formatCurrency(ebit, currencySymbol)}
+                                  {currencyCode !== "AUD" && currencyCode !== "USD" && currencyCode !== "CAD" ? "" : ` ${currencyCode}`}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-600">+ Addbacks:</span>
+                                <span className="font-medium text-gray-900">
+                                  {formatCurrency(addbacks, currencySymbol)}
+                                  {currencyCode !== "AUD" && currencyCode !== "USD" && currencyCode !== "CAD" ? "" : ` ${currencyCode}`}
+                                </span>
+                              </div>
+                              <div className="border-t border-gray-300 pt-2 mt-2">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-bold text-red-700">= Adjusted EBIT:</span>
+                                  <span className="font-bold text-red-700">
+                                    {formatCurrency(adjustedEbit, currencySymbol)}
+                                    {currencyCode !== "AUD" && currencyCode !== "USD" && currencyCode !== "CAD" ? "" : ` ${currencyCode}`}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Equity Value Calculation — China & Indonesia only */}
                 {(country.toLowerCase() === "china" || country.toLowerCase() === "indonesia") && (
                   <div className="mt-6 border border-blue-300 rounded-lg overflow-hidden">
