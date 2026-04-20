@@ -42,7 +42,6 @@ const financialMetrics = [
   { key: "netProfitAndLoss", label: "Net profit and Loss", placeholder: "", isInput: false }, // Calculated: Gross Profit - Operating Expenses
   { key: "interestExpense", label: "Interest Expense", placeholder: "10", isInput: true },
   { key: "interestIncome", label: "Interest Income", placeholder: "5", isInput: true },
-  { key: "taxExpense", label: "Tax Expense", placeholder: "0", isInput: true },
 ];
 
 // Type for persisted calculator state
@@ -294,14 +293,13 @@ export default function CalculatorPage() {
       const operatingExpenses = parseFloat(financialData?.operatingExpenses?.[year] as string) || 0;
       const interestExpense = parseFloat(financialData?.interestExpense?.[year] as string) || 0;
       const interestIncome = parseFloat(financialData?.interestIncome?.[year] as string) || 0;
-      const taxExpense = parseFloat(financialData?.taxExpense?.[year] as string) || 0;
 
       // Calculated values
       const grossProfit = sales + otherIncome - cogs; // Gross Profit = Sales + Other Income - COGS
       const netProfitAndLoss = grossProfit - operatingExpenses; // Net Profit = Gross Profit - Operating Expenses
 
-      // EBIT = Net Profit + Interest Expense - Interest Income - Tax Expense
-      const ebit = netProfitAndLoss + interestExpense - interestIncome - taxExpense;
+      // EBIT = Net Profit + Interest Expense - Interest Income
+      const ebit = netProfitAndLoss + interestExpense - interestIncome;
 
       metrics[year] = {
         sales,
@@ -312,7 +310,6 @@ export default function CalculatorPage() {
         netProfitAndLoss,
         interestExpense,
         interestIncome,
-        taxExpense,
         ebit,
       };
     });
@@ -446,7 +443,7 @@ export default function CalculatorPage() {
 
       if (selectedMethod === "profit") {
         // Convert financial data to proper format
-        const formattedFinancialData: Record<string, { sales: number; otherIncome: number; cogs: number; operatingExpenses: number; interestExpense: number; interestIncome: number; taxExpense: number }> = {};
+        const formattedFinancialData: Record<string, { sales: number; otherIncome: number; cogs: number; operatingExpenses: number; interestExpense: number; interestIncome: number }> = {};
         financialYears.forEach((year) => {
           formattedFinancialData[year] = {
             sales: parseFloat((financialData?.sales?.[year] as string) || "0"),
@@ -455,7 +452,6 @@ export default function CalculatorPage() {
             operatingExpenses: parseFloat((financialData?.operatingExpenses?.[year] as string) || "0"),
             interestExpense: parseFloat((financialData?.interestExpense?.[year] as string) || "0"),
             interestIncome: parseFloat((financialData?.interestIncome?.[year] as string) || "0"),
-            taxExpense: parseFloat((financialData?.taxExpense?.[year] as string) || "0"),
           };
         });
 
@@ -1258,21 +1254,7 @@ export default function CalculatorPage() {
                 </div>
 
                 <div className="mt-6">
-                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, (totalAddbacksByYear[year] || 0).toLocaleString()]))} disabled={!isAuthenticated || !hasCalculatorAccess} currencySymbol={currencySymbol} currencyCode={currencyCode} />
-                </div>
-
-                <div className="mt-6">
-                  <div className="p-4 bg-red-50">
-                    <div className="text-sm font-bold text-red-700 uppercase mb-2">Adjusted EBIT</div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {financialYears.map((year) => (
-                        <div key={year} className="text-center">
-                          <div className="text-xs text-red-600 mb-1">{year}</div>
-                          <div className="text-sm font-bold text-red-700">{fmt(adjustedEbitByYear[year]?.toLocaleString() || "0")}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, (totalAddbacksByYear[year] || 0).toLocaleString()]))} adjustedEbitByYear={adjustedEbitByYear} disabled={!isAuthenticated || !hasCalculatorAccess} currencySymbol={currencySymbol} currencyCode={currencyCode} />
                 </div>
 
                 {/* Equity Value Calculation — China & Indonesia only */}

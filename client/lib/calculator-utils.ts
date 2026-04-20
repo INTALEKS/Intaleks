@@ -10,8 +10,7 @@ export interface FinancialYearData {
   netProfitAndLoss: number; // Calculated: Gross Profit - Operating Expenses
   interestExpense: number;
   interestIncome: number;
-  taxExpense: number;
-  ebit: number; // Calculated: Net Profit + Interest Expense - Interest Income - Tax Expense
+  ebit: number; // Calculated: Net Profit + Interest Expense - Interest Income
 }
 
 export interface Addback {

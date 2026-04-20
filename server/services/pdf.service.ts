@@ -17,7 +17,6 @@ export interface ValuationPDFData {
       netProfitAndLoss: number;
       interestExpense: number;
       interestIncome: number;
-      taxExpense: number;
       ebit: number;
     }
   >;

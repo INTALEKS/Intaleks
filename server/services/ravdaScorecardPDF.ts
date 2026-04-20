@@ -73,7 +73,6 @@ export interface RAVDAData {
       netProfitAndLoss: number;
       interestExpense: number;
       interestIncome: number;
-      taxExpense: number;
       ebit: number;
     }
   >;
@@ -772,7 +771,7 @@ function formatYearLabel(year: string): string {
   return line1;
 }
 
-function financialValue(data: RAVDAData, year: string, key: "sales" | "otherIncome" | "grossProfit" | "cogs" | "operatingExpenses" | "netProfitAndLoss" | "interestExpense" | "interestIncome" | "taxExpense" | "ebit"): number {
+function financialValue(data: RAVDAData, year: string, key: "sales" | "otherIncome" | "grossProfit" | "cogs" | "operatingExpenses" | "netProfitAndLoss" | "interestExpense" | "interestIncome" | "ebit"): number {
   return data.financialData?.[year]?.[key] ?? 0;
 }
 
@@ -1298,7 +1297,6 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     { label: "Net Profit and Loss", key: "netProfitAndLoss" as const },
     { label: "Interest Expense", key: "interestExpense" as const },
     { label: "Interest Income", key: "interestIncome" as const },
-    { label: "Tax Expense", key: "taxExpense" as const },
   ];
 
   const rowHeight = 32;
