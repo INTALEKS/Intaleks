@@ -24,6 +24,7 @@ export interface ValuationPDFData {
   addbacks: Array<{
     id: string;
     reason: string;
+    customReason?: string;
     values: Record<string, number>;
   }>;
   totalAddbacks: number;

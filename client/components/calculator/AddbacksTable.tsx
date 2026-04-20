@@ -9,13 +9,14 @@ import { SectionHeader } from "./SectionHeader";
 interface Addback {
   id: string;
   reason: string;
+  customReason?: string; // For "other" option
   values: Record<string, string>; // year -> value mapping
 }
 
 interface AddbacksTableProps {
   addbacks: Addback[];
   financialYears: string[];
-  onAddbackChange: (id: string, field: "reason" | "values", value: string | Record<string, string>) => void;
+  onAddbackChange: (id: string, field: "reason" | "customReason" | "values", value: string | Record<string, string>) => void;
   onAddAddback: () => void;
   totalValuesByYear: Record<string, string>;
   disabled?: boolean;
@@ -84,6 +85,9 @@ const ADDBACK_REASONS = [
   { value: "underpaid-staff", label: "Underpaid key staff adjustment" },
   { value: "temporary-labour", label: "Temporary labour (non-recurring)" },
   { value: "owner-multiple-roles", label: "Owner performing multiple roles" },
+
+  // Other
+  { value: "other", label: "Other (specify below)" },
 ];
 
 export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAddAddback, totalValuesByYear, disabled = false, currencySymbol = "$", currencyCode = "AUD" }: AddbacksTableProps) {
@@ -131,18 +135,21 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
             {addbacks.map((addback) => (
               <tr key={addback.id} className="border-t">
                 <td className="p-3">
-                  <Select value={addback.reason} onValueChange={(value) => onAddbackChange(addback.id, "reason", value)} disabled={disabled}>
-                    <SelectTrigger className="bg-gray-50 border-gray-200 w-full">
-                      <SelectValue placeholder="Select addback reason" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
-                      {ADDBACK_REASONS.map((reason) => (
-                        <SelectItem key={reason.value} value={reason.value}>
-                          {reason.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <Select value={addback.reason} onValueChange={(value) => onAddbackChange(addback.id, "reason", value)} disabled={disabled}>
+                      <SelectTrigger className="bg-gray-50 border-gray-200 w-full">
+                        <SelectValue placeholder="Select addback reason" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        {ADDBACK_REASONS.map((reason) => (
+                          <SelectItem key={reason.value} value={reason.value}>
+                            {reason.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {addback.reason === "other" && <Input type="text" value={addback.customReason || ""} onChange={(e) => onAddbackChange(addback.id, "customReason", e.target.value)} placeholder="Enter custom reason" className="bg-white border-gray-300" disabled={disabled} />}
+                  </div>
                 </td>
                 {financialYears.map((year) => (
                   <td key={year} className="p-3">
@@ -188,6 +195,7 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
                     ))}
                   </SelectContent>
                 </Select>
+                {addback.reason === "other" && <Input type="text" value={addback.customReason || ""} onChange={(e) => onAddbackChange(addback.id, "customReason", e.target.value)} placeholder="Enter custom reason" className="bg-white border-gray-300 mt-2" disabled={disabled} />}
               </div>
               {financialYears.map((year) => (
                 <div key={year}>

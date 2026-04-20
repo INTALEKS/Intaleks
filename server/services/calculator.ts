@@ -15,6 +15,7 @@ interface FinancialYearData {
 
 interface AddbackData {
   reason: string;
+  customReason?: string;
   values: Record<string, number>; // year -> amount
 }
 

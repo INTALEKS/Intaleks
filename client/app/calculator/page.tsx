@@ -61,7 +61,7 @@ interface CalculatorState {
   useQuestionnaireMultiple: boolean;
   selectedYears: FinancialColumn[];
   financialData: Record<string, Record<string, string>>;
-  addbacks: Array<{ id: string; reason: string; values: Record<string, string> }>;
+  addbacks: Array<{ id: string; reason: string; customReason?: string; values: Record<string, string> }>;
   selectedMethod: ValuationMethod | "";
   assets: Record<string, string>;
   liabilities: Record<string, string>;
@@ -244,9 +244,9 @@ export default function CalculatorPage() {
   const [financialData, setFinancialData] = useState<Record<string, Record<string, string>>>(initialState?.financialData || {});
   const [addbacks, setAddbacks] = useState(
     initialState?.addbacks || [
-      { id: "1", reason: "", values: {} as Record<string, string> },
-      { id: "2", reason: "", values: {} as Record<string, string> },
-      { id: "3", reason: "", values: {} as Record<string, string> },
+      { id: "1", reason: "", customReason: "", values: {} as Record<string, string> },
+      { id: "2", reason: "", customReason: "", values: {} as Record<string, string> },
+      { id: "3", reason: "", customReason: "", values: {} as Record<string, string> },
     ],
   );
 
@@ -563,12 +563,12 @@ export default function CalculatorPage() {
     }));
   };
 
-  const handleAddbackChange = (id: string, field: "reason" | "values", value: string | Record<string, string>) => {
+  const handleAddbackChange = (id: string, field: "reason" | "customReason" | "values", value: string | Record<string, string>) => {
     setAddbacks((prev) => prev.map((a) => (a.id === id ? { ...a, [field]: value } : a)));
   };
 
   const handleAddAddback = () => {
-    setAddbacks((prev) => [...prev, { id: String(prev.length + 1), reason: "", values: {} }]);
+    setAddbacks((prev) => [...prev, { id: String(prev.length + 1), reason: "", customReason: "", values: {} }]);
   };
 
   const handleDownloadPDF = async () => {

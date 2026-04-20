@@ -5,6 +5,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:4
 export interface Addback {
   id: string;
   reason: string;
+  customReason?: string;
   values: Record<string, number>; // year -> value mapping (e.g., {"2023": 5000, "2024": 6000, "2025": 7000})
 }
 

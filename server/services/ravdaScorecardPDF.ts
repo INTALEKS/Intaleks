@@ -80,6 +80,7 @@ export interface RAVDAData {
   addbacks?: Array<{
     id: string;
     reason: string;
+    customReason?: string;
     values: Record<string, number>;
   }>;
   totalAddbacks?: number;
@@ -1446,10 +1447,16 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
         .fillColor("#111827")
         .text(`Addback ${idx + 1}`, tableX + 12, addRowY + 10, { lineBreak: false });
 
-      const reason = (addback?.reason || "")
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(" ");
+      // Use customReason if reason is "other", otherwise format the reason
+      let reason = "";
+      if (addback?.reason === "other" && addback?.customReason) {
+        reason = addback.customReason;
+      } else {
+        reason = (addback?.reason || "")
+          .split("-")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(" ");
+      }
 
       const fontSize = reason.length > 15 ? 9 : 10;
       doc
