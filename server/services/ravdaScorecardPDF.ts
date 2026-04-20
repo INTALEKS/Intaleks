@@ -28,13 +28,12 @@ const COUNTRY_CURRENCY_MAP: Record<string, { symbol: string; code: string }> = {
   indonesia: { symbol: "Rp", code: "IDR" },
 };
 
-/** Returns a formatted currency string, e.g. "$50 AUD", "£50", "¥50" */
+/** Returns a formatted currency string, e.g. "$50", "£50", "¥50" */
 function formatMoney(value: number, symbol: string, code: string): string {
   const safe = Number.isFinite(value) ? Math.round(value) : 0;
   const formatted = safe.toLocaleString("en-US");
-  // Append ISO code for dollar currencies to disambiguate
-  const suffix = code === "AUD" || code === "CAD" || code === "USD" ? ` ${code}` : "";
-  return `${symbol}${formatted}${suffix}`;
+  // Only show currency symbol without code suffix
+  return `${symbol}${formatted}`;
 }
 
 function getCurrencySymbolForCountry(country?: string): string {
