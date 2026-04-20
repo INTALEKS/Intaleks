@@ -5,6 +5,7 @@
 
 interface FinancialYearData {
   sales: number;
+  otherIncome?: number;
   cogs: number;
   operatingExpenses: number;
   interestExpense: number;
@@ -39,6 +40,7 @@ interface CalculationResult {
     string,
     {
       sales: number;
+      otherIncome: number;
       cogs: number;
       grossProfit: number;
       operatingExpenses: number;
@@ -80,18 +82,20 @@ export class CalculatorService {
       if (!data) continue;
 
       const sales = Number(data.sales) || 0;
+      const otherIncome = Number(data.otherIncome) || 0;
       const cogs = Number(data.cogs) || 0;
       const operatingExpenses = Number(data.operatingExpenses) || 0;
       const interestExpense = Number(data.interestExpense) || 0;
       const interestIncome = Number(data.interestIncome) || 0;
       const taxExpense = Number(data.taxExpense) || 0;
 
-      const grossProfit = sales - cogs;
+      const grossProfit = sales + otherIncome - cogs;
       const netProfitAndLoss = grossProfit - operatingExpenses;
       const ebit = netProfitAndLoss + interestExpense - interestIncome - taxExpense;
 
       yearlyMetrics[year] = {
         sales,
+        otherIncome,
         cogs,
         grossProfit,
         operatingExpenses,

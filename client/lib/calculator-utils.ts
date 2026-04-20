@@ -3,7 +3,8 @@
 
 export interface FinancialYearData {
   sales: number;
-  grossProfit: number; // Calculated: Sales - COGS
+  otherIncome: number;
+  grossProfit: number; // Calculated: Sales + Other Income - COGS
   cogs: number;
   operatingExpenses: number;
   netProfitAndLoss: number; // Calculated: Gross Profit - Operating Expenses

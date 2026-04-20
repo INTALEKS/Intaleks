@@ -66,6 +66,7 @@ export interface RAVDAData {
     string,
     {
       sales: number;
+      otherIncome: number;
       cogs: number;
       grossProfit: number;
       operatingExpenses: number;
@@ -770,7 +771,7 @@ function formatYearLabel(year: string): string {
   return line1;
 }
 
-function financialValue(data: RAVDAData, year: string, key: "sales" | "grossProfit" | "cogs" | "operatingExpenses" | "netProfitAndLoss" | "interestExpense" | "interestIncome" | "taxExpense" | "ebit"): number {
+function financialValue(data: RAVDAData, year: string, key: "sales" | "otherIncome" | "grossProfit" | "cogs" | "operatingExpenses" | "netProfitAndLoss" | "interestExpense" | "interestIncome" | "taxExpense" | "ebit"): number {
   return data.financialData?.[year]?.[key] ?? 0;
 }
 
@@ -1289,6 +1290,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   // Financial data rows
   const financialRows = [
     { label: "Sales", key: "sales" as const },
+    { label: "Other Income", key: "otherIncome" as const },
     { label: "COGS", key: "cogs" as const },
     { label: "Gross Profit", key: "grossProfit" as const },
     { label: "Operating Expenses", key: "operatingExpenses" as const },

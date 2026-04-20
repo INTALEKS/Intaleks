@@ -35,8 +35,9 @@ const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 // Only input fields - calculated fields are handled separately
 const financialMetrics = [
   { key: "sales", label: "Sales", placeholder: "500", isInput: true },
+  { key: "otherIncome", label: "Other Income", placeholder: "0", isInput: true },
   { key: "cogs", label: "COGS", placeholder: "200", isInput: true },
-  { key: "grossProfit", label: "Gross profit", placeholder: "", isInput: false }, // Calculated: Sales - COGS
+  { key: "grossProfit", label: "Gross profit", placeholder: "", isInput: false }, // Calculated: Sales + Other Income - COGS
   { key: "operatingExpenses", label: "Operating Expenses", placeholder: "150", isInput: true },
   { key: "netProfitAndLoss", label: "Net profit and Loss", placeholder: "", isInput: false }, // Calculated: Gross Profit - Operating Expenses
   { key: "interestExpense", label: "Interest Expense", placeholder: "10", isInput: true },
@@ -288,6 +289,7 @@ export default function CalculatorPage() {
     financialYears.forEach((year) => {
       // Input values from user
       const sales = parseFloat(financialData?.sales?.[year] as string) || 0;
+      const otherIncome = parseFloat(financialData?.otherIncome?.[year] as string) || 0;
       const cogs = parseFloat(financialData?.cogs?.[year] as string) || 0;
       const operatingExpenses = parseFloat(financialData?.operatingExpenses?.[year] as string) || 0;
       const interestExpense = parseFloat(financialData?.interestExpense?.[year] as string) || 0;
@@ -295,7 +297,7 @@ export default function CalculatorPage() {
       const taxExpense = parseFloat(financialData?.taxExpense?.[year] as string) || 0;
 
       // Calculated values
-      const grossProfit = sales - cogs; // Gross Profit = Sales - COGS
+      const grossProfit = sales + otherIncome - cogs; // Gross Profit = Sales + Other Income - COGS
       const netProfitAndLoss = grossProfit - operatingExpenses; // Net Profit = Gross Profit - Operating Expenses
 
       // EBIT = Net Profit + Interest Expense - Interest Income - Tax Expense
@@ -303,6 +305,7 @@ export default function CalculatorPage() {
 
       metrics[year] = {
         sales,
+        otherIncome,
         grossProfit,
         cogs,
         operatingExpenses,
@@ -443,10 +446,11 @@ export default function CalculatorPage() {
 
       if (selectedMethod === "profit") {
         // Convert financial data to proper format
-        const formattedFinancialData: Record<string, { sales: number; cogs: number; operatingExpenses: number; interestExpense: number; interestIncome: number; taxExpense: number }> = {};
+        const formattedFinancialData: Record<string, { sales: number; otherIncome: number; cogs: number; operatingExpenses: number; interestExpense: number; interestIncome: number; taxExpense: number }> = {};
         financialYears.forEach((year) => {
           formattedFinancialData[year] = {
             sales: parseFloat((financialData?.sales?.[year] as string) || "0"),
+            otherIncome: parseFloat((financialData?.otherIncome?.[year] as string) || "0"),
             cogs: parseFloat((financialData?.cogs?.[year] as string) || "0"),
             operatingExpenses: parseFloat((financialData?.operatingExpenses?.[year] as string) || "0"),
             interestExpense: parseFloat((financialData?.interestExpense?.[year] as string) || "0"),

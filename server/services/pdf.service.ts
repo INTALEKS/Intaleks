@@ -10,6 +10,7 @@ export interface ValuationPDFData {
     string,
     {
       sales: number;
+      otherIncome: number;
       cogs: number;
       grossProfit: number;
       operatingExpenses: number;
