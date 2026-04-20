@@ -19,6 +19,7 @@ interface AddbacksTableProps {
   onAddbackChange: (id: string, field: "reason" | "customReason" | "values", value: string | Record<string, string>) => void;
   onAddAddback: () => void;
   totalValuesByYear: Record<string, string>;
+  adjustedEbitByYear: Record<string, number>; // EBIT + Addbacks for each year
   disabled?: boolean;
   currencySymbol?: string;
   currencyCode?: string;
@@ -90,7 +91,7 @@ const ADDBACK_REASONS = [
   { value: "other", label: "Other (specify below)" },
 ];
 
-export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAddAddback, totalValuesByYear, disabled = false, currencySymbol = "$", currencyCode = "AUD" }: AddbacksTableProps) {
+export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAddAddback, totalValuesByYear, adjustedEbitByYear, disabled = false, currencySymbol = "$", currencyCode = "AUD" }: AddbacksTableProps) {
   const dollarCurrencies = ["AUD", "USD", "CAD", "NZD", "SGD", "HKD"];
   const codeSuffix = dollarCurrencies.includes(currencyCode) ? ` ${currencyCode}` : "";
   const fmt = (val: string | number) => `${currencySymbol}${val || "0"}${codeSuffix}`;

@@ -1261,6 +1261,20 @@ export default function CalculatorPage() {
                   <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, (totalAddbacksByYear[year] || 0).toLocaleString()]))} disabled={!isAuthenticated || !hasCalculatorAccess} currencySymbol={currencySymbol} currencyCode={currencyCode} />
                 </div>
 
+                <div className="mt-6">
+                  <div className="p-4 bg-red-50">
+                    <div className="text-sm font-bold text-red-700 uppercase mb-2">Adjusted EBIT</div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {financialYears.map((year) => (
+                        <div key={year} className="text-center">
+                          <div className="text-xs text-red-600 mb-1">{year}</div>
+                          <div className="text-sm font-bold text-red-700">{fmt(adjustedEbitByYear[year]?.toLocaleString() || "0")}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Equity Value Calculation — China & Indonesia only */}
                 {(country.toLowerCase() === "china" || country.toLowerCase() === "indonesia") && (
                   <div className="mt-6 border border-blue-300 rounded-lg overflow-hidden">
