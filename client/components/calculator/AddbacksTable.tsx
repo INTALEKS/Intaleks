@@ -134,7 +134,7 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
           <tbody>
             {addbacks.map((addback) => (
               <tr key={addback.id} className="border-t">
-                <td className="p-3">
+                <td className="p-3 align-bottom">
                   <div className="space-y-2">
                     <Select value={addback.reason} onValueChange={(value) => onAddbackChange(addback.id, "reason", value)} disabled={disabled}>
                       <SelectTrigger className="bg-gray-50 border-gray-200 w-full">
@@ -152,7 +152,7 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
                   </div>
                 </td>
                 {financialYears.map((year) => (
-                  <td key={year} className="p-3">
+                  <td key={year} className="p-3 align-bottom">
                     <Input type="number" value={addback.values[year] || ""} onChange={(e) => handleYearValueChange(addback.id, year, e.target.value)} placeholder="0" className="bg-gray-50 border-gray-200 text-center" disabled={disabled} />
                   </td>
                 ))}
