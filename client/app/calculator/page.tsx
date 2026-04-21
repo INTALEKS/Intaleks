@@ -1275,25 +1275,16 @@ export default function CalculatorPage() {
                             <div className="space-y-2 text-sm">
                               <div className="flex justify-between items-center">
                                 <span className="text-gray-600">EBIT:</span>
-                                <span className="font-medium text-gray-900">
-                                  {formatCurrency(ebit, currencySymbol)}
-                                  {currencyCode !== "AUD" && currencyCode !== "USD" && currencyCode !== "CAD" ? "" : ` ${currencyCode}`}
-                                </span>
+                                <span className="font-medium text-gray-900">{formatCurrency(ebit, currencyCode)}</span>
                               </div>
                               <div className="flex justify-between items-center">
                                 <span className="text-gray-600">+ Addbacks:</span>
-                                <span className="font-medium text-gray-900">
-                                  {formatCurrency(addbacks, currencySymbol)}
-                                  {currencyCode !== "AUD" && currencyCode !== "USD" && currencyCode !== "CAD" ? "" : ` ${currencyCode}`}
-                                </span>
+                                <span className="font-medium text-gray-900">{formatCurrency(addbacks, currencyCode)}</span>
                               </div>
                               <div className="border-t border-gray-300 pt-2 mt-2">
                                 <div className="flex justify-between items-center">
                                   <span className="font-bold text-red-700">= Adjusted EBIT:</span>
-                                  <span className="font-bold text-red-700">
-                                    {formatCurrency(adjustedEbit, currencySymbol)}
-                                    {currencyCode !== "AUD" && currencyCode !== "USD" && currencyCode !== "CAD" ? "" : ` ${currencyCode}`}
-                                  </span>
+                                  <span className="font-bold text-red-700">{formatCurrency(adjustedEbit, currencyCode)}</span>
                                 </div>
                               </div>
                             </div>
