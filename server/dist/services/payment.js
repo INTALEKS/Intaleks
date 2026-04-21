@@ -9,6 +9,7 @@ const stripe_1 = require("../config/stripe");
 const environment_1 = require("../config/environment");
 const client_1 = require("@prisma/client");
 const errors_1 = require("../errors");
+const invoice_1 = require("./invoice");
 const stripe_2 = __importDefault(require("stripe"));
 const SubscriptionStatusValues = {
     NONE: "NONE",
@@ -155,6 +156,7 @@ class PaymentService {
                 },
                 success_url: finalSuccessUrl,
                 cancel_url: finalCancelUrl,
+                allow_promotion_codes: true, // Enable promo code support
                 // For subscriptions, also add metadata to the subscription
                 ...(mode === "subscription" && {
                     subscription_data: {
@@ -484,6 +486,25 @@ class PaymentService {
                 },
             }),
         ]);
+        // Create a $0 payment record and send invoice (non-blocking)
+        try {
+            const payment = await db_1.prisma.payment.create({
+                data: {
+                    userId,
+                    planId,
+                    amount: 0,
+                    currency: "usd",
+                    status: "SUCCEEDED",
+                    description: `Admin granted subscription: ${plan.name}`,
+                },
+            });
+            const invoice = await invoice_1.invoiceService.createInvoice(payment.id);
+            await invoice_1.invoiceService.sendInvoiceEmail(invoice.id);
+            console.log(`✅ Invoice ${invoice.invoiceNumber} sent to user ${userId} for admin-granted subscription`);
+        }
+        catch (invoiceError) {
+            console.error("Failed to send invoice for admin-granted subscription:", invoiceError);
+        }
     }
     /**
      * Revoke subscription access from a user (admin action)

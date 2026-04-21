@@ -38,22 +38,19 @@ exports.webhookRouter = (0, express_1.Router)();
 // Requirements: 3.1, 3.7
 exports.webhookRouter.post("/stripe", async (req, res, next) => {
     try {
-        // Get the raw body and signature
         const payload = req.body;
         const signature = req.headers["stripe-signature"];
-        if (!signature) {
+        const isDev = process.env.NODE_ENV === "development";
+        // In development, skip signature verification entirely so the
+        // Stripe CLI secret doesn't need to match the container env var
+        if (!isDev && !signature) {
             res.status(400).json({
                 success: false,
-                error: {
-                    code: "MISSING_SIGNATURE",
-                    message: "Missing Stripe signature header",
-                },
+                error: { code: "MISSING_SIGNATURE", message: "Missing Stripe signature header" },
             });
             return;
         }
-        // Process the webhook event
-        const result = await webhook_1.WebhookService.handleEvent(payload, signature);
-        // Return 200 to acknowledge receipt (Requirement 3.7)
+        const result = await webhook_1.WebhookService.handleEvent(payload, signature, isDev);
         res.status(200).json({
             success: result.success,
             eventType: result.eventType,
@@ -62,23 +59,16 @@ exports.webhookRouter.post("/stripe", async (req, res, next) => {
     }
     catch (error) {
         if ((0, errors_1.isStripeError)(error)) {
-            // Return 400 for invalid signatures (Requirement 3.6)
             res.status(error.statusCode).json({
                 success: false,
-                error: {
-                    code: error.code,
-                    message: error.userMessage,
-                },
+                error: { code: error.code, message: error.userMessage },
             });
             return;
         }
         console.error("Webhook processing error:", error);
         res.status(500).json({
             success: false,
-            error: {
-                code: "WEBHOOK_ERROR",
-                message: "An error occurred while processing webhook",
-            },
+            error: { code: "WEBHOOK_ERROR", message: "An error occurred while processing webhook" },
         });
     }
 });

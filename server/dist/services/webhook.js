@@ -39,17 +39,20 @@ class WebhookService {
      * - Parses event payload
      * - Returns 400 for invalid signatures
      */
-    static validateAndParseEvent(payload, signature) {
-        if (!stripe_1.stripeConfig.webhookSecret) {
+    static validateAndParseEvent(payload, signature, skipVerification = false) {
+        // Skip verification in development so CLI secret doesn't need to match container
+        if (skipVerification || !stripe_1.stripeConfig.webhookSecret) {
+            if (process.env.NODE_ENV === "development") {
+                console.warn("⚠️  Skipping webhook signature verification (development mode)");
+                return JSON.parse(payload.toString());
+            }
             throw new errors_1.StripeError("Webhook secret is not configured", errors_1.STRIPE_ERROR_CODES.WEBHOOK_SIGNATURE_INVALID, 500);
         }
         try {
-            // Verify webhook signature using Stripe signing secret (Requirement 3.1)
             const event = (0, stripe_1.getStripe)().webhooks.constructEvent(payload, signature, stripe_1.stripeConfig.webhookSecret);
             return event;
         }
         catch (error) {
-            // Return 400 for invalid signatures (Requirement 3.6)
             if (error instanceof stripe_2.default.errors.StripeSignatureVerificationError) {
                 throw new errors_1.StripeError("Invalid webhook signature", errors_1.STRIPE_ERROR_CODES.WEBHOOK_SIGNATURE_INVALID, 400, error);
             }
@@ -64,11 +67,10 @@ class WebhookService {
      * - Logs errors for manual review
      * Requirements: 3.1-3.7, 10.4, 10.5
      */
-    static async handleEvent(payload, signature) {
+    static async handleEvent(payload, signature, skipVerification = false) {
         let event;
-        // Validate and parse the event (Requirements 3.1, 3.6)
         try {
-            event = this.validateAndParseEvent(payload, signature);
+            event = this.validateAndParseEvent(payload, signature, skipVerification);
         }
         catch (error) {
             // Log signature validation errors (Requirement 10.4)
@@ -367,7 +369,7 @@ class WebhookService {
                 },
             });
             // Create failed payment record
-            await db_1.prisma.payment.create({
+            const payment = await db_1.prisma.payment.create({
                 data: {
                     userId: user.id,
                     planId: user.subscriptionId,
@@ -378,6 +380,15 @@ class WebhookService {
                     description: "Payment failed",
                 },
             });
+            // Generate and send failed payment notification email
+            try {
+                const invoiceRecord = await invoice_1.invoiceService.createInvoice(payment.id);
+                await invoice_1.invoiceService.sendInvoiceEmail(invoiceRecord.id);
+                console.log(`✅ Failed payment invoice ${invoiceRecord.invoiceNumber} sent for payment ${payment.id}`);
+            }
+            catch (invoiceError) {
+                console.error("Failed to generate/send failed payment invoice:", invoiceError);
+            }
             return {
                 success: true,
                 eventType: event.type,

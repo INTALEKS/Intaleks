@@ -198,6 +198,8 @@ router.get("/me", authMiddleware_1.authenticateToken, async (req, res) => {
                 emailVerifiedAt: true,
                 subscriptionStatus: true,
                 currentPeriodEnd: true,
+                couponAccess: true,
+                couponUsed: true,
                 termsAccepted: true,
                 termsAcceptedAt: true,
                 subscription: {

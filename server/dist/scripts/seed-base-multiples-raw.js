@@ -193,6 +193,96 @@ const baseMultiples = [
     { country: "united states", industry: "other", scoreRange: "30-39", multiple: 2.4 },
     { country: "united states", industry: "other", scoreRange: "20-29", multiple: 1.5 },
     { country: "united states", industry: "other", scoreRange: "<20", multiple: 0.9 },
+    // China
+    { country: "china", industry: "construction", scoreRange: "40-50", multiple: 3.5 },
+    { country: "china", industry: "construction", scoreRange: "30-39", multiple: 2.8 },
+    { country: "china", industry: "construction", scoreRange: "20-29", multiple: 1.75 },
+    { country: "china", industry: "construction", scoreRange: "<20", multiple: 1.05 },
+    { country: "china", industry: "finance", scoreRange: "40-50", multiple: 4.5 },
+    { country: "china", industry: "finance", scoreRange: "30-39", multiple: 3.6 },
+    { country: "china", industry: "finance", scoreRange: "20-29", multiple: 2.25 },
+    { country: "china", industry: "finance", scoreRange: "<20", multiple: 1.35 },
+    { country: "china", industry: "healthcare", scoreRange: "40-50", multiple: 5.5 },
+    { country: "china", industry: "healthcare", scoreRange: "30-39", multiple: 4.4 },
+    { country: "china", industry: "healthcare", scoreRange: "20-29", multiple: 2.75 },
+    { country: "china", industry: "healthcare", scoreRange: "<20", multiple: 1.65 },
+    { country: "china", industry: "hospitality", scoreRange: "40-50", multiple: 3.0 },
+    { country: "china", industry: "hospitality", scoreRange: "30-39", multiple: 2.4 },
+    { country: "china", industry: "hospitality", scoreRange: "20-29", multiple: 1.5 },
+    { country: "china", industry: "hospitality", scoreRange: "<20", multiple: 0.9 },
+    { country: "china", industry: "manufacturing", scoreRange: "40-50", multiple: 4.0 },
+    { country: "china", industry: "manufacturing", scoreRange: "30-39", multiple: 3.2 },
+    { country: "china", industry: "manufacturing", scoreRange: "20-29", multiple: 2.0 },
+    { country: "china", industry: "manufacturing", scoreRange: "<20", multiple: 1.2 },
+    { country: "china", industry: "professional", scoreRange: "40-50", multiple: 4.0 },
+    { country: "china", industry: "professional", scoreRange: "30-39", multiple: 3.2 },
+    { country: "china", industry: "professional", scoreRange: "20-29", multiple: 2.0 },
+    { country: "china", industry: "professional", scoreRange: "<20", multiple: 1.2 },
+    { country: "china", industry: "retail", scoreRange: "40-50", multiple: 4.0 },
+    { country: "china", industry: "retail", scoreRange: "30-39", multiple: 3.2 },
+    { country: "china", industry: "retail", scoreRange: "20-29", multiple: 2.0 },
+    { country: "china", industry: "retail", scoreRange: "<20", multiple: 1.2 },
+    { country: "china", industry: "service", scoreRange: "40-50", multiple: 4.0 },
+    { country: "china", industry: "service", scoreRange: "30-39", multiple: 3.2 },
+    { country: "china", industry: "service", scoreRange: "20-29", multiple: 2.0 },
+    { country: "china", industry: "service", scoreRange: "<20", multiple: 1.2 },
+    { country: "china", industry: "technology", scoreRange: "40-50", multiple: 6.5 },
+    { country: "china", industry: "technology", scoreRange: "30-39", multiple: 5.2 },
+    { country: "china", industry: "technology", scoreRange: "20-29", multiple: 3.25 },
+    { country: "china", industry: "technology", scoreRange: "<20", multiple: 1.95 },
+    { country: "china", industry: "wholesale", scoreRange: "40-50", multiple: 3.0 },
+    { country: "china", industry: "wholesale", scoreRange: "30-39", multiple: 2.4 },
+    { country: "china", industry: "wholesale", scoreRange: "20-29", multiple: 1.5 },
+    { country: "china", industry: "wholesale", scoreRange: "<20", multiple: 0.9 },
+    { country: "china", industry: "other", scoreRange: "40-50", multiple: 3.5 },
+    { country: "china", industry: "other", scoreRange: "30-39", multiple: 2.8 },
+    { country: "china", industry: "other", scoreRange: "20-29", multiple: 1.75 },
+    { country: "china", industry: "other", scoreRange: "<20", multiple: 1.05 },
+    // Indonesia
+    { country: "indonesia", industry: "construction", scoreRange: "40-50", multiple: 2.5 },
+    { country: "indonesia", industry: "construction", scoreRange: "30-39", multiple: 2.0 },
+    { country: "indonesia", industry: "construction", scoreRange: "20-29", multiple: 1.25 },
+    { country: "indonesia", industry: "construction", scoreRange: "<20", multiple: 0.75 },
+    { country: "indonesia", industry: "finance", scoreRange: "40-50", multiple: 3.0 },
+    { country: "indonesia", industry: "finance", scoreRange: "30-39", multiple: 2.4 },
+    { country: "indonesia", industry: "finance", scoreRange: "20-29", multiple: 1.5 },
+    { country: "indonesia", industry: "finance", scoreRange: "<20", multiple: 0.9 },
+    { country: "indonesia", industry: "healthcare", scoreRange: "40-50", multiple: 4.0 },
+    { country: "indonesia", industry: "healthcare", scoreRange: "30-39", multiple: 3.2 },
+    { country: "indonesia", industry: "healthcare", scoreRange: "20-29", multiple: 2.0 },
+    { country: "indonesia", industry: "healthcare", scoreRange: "<20", multiple: 1.2 },
+    { country: "indonesia", industry: "hospitality", scoreRange: "40-50", multiple: 2.5 },
+    { country: "indonesia", industry: "hospitality", scoreRange: "30-39", multiple: 2.0 },
+    { country: "indonesia", industry: "hospitality", scoreRange: "20-29", multiple: 1.25 },
+    { country: "indonesia", industry: "hospitality", scoreRange: "<20", multiple: 0.75 },
+    { country: "indonesia", industry: "manufacturing", scoreRange: "40-50", multiple: 3.0 },
+    { country: "indonesia", industry: "manufacturing", scoreRange: "30-39", multiple: 2.4 },
+    { country: "indonesia", industry: "manufacturing", scoreRange: "20-29", multiple: 1.5 },
+    { country: "indonesia", industry: "manufacturing", scoreRange: "<20", multiple: 0.9 },
+    { country: "indonesia", industry: "professional", scoreRange: "40-50", multiple: 3.0 },
+    { country: "indonesia", industry: "professional", scoreRange: "30-39", multiple: 2.4 },
+    { country: "indonesia", industry: "professional", scoreRange: "20-29", multiple: 1.5 },
+    { country: "indonesia", industry: "professional", scoreRange: "<20", multiple: 0.9 },
+    { country: "indonesia", industry: "retail", scoreRange: "40-50", multiple: 2.5 },
+    { country: "indonesia", industry: "retail", scoreRange: "30-39", multiple: 2.0 },
+    { country: "indonesia", industry: "retail", scoreRange: "20-29", multiple: 1.25 },
+    { country: "indonesia", industry: "retail", scoreRange: "<20", multiple: 0.75 },
+    { country: "indonesia", industry: "service", scoreRange: "40-50", multiple: 3.0 },
+    { country: "indonesia", industry: "service", scoreRange: "30-39", multiple: 2.4 },
+    { country: "indonesia", industry: "service", scoreRange: "20-29", multiple: 1.5 },
+    { country: "indonesia", industry: "service", scoreRange: "<20", multiple: 0.9 },
+    { country: "indonesia", industry: "technology", scoreRange: "40-50", multiple: 4.5 },
+    { country: "indonesia", industry: "technology", scoreRange: "30-39", multiple: 3.6 },
+    { country: "indonesia", industry: "technology", scoreRange: "20-29", multiple: 2.25 },
+    { country: "indonesia", industry: "technology", scoreRange: "<20", multiple: 1.35 },
+    { country: "indonesia", industry: "wholesale", scoreRange: "40-50", multiple: 2.5 },
+    { country: "indonesia", industry: "wholesale", scoreRange: "30-39", multiple: 2.0 },
+    { country: "indonesia", industry: "wholesale", scoreRange: "20-29", multiple: 1.25 },
+    { country: "indonesia", industry: "wholesale", scoreRange: "<20", multiple: 0.75 },
+    { country: "indonesia", industry: "other", scoreRange: "40-50", multiple: 2.5 },
+    { country: "indonesia", industry: "other", scoreRange: "30-39", multiple: 2.0 },
+    { country: "indonesia", industry: "other", scoreRange: "20-29", multiple: 1.25 },
+    { country: "indonesia", industry: "other", scoreRange: "<20", multiple: 0.75 },
 ];
 async function main() {
     console.log("🌱 Seeding base valuation multiples using raw SQL...");
@@ -219,19 +309,9 @@ async function main() {
     }
     // Seed subscription plan
     console.log("\n🌱 Seeding subscription plan...");
-    // Delete Free plan if exists
-    const freePlan = await prisma.subscriptionPlan.findUnique({
-        where: { name: "Free" },
-    });
-    if (freePlan) {
-        await prisma.subscriptionPlan.delete({
-            where: { name: "Free" },
-        });
-        console.log("✅ Removed Free plan");
-    }
     // Upsert One-Off plan
     const planData = {
-        price: 39900, // AUD $399.00 in cents
+        price: 49500, // AUD $495.00 in cents
         billingPeriod: "ONE_TIME",
         features: ["Worldwide Industry Multiples (US, Canada, UK, Australia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking"],
         active: true,
@@ -245,7 +325,7 @@ async function main() {
             where: { name: "One-Off" },
             data: planData,
         });
-        console.log("✅ One-Off subscription plan updated to AUD $399");
+        console.log("✅ One-Off subscription plan updated to AUD $495");
     }
     else {
         plan = await prisma.subscriptionPlan.create({
@@ -254,7 +334,7 @@ async function main() {
                 ...planData,
             },
         });
-        console.log("✅ One-Off subscription plan created at AUD $399");
+        console.log("✅ One-Off subscription plan created at AUD $495");
     }
     // Set up Stripe product and price if Stripe is configured
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY;

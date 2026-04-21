@@ -105,6 +105,9 @@ async function generateValuationPDF(data) {
         finalValuation: data.finalValuation,
         calculatedMultiple: data.calculatedMultiple,
         multipleSource: data.multipleSource,
+        // Questionnaire data
+        questionnaireScore: data.questionnaireScore,
+        questionnaireResponses: data.questionnaireScores,
         // Company info
         startedYear: data.startedYear,
         employees: data.employees,
@@ -114,6 +117,13 @@ async function generateValuationPDF(data) {
         liabilities: data.liabilities,
         totalAssets: data.totalAssets,
         totalLiabilities: data.totalLiabilities,
+        // Equity value data (China & Indonesia only)
+        totalDebt: data.totalDebt,
+        cashEquivalents: data.cashEquivalents,
+        equityValue: data.equityValue,
+        currencySymbol: data.currencySymbol,
+        daysInPeriod: data.daysInPeriod,
+        currencyCode: data.currencyCode,
     };
     return (0, ravdaScorecardPDF_1.generateRAVDAScorecardPDF)(ravdaData);
 }

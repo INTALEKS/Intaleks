@@ -43,69 +43,95 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const bcrypt_1 = __importDefault(require("bcrypt"));
+const stripe_1 = __importDefault(require("stripe"));
 const prisma = new client_1.PrismaClient();
+async function ensureStripePlan(plan) {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+        console.warn("⚠️  STRIPE_SECRET_KEY not set — skipping Stripe product sync");
+        return;
+    }
+    const stripe = new stripe_1.default(stripeKey);
+    // Create Stripe product
+    const product = await stripe.products.create({
+        name: plan.name,
+        metadata: { planId: plan.id },
+    });
+    // Create Stripe price
+    const price = await stripe.prices.create({
+        product: product.id,
+        unit_amount: plan.price,
+        currency: "usd",
+        ...(plan.billingPeriod === client_1.BillingPeriod.MONTHLY && { recurring: { interval: "month" } }),
+        ...(plan.billingPeriod === client_1.BillingPeriod.YEARLY && { recurring: { interval: "year" } }),
+        // ONE_TIME has no recurring
+    });
+    // Store IDs back to DB
+    await prisma.subscriptionPlan.update({
+        where: { id: plan.id },
+        data: { stripeProductId: product.id, stripePriceId: price.id },
+    });
+    console.log(`✅ Stripe product+price created for plan "${plan.name}": ${price.id}`);
+}
 async function startupSeed() {
     try {
         // Check and seed valuation multiples
         const multiplesCount = await prisma.valuationMultiple.count();
         if (multiplesCount === 0) {
             console.log("🌱 Seeding valuation multiples...");
-            // Import and run the full seed
             await Promise.resolve().then(() => __importStar(require("./seed-base-multiples-raw")));
         }
         // Check and seed subscription plan
-        const planExists = await prisma.subscriptionPlan.findUnique({
-            where: { name: "One-Off" },
-        });
-        if (!planExists) {
+        let plan = await prisma.subscriptionPlan.findUnique({ where: { name: "One-Off" } });
+        const planFeatures = ["Worldwide Industry Multiples (US, Canada, UK, Australia, China, Indonesia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking", "Unlimited Valuations", "Export to PDF"];
+        if (!plan) {
             console.log("🌱 Seeding subscription plan...");
-            await prisma.subscriptionPlan.create({
+            plan = await prisma.subscriptionPlan.create({
                 data: {
                     name: "One-Off",
-                    price: 39900,
+                    price: 49500,
                     billingPeriod: client_1.BillingPeriod.ONE_TIME,
-                    features: ["Worldwide Industry Multiples (US, Canada, UK, Australia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking", "Unlimited Valuations", "Export to Excel/PDF"],
+                    features: planFeatures,
                     active: true,
                 },
             });
         }
-        // Check and seed admin user
+        else {
+            // Always keep features in sync
+            plan = await prisma.subscriptionPlan.update({
+                where: { name: "One-Off" },
+                data: { features: planFeatures },
+            });
+        }
+        // Sync Stripe product/price if missing
+        if (!plan.stripePriceId) {
+            console.log("🔗 Linking plan to Stripe...");
+            await ensureStripePlan(plan);
+        }
+        // Check and seed super admin user
         const email = process.env.ADMIN_EMAIL || "admin@intaleks.com";
         const password = process.env.ADMIN_PASSWORD || "Admin123!";
         const firstName = process.env.ADMIN_FIRST_NAME || "Admin";
         const lastName = process.env.ADMIN_LAST_NAME || "User";
-        // Check if this specific admin email already exists
-        const existingUser = await prisma.user.findUnique({
-            where: { email },
-        });
+        const existingUser = await prisma.user.findUnique({ where: { email } });
         if (!existingUser) {
-            // Check if any admin exists
-            const adminExists = await prisma.user.findFirst({
-                where: { role: client_1.UserRole.ADMIN },
+            const hashedPassword = await bcrypt_1.default.hash(password, 10);
+            await prisma.user.create({
+                data: {
+                    email,
+                    password: hashedPassword,
+                    firstName,
+                    lastName,
+                    role: client_1.UserRole.SUPER_ADMIN,
+                    termsAccepted: true,
+                    termsAcceptedAt: new Date(),
+                },
             });
-            if (!adminExists) {
-                const hashedPassword = await bcrypt_1.default.hash(password, 10);
-                await prisma.user.create({
-                    data: {
-                        email,
-                        password: hashedPassword,
-                        firstName,
-                        lastName,
-                        role: client_1.UserRole.ADMIN,
-                        termsAccepted: true,
-                        termsAcceptedAt: new Date(),
-                    },
-                });
-                console.log(`🔐 Created admin user: ${email}`);
-            }
+            console.log(`🔐 Created super admin user: ${email}`);
         }
-        else if (existingUser.role !== client_1.UserRole.ADMIN) {
-            // If user exists but is not admin, upgrade them
-            await prisma.user.update({
-                where: { email },
-                data: { role: client_1.UserRole.ADMIN },
-            });
-            console.log(`🔐 Upgraded existing user to admin: ${email}`);
+        else if (existingUser.role !== client_1.UserRole.SUPER_ADMIN) {
+            await prisma.user.update({ where: { email }, data: { role: client_1.UserRole.SUPER_ADMIN } });
+            console.log(`🔐 Upgraded existing user to super admin: ${email}`);
         }
     }
     catch (error) {
@@ -115,5 +141,4 @@ async function startupSeed() {
         await prisma.$disconnect();
     }
 }
-// Export for manual execution
 exports.default = startupSeed;

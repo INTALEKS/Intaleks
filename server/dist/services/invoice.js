@@ -4,6 +4,7 @@ exports.invoiceService = void 0;
 const db_1 = require("../config/db");
 const errors_1 = require("../errors");
 const email_1 = require("./email");
+const stripe_1 = require("../config/stripe");
 /**
  * Invoice Service
  * Handles invoice generation, storage, and email delivery
@@ -99,6 +100,25 @@ class InvoiceService {
         if (!invoice) {
             throw new errors_1.NotFoundError("Invoice not found");
         }
+        const isSuccess = invoice.status === "PAID";
+        // Try to fetch payment method details from Stripe
+        let paymentMethod;
+        try {
+            if (invoice.payment.stripePaymentId) {
+                const stripe = (0, stripe_1.getStripe)();
+                const paymentIntent = await stripe.paymentIntents.retrieve(invoice.payment.stripePaymentId, {
+                    expand: ["payment_method"],
+                });
+                const pm = paymentIntent.payment_method;
+                if (pm && pm.card) {
+                    const brand = pm.card.brand.charAt(0).toUpperCase() + pm.card.brand.slice(1);
+                    paymentMethod = `${brand} ending in ${pm.card.last4}`;
+                }
+            }
+        }
+        catch {
+            // Non-critical — proceed without payment method details
+        }
         // Send email
         await email_1.emailService.sendInvoiceEmail({
             email: invoice.user.email,
@@ -108,8 +128,12 @@ class InvoiceService {
             amount: invoice.amount,
             currency: invoice.currency,
             planName: invoice.plan?.name || "Subscription",
+            billingPeriod: invoice.plan?.billingPeriod,
             paidAt: invoice.paidAt || invoice.createdAt,
             stripeInvoiceId: invoice.stripeInvoiceId || undefined,
+            paymentMethod,
+            nextRenewal: invoice.user.currentPeriodEnd,
+            status: isSuccess ? "success" : "failed",
         });
         // Mark email as sent
         await db_1.prisma.invoice.update({

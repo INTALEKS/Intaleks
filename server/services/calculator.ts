@@ -70,9 +70,32 @@ interface CalculationResult {
 
 export class CalculatorService {
   /**
+   * Validate addbacks: if a reason is provided, at least one value must be non-zero
+   */
+  static validateAddbacks(addbacks: AddbackData[]): void {
+    for (const addback of addbacks) {
+      // Skip empty addbacks (no reason)
+      if (!addback.reason) continue;
+
+      // Check if at least one value is non-zero
+      const hasNonZeroValue = Object.values(addback.values).some((val) => {
+        const numVal = Number(val);
+        return !isNaN(numVal) && numVal !== 0;
+      });
+
+      if (!hasNonZeroValue) {
+        throw new Error(`Addback with reason "${addback.reason}" must have at least one non-zero value`);
+      }
+    }
+  }
+
+  /**
    * Calculate profit-based valuation
    */
   static calculateProfitValuation(financialData: Record<string, FinancialYearData>, addbacks: AddbackData[], multiple: number, years: string[]): CalculationResult {
+    // Validate addbacks first
+    this.validateAddbacks(addbacks);
+
     // Calculate metrics for each year
     const yearlyMetrics: Record<string, any> = {};
 

@@ -311,6 +311,7 @@ function drawCompanyLogo(doc: PDFKit.PDFDocument, data: RAVDAData): boolean {
 }
 
 function drawCenteredIntroPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): void {
+  doc.addPage();
   doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
 
   // Draw client's uploaded logo at the top center
@@ -1113,10 +1114,12 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
   });
 }
 
-function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): void {
+function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): number {
   doc.addPage();
   doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
   drawIntaleksLogo(doc);
+
+  let currentPageNumber = 4; // This is page 4 in the sequence
 
   // Title should always be "Valuation Method"
   doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Method", PAGE.marginX, 76, { lineBreak: false });
@@ -1219,6 +1222,31 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   const years = (data.financialYears || []).slice(0, 3);
   let yearY = toggleY + cardHeight + 40;
 
+  // Check if we have enough space for year columns, if not, create a new page
+  const spaceNeededForYears = years.length * 38 + 40; // 38px per year + 40px gap before table
+  const spaceNeededForTableStart = 100; // Minimum space needed for table header
+  const totalSpaceNeeded = yearY + spaceNeededForYears + spaceNeededForTableStart;
+
+  if (totalSpaceNeeded > PAGE.height - PAGE.marginX - 60) {
+    // Not enough space, create a new page
+    const footerY = PAGE.height - PAGE.marginX - 20;
+    doc.font(fonts.regular).fontSize(10).fillColor("#111827").text(currentPageNumber.toString(), 0, footerY, {
+      width: PAGE.width,
+      align: "center",
+      lineBreak: false,
+    });
+
+    doc.addPage();
+    doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
+    drawIntaleksLogo(doc);
+    currentPageNumber++;
+
+    // Add continuation title
+    doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Method (continued)", PAGE.marginX, 76, { lineBreak: false });
+
+    yearY = 110; // Reset Y position for new page
+  }
+
   years.forEach((year, idx) => {
     const { line1, line2 } = parseColumnHeader(year);
     const days = data.daysInPeriod?.[year];
@@ -1279,12 +1307,46 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   years.forEach((year, idx) => {
     const colX = tableX + metricW + idx * colW;
     const { line1, line2 } = parseColumnHeader(year);
-    const headerText = line2 ? `${line1}\n${line2}` : line1;
-    doc
-      .font(fonts.bold)
-      .fontSize(9)
-      .fillColor("#374151")
-      .text(headerText, colX + 4, headerY + (line2 ? 6 : 12), { width: colW - 8, align: "center", lineBreak: false });
+
+    if (line2) {
+      // Render two lines separately - manually center to avoid PDFKit issues
+      doc.font(fonts.bold).fontSize(9);
+      const line1Width = doc.widthOfString(line1);
+      const line2Width = doc.widthOfString(line2);
+      const line1X = colX + (colW - line1Width) / 2;
+      const line2X = colX + (colW - line2Width) / 2;
+
+      // Save cursor position
+      const savedX = doc.x;
+      const savedY = doc.y;
+
+      doc.fillColor("#374151").text(line1, line1X, headerY + 6, { lineBreak: false, continued: false });
+
+      // Reset cursor to prevent interference
+      doc.x = savedX;
+      doc.y = savedY;
+
+      doc.fillColor("#374151").text(line2, line2X, headerY + 18, { lineBreak: false, continued: false });
+
+      // Reset cursor again
+      doc.x = savedX;
+      doc.y = savedY;
+    } else {
+      // Single line - manually center
+      doc.font(fonts.bold).fontSize(9);
+      const lineWidth = doc.widthOfString(line1);
+      const lineX = colX + (colW - lineWidth) / 2;
+
+      // Save cursor position
+      const savedX = doc.x;
+      const savedY = doc.y;
+
+      doc.fillColor("#374151").text(line1, lineX, headerY + 12, { lineBreak: false, continued: false });
+
+      // Reset cursor
+      doc.x = savedX;
+      doc.y = savedY;
+    }
   });
 
   // Financial data rows
@@ -1364,17 +1426,57 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
       .text(moneyComma(ebitValue, data.currencySymbol, data.currencyCode), colX + 8, rowY + 11, { width: colW - 16, align: "center", lineBreak: false });
   });
 
-  // Addbacks section - add more space from the main table
+  // Addbacks section - check if we have enough space BEFORE rendering
   const addbacksY = rowY + 40;
-  doc.rect(tableX, addbacksY, tableW, 24).fill("#4C94D8");
+
+  // Calculate space needed for addbacks section
+  const allAddbacks = data.addbacks || [];
+  const addbacks = allAddbacks.filter((addback) => {
+    // Check if addback has a reason
+    if (addback.reason && addback.reason.trim().length > 0) return true;
+
+    // Check if addback has any non-zero values
+    const hasNonZeroValue = Object.values(addback.values || {}).some((val) => val > 0);
+    return hasNonZeroValue;
+  });
+
+  const addbacksHeaderHeight = 24 + 32; // Header + column headers
+  const addbacksRowsHeight = addbacks.length > 0 ? addbacks.length * rowHeight + rowHeight : rowHeight; // Rows + total/no data row
+  const totalAddbacksHeight = addbacksHeaderHeight + addbacksRowsHeight;
+  const spaceNeededForAddbacks = addbacksY + totalAddbacksHeight + 80; // 80 for page number and safe margin
+
+  // Check if we need a new page for addbacks BEFORE rendering anything
+  let actualAddbacksY = addbacksY;
+  if (spaceNeededForAddbacks > PAGE.height - PAGE.marginX) {
+    // Not enough space, move entire addbacks section to new page
+    const footerY = PAGE.height - PAGE.marginX - 20;
+    doc.font(fonts.regular).fontSize(10).fillColor("#111827").text(currentPageNumber.toString(), 0, footerY, {
+      width: PAGE.width,
+      align: "center",
+      lineBreak: false,
+    });
+
+    doc.addPage();
+    doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
+    drawIntaleksLogo(doc);
+    currentPageNumber++;
+
+    // Add continuation title
+    doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Method (continued)", PAGE.marginX, 76, { lineBreak: false });
+
+    actualAddbacksY = 110; // Reset Y position for new page
+  }
+
+  // Now render addbacks section
+  doc.rect(tableX, actualAddbacksY, tableW, 24).fill("#4C94D8");
   doc
     .font(fonts.bold)
     .fontSize(11)
     .fillColor("#FFFFFF")
-    .text("ADDBACKS / ADJUSTMENTS", tableX + 12, addbacksY + 7, { lineBreak: false });
+    .text("ADDBACKS / ADJUSTMENTS", tableX + 12, actualAddbacksY + 7, { lineBreak: false });
 
   // Addbacks table headers
-  const addHeaderY = addbacksY + 24;
+  const addHeaderY = actualAddbacksY + 24;
   doc.rect(tableX, addHeaderY, tableW, 32).fill("#E8E8E8");
 
   const addbackW = 80;
@@ -1404,26 +1506,49 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   years.forEach((year, idx) => {
     const colX = tableX + addbackW + reasonW + idx * addYearColW;
     const { line1, line2 } = parseColumnHeader(year);
-    const headerText = line2 ? `${line1}\n${line2}` : line1;
-    doc
-      .font(fonts.bold)
-      .fontSize(9)
-      .fillColor("#374151")
-      .text(headerText, colX + 4, addHeaderY + (line2 ? 6 : 12), { width: addYearColW - 8, align: "center", lineBreak: false });
+
+    if (line2) {
+      // Render two lines separately - manually center to avoid PDFKit issues
+      doc.font(fonts.bold).fontSize(9);
+      const line1Width = doc.widthOfString(line1);
+      const line2Width = doc.widthOfString(line2);
+      const line1X = colX + (addYearColW - line1Width) / 2;
+      const line2X = colX + (addYearColW - line2Width) / 2;
+
+      // Save cursor position
+      const savedX = doc.x;
+      const savedY = doc.y;
+
+      doc.fillColor("#374151").text(line1, line1X, addHeaderY + 6, { lineBreak: false, continued: false });
+
+      // Reset cursor to prevent interference
+      doc.x = savedX;
+      doc.y = savedY;
+
+      doc.fillColor("#374151").text(line2, line2X, addHeaderY + 18, { lineBreak: false, continued: false });
+
+      // Reset cursor again
+      doc.x = savedX;
+      doc.y = savedY;
+    } else {
+      // Single line - manually center
+      doc.font(fonts.bold).fontSize(9);
+      const lineWidth = doc.widthOfString(line1);
+      const lineX = colX + (addYearColW - lineWidth) / 2;
+
+      // Save cursor position
+      const savedX = doc.x;
+      const savedY = doc.y;
+
+      doc.fillColor("#374151").text(line1, lineX, addHeaderY + 12, { lineBreak: false, continued: false });
+
+      // Reset cursor
+      doc.x = savedX;
+      doc.y = savedY;
+    }
   });
 
-  // Addback rows - only show addbacks with actual data (non-zero values or reasons)
-  const allAddbacks = data.addbacks || [];
-  const addbacks = allAddbacks.filter((addback) => {
-    // Check if addback has a reason
-    if (addback.reason && addback.reason.trim().length > 0) return true;
-
-    // Check if addback has any non-zero values
-    const hasNonZeroValue = Object.values(addback.values || {}).some((val) => val > 0);
-    return hasNonZeroValue;
-  });
-
-  // Only render addback rows if there are any
+  // Render addback rows (addbacks already filtered above)
   if (addbacks.length > 0) {
     let addRowY = addHeaderY + 32;
 
@@ -1516,11 +1641,13 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
 
   // Page number
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("4", 0, footerY, {
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text(currentPageNumber.toString(), 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
   });
+
+  return currentPageNumber; // Return the last page number used
 }
 
 function drawMetricCard(doc: PDFKit.PDFDocument, fonts: PdfFonts, x: number, y: number, title: string, value: string): void {
@@ -2028,7 +2155,7 @@ function drawBusinessStrengthAssessmentPage(doc: PDFKit.PDFDocument, data: RAVDA
   });
 }
 
-function drawQuestionnaireQAPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): void {
+function drawQuestionnaireQAPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts, pageNumber: number): void {
   doc.addPage();
   doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
 
@@ -2053,7 +2180,7 @@ function drawQuestionnaireQAPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts
     });
 
     const footerY = PAGE.height - PAGE.marginX - 20;
-    doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("7", 0, footerY, {
+    doc.font(fonts.regular).fontSize(10).fillColor("#111827").text(pageNumber.toString(), 0, footerY, {
       width: PAGE.width,
       align: "center",
       lineBreak: false,
@@ -2157,7 +2284,7 @@ function drawQuestionnaireQAPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts
 
   // Page number
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("5", 0, footerY, {
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text(pageNumber.toString(), 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -2173,7 +2300,12 @@ export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer
   };
 
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: PAGE.marginX, size: "A4" });
+    const doc = new PDFDocument({
+      margin: PAGE.marginX,
+      size: "A4",
+      bufferPages: true, // Buffer pages to prevent automatic page creation
+      autoFirstPage: false, // We'll manually add pages
+    });
     const buffers: Buffer[] = [];
 
     doc.on("data", (chunk: Buffer) => {
@@ -2196,9 +2328,9 @@ export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer
     } else if (resolvedData.valuationMethod === "profit") {
       drawValuationSummaryPage(doc, resolvedData, fonts); // Page 3 - Well-formatted valuation summary
     }
-    drawFinancialDataPage(doc, resolvedData, fonts); // Page 4 - Financial data with method-specific title
+    const lastFinancialPageNumber = drawFinancialDataPage(doc, resolvedData, fonts); // Page 4+ - Financial data (may span multiple pages)
     // drawBusinessStrengthAssessmentPage(doc, resolvedData, fonts); // Page 5 - Business Strength Assessment (temporarily hidden)
-    drawQuestionnaireQAPage(doc, resolvedData, fonts); // Page 6 - Questionnaire Q&A
+    drawQuestionnaireQAPage(doc, resolvedData, fonts, lastFinancialPageNumber + 1); // Next page after financial data - Questionnaire Q&A
 
     doc.end();
   });

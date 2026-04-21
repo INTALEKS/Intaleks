@@ -58,6 +58,7 @@ const invoice_routes_1 = __importDefault(require("./routes/invoice.routes"));
 const profile_routes_1 = __importDefault(require("./routes/profile.routes"));
 const contact_routes_1 = __importDefault(require("./routes/contact.routes"));
 const calculator_routes_1 = __importDefault(require("./routes/calculator.routes"));
+const coupon_routes_1 = require("./routes/coupon.routes");
 const startup_seed_1 = __importDefault(require("./scripts/startup-seed"));
 const errorHandler_1 = require("./middleware/errorHandler");
 dotenv_1.default.config();
@@ -116,6 +117,8 @@ app.use("/api/users", profile_routes_1.default);
 app.use("/api/contact", contact_routes_1.default);
 app.use("/api/upload", profile_routes_1.default); // For avatar uploads
 app.use("/api/calculator", calculator_routes_1.default); // Calculator with server-side validation
+app.use("/api/coupons", coupon_routes_1.couponRouter); // User coupon redemption
+app.use("/api/admin/coupons", coupon_routes_1.adminCouponRouter); // Super Admin coupon management
 // Test database connection
 app.get("/db-test", async (req, res) => {
     try {
@@ -137,8 +140,6 @@ process.on("SIGINT", async () => {
 });
 app.listen(PORT, "0.0.0.0", async () => {
     console.log(`🚀 Server running on port ${PORT}`);
-    // Auto-seed database on startup (only seeds missing data)
-    if (process.env.NODE_ENV === "development") {
-        await (0, startup_seed_1.default)();
-    }
+    // Auto-seed database on startup (seeds missing data and syncs existing records)
+    await (0, startup_seed_1.default)();
 });

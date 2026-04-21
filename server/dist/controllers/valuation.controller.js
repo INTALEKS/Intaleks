@@ -6,6 +6,7 @@ const valuationValidation_1 = require("../validation/valuationValidation");
 const pdf_service_1 = require("../services/pdf.service");
 const storage_1 = require("../services/storage");
 const calculator_1 = require("../services/calculator");
+const db_1 = require("../config/db");
 /**
  * Create a new valuation document record
  * POST /api/valuations
@@ -227,6 +228,20 @@ const generatePDF = async (req, res, next) => {
         catch (dbError) {
             console.error("Failed to save valuation document to database:", dbError);
             // Continue - user can still download the PDF
+        }
+        // Coupon users get exactly one download — mark as used after successful PDF generation
+        if (req.user?.couponAccess && !req.user?.couponUsed) {
+            try {
+                await db_1.prisma.user.update({
+                    where: { id: userId },
+                    data: { couponUsed: true },
+                });
+                console.log(`[COUPON] Marked coupon access as used for user ${userId}`);
+            }
+            catch (couponErr) {
+                console.error("Failed to mark coupon as used:", couponErr);
+                // Non-fatal — PDF is already sent
+            }
         }
         // Generate filename in format: "Company Name - Intaleks Business Valuation Report.pdf"
         const sanitizedCompanyName = data.companyName.replace(/[<>:"/\\|?*]/g, "").trim();

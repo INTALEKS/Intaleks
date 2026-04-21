@@ -40,6 +40,8 @@ const authenticateToken = async (req, res, next) => {
                 lastName: true,
                 role: true,
                 subscriptionStatus: true,
+                couponAccess: true,
+                couponUsed: true,
                 emailVerified: true,
                 termsAccepted: true,
                 termsAcceptedAt: true,
@@ -118,7 +120,7 @@ const requireEmailVerified = (req, res, next) => {
 };
 exports.requireEmailVerified = requireEmailVerified;
 /**
- * Middleware to check if user has an active subscription
+ * Middleware to check if user has an active subscription or valid coupon access
  * Use this on routes that require a paid subscription
  */
 const requireActiveSubscription = (req, res, next) => {
@@ -131,11 +133,23 @@ const requireActiveSubscription = (req, res, next) => {
         next();
         return;
     }
-    if (req.user.subscriptionStatus !== client_1.SubscriptionStatus.ACTIVE) {
+    const hasSubscription = req.user.subscriptionStatus === client_1.SubscriptionStatus.ACTIVE;
+    const hasCouponAccess = req.user.couponAccess === true;
+    const couponAlreadyUsed = req.user.couponUsed === true;
+    if (!hasSubscription && !hasCouponAccess) {
         res.status(403).json({
             error: "Active subscription required",
-            message: "This feature requires an active subscription. Please subscribe to continue.",
+            message: "This feature requires an active subscription. Please subscribe or redeem a coupon code to continue.",
             subscriptionStatus: req.user.subscriptionStatus,
+        });
+        return;
+    }
+    // Coupon users get exactly one use — block if already consumed
+    if (!hasSubscription && hasCouponAccess && couponAlreadyUsed) {
+        res.status(403).json({
+            error: "Coupon access expired",
+            message: "Your one-time coupon access has already been used. Please subscribe to continue.",
+            couponUsed: true,
         });
         return;
     }

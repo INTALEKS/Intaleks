@@ -5,28 +5,18 @@ const db_1 = require("../config/db");
 const client_1 = require("@prisma/client");
 /**
  * Seeds the One-Off subscription plan only
- * AUD $399 one-time payment with full features
+ * AUD $495 one-time payment with full features
  */
 async function seedSubscriptionPlan() {
     try {
-        // Delete the free plan if it exists
-        const freePlan = await db_1.prisma.subscriptionPlan.findUnique({
-            where: { name: "Free" },
-        });
-        if (freePlan) {
-            await db_1.prisma.subscriptionPlan.delete({
-                where: { name: "Free" },
-            });
-            console.log("✅ Removed Free plan");
-        }
         // Check if the One-Off plan already exists
         const existingPlan = await db_1.prisma.subscriptionPlan.findUnique({
             where: { name: "One-Off" },
         });
         const planData = {
-            price: 39900, // AUD $399.00 in cents
+            price: 49500, // AUD $495.00 in cents
             billingPeriod: client_1.BillingPeriod.ONE_TIME,
-            features: ["Worldwide Industry Multiples (US, Canada, UK, Australia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking"],
+            features: ["Worldwide Industry Multiples (US, Canada, UK, Australia, China, Indonesia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking"],
             active: true,
         };
         if (existingPlan) {
@@ -35,7 +25,7 @@ async function seedSubscriptionPlan() {
                 where: { name: "One-Off" },
                 data: planData,
             });
-            console.log("✅ One-Off subscription plan updated to AUD $399");
+            console.log("✅ One-Off subscription plan updated to AUD $495");
         }
         else {
             // Create the One-Off subscription plan

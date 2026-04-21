@@ -437,6 +437,12 @@ export default function CalculatorPage() {
       return;
     }
 
+    // Validate addbacks
+    if (!validateAddbacks) {
+      toast.error("Please provide values for all addback reasons you've selected");
+      return;
+    }
+
     // Prepare data for server-side calculation
     try {
       let calculationData;
@@ -571,6 +577,12 @@ export default function CalculatorPage() {
     // Check if all steps are complete first
     if (!isStep4Complete) {
       toast.error("Please complete all steps before downloading");
+      return;
+    }
+
+    // Additional validation for addbacks
+    if (!validateAddbacks) {
+      toast.error("Please provide values for all addback reasons you've selected");
       return;
     }
 
@@ -767,6 +779,22 @@ export default function CalculatorPage() {
     return isStep2Complete && !!selectedMethod;
   }, [isStep2Complete, selectedMethod]);
 
+  // Validate addbacks: if a reason is provided, at least one value must be non-zero
+  const validateAddbacks = useMemo(() => {
+    return addbacks.every((addback) => {
+      // If no reason is selected, it's valid (empty addback)
+      if (!addback.reason) return true;
+
+      // If reason is selected, check if at least one value is non-zero
+      const hasNonZeroValue = Object.values(addback.values).some((val) => {
+        const numVal = parseFloat(val as string);
+        return !isNaN(numVal) && numVal !== 0;
+      });
+
+      return hasNonZeroValue;
+    });
+  }, [addbacks]);
+
   // Step 4 is complete when financial data is entered based on selected method
   const isStep4Complete = useMemo(() => {
     if (!isStep3Complete) return false;
@@ -780,6 +808,12 @@ export default function CalculatorPage() {
         const sales = parseFloat((financialData?.sales?.[year] as string) || "0");
         return sales > 0;
       });
+
+      // Validate addbacks
+      if (!validateAddbacks) {
+        return false;
+      }
+
       return hasSalesData;
     } else if (selectedMethod === "asset") {
       // For asset method, need at least one asset value
@@ -788,7 +822,7 @@ export default function CalculatorPage() {
     }
 
     return false;
-  }, [isStep3Complete, isAuthenticated, hasCalculatorAccess, selectedMethod, financialData, financialYears, assets]);
+  }, [isStep3Complete, isAuthenticated, hasCalculatorAccess, selectedMethod, financialData, financialYears, assets, validateAddbacks]);
 
   // Step 5 (Download) is complete when step 4 is done
   const isStep5Complete = isStep4Complete;
