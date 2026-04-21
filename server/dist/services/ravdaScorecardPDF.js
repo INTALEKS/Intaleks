@@ -1375,18 +1375,21 @@ function drawAssetSummaryPage(doc, data, fonts) {
     doc.addPage();
     doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
     drawIntaleksLogo(doc);
-    const assets = data.assets || { plantEquipment: 0, inventory: 0, vehicles: 0, goodwill: 0, otherIntangible: 0 };
-    const liabilities = data.liabilities || { loans: 0, annualLeave: 0, longServiceLeave: 0, otherLiabilities: 0 };
+    const assets = data.assets || {};
+    const liabilities = data.liabilities || {};
     const isChina = (data.country || "").toLowerCase() === "china";
-    const landUseRights = isChina ? assets.landUseRights || 0 : 0;
-    const totalAssets = typeof data.totalAssets === "number" ? data.totalAssets : assets.plantEquipment + assets.inventory + assets.vehicles + assets.goodwill + assets.otherIntangible + landUseRights;
-    const totalLiabilities = typeof data.totalLiabilities === "number" ? data.totalLiabilities : liabilities.loans + liabilities.annualLeave + liabilities.longServiceLeave + liabilities.otherLiabilities;
-    const netAssetValue = typeof data.finalValuation === "number" ? data.finalValuation : totalAssets - totalLiabilities;
+    // Calculate totals for Book Value and Fair Market Value
+    const totalAssetsBV = (Number(assets.cashAndBank_bv) || 0) + (Number(assets.accountsReceivable_bv) || 0) + (Number(assets.inventory_bv) || 0) + (Number(assets.plantEquipment_bv) || 0) + (Number(assets.vehicles_bv) || 0) + (Number(assets.realEstate_bv) || 0) + (Number(assets.intellectualProperty_bv) || 0) + (Number(assets.otherAssets_bv) || 0) + (isChina ? Number(assets.landUseRights_bv) || 0 : 0);
+    const totalAssetsFMV = (Number(assets.cashAndBank_fmv) || 0) + (Number(assets.accountsReceivable_fmv) || 0) + (Number(assets.inventory_fmv) || 0) + (Number(assets.plantEquipment_fmv) || 0) + (Number(assets.vehicles_fmv) || 0) + (Number(assets.realEstate_fmv) || 0) + (Number(assets.intellectualProperty_fmv) || 0) + (Number(assets.otherAssets_fmv) || 0) + (isChina ? Number(assets.landUseRights_fmv) || 0 : 0);
+    const totalLiabilitiesBV = (Number(liabilities.liabilities_bv) || 0) + (Number(liabilities.accountsPayable_bv) || 0) + (Number(liabilities.loansAndDebt_bv) || 0) + (Number(liabilities.otherLiabilities_bv) || 0);
+    const totalLiabilitiesFMV = (Number(liabilities.liabilities_fmv) || 0) + (Number(liabilities.accountsPayable_fmv) || 0) + (Number(liabilities.loansAndDebt_fmv) || 0) + (Number(liabilities.otherLiabilities_fmv) || 0);
+    const netAssetValueBV = totalAssetsBV - totalLiabilitiesBV;
+    const netAssetValueFMV = totalAssetsFMV - totalLiabilitiesFMV;
     const strengthScore = getScoreOutOf50(data);
     const strengthRating = getStrengthRating(strengthScore);
     doc.font(fonts.semibold).fontSize(14).fillColor("#111827").text("Asset Method Summary", PAGE.marginX, 94, { lineBreak: false });
     // Company info line with justified spacing
-    const infoY = 175;
+    const infoY = 130;
     const infoStartX = PAGE.marginX + 26;
     const infoEndX = PAGE.width - PAGE.marginX - 26;
     const infoWidth = infoEndX - infoStartX;
@@ -1418,200 +1421,246 @@ function drawAssetSummaryPage(doc, data, fonts) {
         .fillColor("#111827")
         .text(`Industry: ${toDisplayLabel(data.industry) || "N/A"}`, industryX, infoY, { lineBreak: false, continued: true });
     doc.font(fonts.regular).fontSize(13).fillColor("#9CA3AF").text(`(Base: ${baseMultiple}x)`, { lineBreak: false });
-    // Method description box - positioned below company info line
-    const methodDescY = 197;
+    // Method description box
+    const methodDescY = 152;
     const methodDescW = PAGE.width - PAGE.marginX * 2;
-    const methodDescH = 64;
+    const methodDescH = 50;
     doc.roundedRect(PAGE.marginX, methodDescY, methodDescW, methodDescH, 8).fillAndStroke("#F0F9FF", "#BFDBFE");
-    // Method title
     doc
         .font(fonts.semibold)
-        .fontSize(12)
+        .fontSize(11)
         .fillColor("#1E40AF")
-        .text("Asset Method", PAGE.marginX + 16, methodDescY + 12, {
+        .text("Asset Method", PAGE.marginX + 16, methodDescY + 10, {
         width: methodDescW - 32,
         align: "center",
         lineBreak: false,
     });
-    // Method description
     doc
         .font(fonts.regular)
-        .fontSize(9)
+        .fontSize(8.5)
         .fillColor("#1E40AF")
-        .text("This asset method is effective because it values a business based on verifiable assets and liabilities.", PAGE.marginX + 16, methodDescY + 32, {
+        .text("This asset method values a business based on verifiable assets and liabilities.", PAGE.marginX + 16, methodDescY + 28, {
         width: methodDescW - 32,
         align: "center",
         lineGap: 1.5,
     });
-    const cardY = 275;
-    const gap = 12;
-    const x0 = PAGE.marginX + 26;
-    drawMetricCard(doc, fonts, x0, cardY, "Total Assets", moneyComma(totalAssets, data.currencySymbol, data.currencyCode));
-    drawMetricCard(doc, fonts, x0 + 150 + gap, cardY, "Total Liabilities", moneyComma(totalLiabilities, data.currencySymbol, data.currencyCode));
-    const w = 150;
-    const h = 62;
-    const x3 = x0 + (150 + gap) * 2;
-    doc.roundedRect(x3, cardY, w, h, 5).fillAndStroke("#DBEAFE", "#60A5FA");
-    doc
-        .font(fonts.bold)
-        .fontSize(8)
-        .fillColor("#111827")
-        .text("Net Asset Value", x3, cardY + 14, { width: w, align: "center", lineBreak: false });
-    doc
-        .font(fonts.bold)
-        .fontSize(16)
-        .fillColor("#111827")
-        .text(moneyComma(netAssetValue, data.currencySymbol, data.currencyCode), x3, cardY + 32, { width: w, align: "center", lineBreak: false });
-    // Asset & Liability line-item breakdown table
-    const tableY = cardY + 82;
+    // Asset & Liability breakdown table with BV and FMV columns
+    const tableY = methodDescY + methodDescH + 16;
     const tableX = PAGE.marginX;
     const tableW = PAGE.width - PAGE.marginX * 2;
-    const labelColW = tableW * 0.65;
-    const valueColW = tableW - labelColW;
-    const rowH = 22;
-    const gridColor = "#E5E7EB";
+    const labelColW = tableW * 0.4;
+    const valueColW = (tableW - labelColW) / 2; // Split remaining space for BV and FMV
+    const rowH = 20;
+    const gridColor = "#D1D5DB";
     // Assets header
-    doc.rect(tableX, tableY, tableW, 22).fill("#4C94D8");
+    doc.rect(tableX, tableY, tableW, 20).fill("#4C94D8");
     doc
         .font(fonts.bold)
         .fontSize(9)
         .fillColor("#FFFFFF")
-        .text("ASSETS (FAIR MARKET VALUE)", tableX + 10, tableY + 7, { lineBreak: false });
+        .text("ASSETS", tableX + 10, tableY + 6, { lineBreak: false });
+    // Column headers
+    const headerY = tableY + 20;
+    doc.rect(tableX, headerY, tableW, 22).fill("#E8E8E8");
+    doc.rect(tableX, headerY, labelColW, 22).stroke(gridColor);
+    doc.rect(tableX + labelColW, headerY, valueColW, 22).stroke(gridColor);
+    doc.rect(tableX + labelColW + valueColW, headerY, valueColW, 22).stroke(gridColor);
+    doc
+        .font(fonts.bold)
+        .fontSize(8)
+        .fillColor("#374151")
+        .text("Asset Category", tableX + 10, headerY + 8, { lineBreak: false });
+    doc
+        .font(fonts.bold)
+        .fontSize(8)
+        .fillColor("#374151")
+        .text("Book Value", tableX + labelColW + 8, headerY + 8, { width: valueColW - 16, align: "center", lineBreak: false });
+    doc
+        .font(fonts.bold)
+        .fontSize(8)
+        .fillColor("#374151")
+        .text("Fair Market Value", tableX + labelColW + valueColW + 8, headerY + 8, { width: valueColW - 16, align: "center", lineBreak: false });
+    // Asset rows
     const assetRows = [
-        { label: "Plant and Equipment (FMV)", value: assets.plantEquipment },
-        { label: "Inventory (FMV)", value: assets.inventory },
-        { label: "Vehicles (FMV)", value: assets.vehicles },
-        { label: "Goodwill (FMV)", value: assets.goodwill },
-        { label: "Other Intangible Assets (FMV)", value: assets.otherIntangible },
+        { label: "Cash & Bank", bv: Number(assets.cashAndBank_bv) || 0, fmv: Number(assets.cashAndBank_fmv) || 0 },
+        { label: "Accounts Receivable", bv: Number(assets.accountsReceivable_bv) || 0, fmv: Number(assets.accountsReceivable_fmv) || 0 },
+        { label: "Inventory", bv: Number(assets.inventory_bv) || 0, fmv: Number(assets.inventory_fmv) || 0 },
+        { label: "Plant & Equipment", bv: Number(assets.plantEquipment_bv) || 0, fmv: Number(assets.plantEquipment_fmv) || 0 },
+        { label: "Vehicles", bv: Number(assets.vehicles_bv) || 0, fmv: Number(assets.vehicles_fmv) || 0 },
+        { label: "Real Estate", bv: Number(assets.realEstate_bv) || 0, fmv: Number(assets.realEstate_fmv) || 0 },
+        { label: "Intellectual Property", bv: Number(assets.intellectualProperty_bv) || 0, fmv: Number(assets.intellectualProperty_fmv) || 0 },
+        { label: "Other Assets", bv: Number(assets.otherAssets_bv) || 0, fmv: Number(assets.otherAssets_fmv) || 0 },
     ];
     if (isChina) {
-        assetRows.push({ label: "Land-Use Rights (FMV) — China only", value: landUseRights });
+        assetRows.push({
+            label: "Land-Use Rights (China)",
+            bv: Number(assets.landUseRights_bv) || 0,
+            fmv: Number(assets.landUseRights_fmv) || 0,
+        });
     }
-    assetRows.push({ label: "Total Assets", value: totalAssets, highlight: true });
-    let rowY = tableY + 22;
+    assetRows.push({ label: "TOTAL ASSETS", bv: totalAssetsBV, fmv: totalAssetsFMV, highlight: true });
+    let rowY = headerY + 22;
     assetRows.forEach((row, idx) => {
         const bg = row.highlight ? "#A5C9EB" : idx % 2 === 0 ? "#FFFFFF" : "#F9FAFB";
         doc.rect(tableX, rowY, tableW, rowH).fill(bg);
         doc.rect(tableX, rowY, labelColW, rowH).stroke(gridColor);
         doc.rect(tableX + labelColW, rowY, valueColW, rowH).stroke(gridColor);
+        doc.rect(tableX + labelColW + valueColW, rowY, valueColW, rowH).stroke(gridColor);
         doc
             .font(row.highlight ? fonts.bold : fonts.regular)
-            .fontSize(9)
+            .fontSize(8)
             .fillColor("#111827")
-            .text(row.label, tableX + 10, rowY + 7, { lineBreak: false });
+            .text(row.label, tableX + 10, rowY + 6, { lineBreak: false });
         doc
             .font(row.highlight ? fonts.bold : fonts.regular)
-            .fontSize(9)
+            .fontSize(8)
             .fillColor("#111827")
-            .text(moneyComma(row.value, data.currencySymbol, data.currencyCode), tableX + labelColW + 8, rowY + 7, { width: valueColW - 16, align: "right", lineBreak: false });
+            .text(moneyComma(row.bv, data.currencySymbol, data.currencyCode), tableX + labelColW + 8, rowY + 6, { width: valueColW - 16, align: "center", lineBreak: false });
+        doc
+            .font(row.highlight ? fonts.bold : fonts.regular)
+            .fontSize(8)
+            .fillColor("#111827")
+            .text(moneyComma(row.fmv, data.currencySymbol, data.currencyCode), tableX + labelColW + valueColW + 8, rowY + 6, { width: valueColW - 16, align: "center", lineBreak: false });
         rowY += rowH;
     });
     // Liabilities header
-    const liabHeaderY = rowY + 6;
-    doc.rect(tableX, liabHeaderY, tableW, 22).fill("#4C94D8");
+    const liabHeaderY = rowY + 8;
+    doc.rect(tableX, liabHeaderY, tableW, 20).fill("#4C94D8");
     doc
         .font(fonts.bold)
         .fontSize(9)
         .fillColor("#FFFFFF")
-        .text("LIABILITIES", tableX + 10, liabHeaderY + 7, { lineBreak: false });
+        .text("LIABILITIES", tableX + 10, liabHeaderY + 6, { lineBreak: false });
+    // Column headers for liabilities
+    const liabColHeaderY = liabHeaderY + 20;
+    doc.rect(tableX, liabColHeaderY, tableW, 22).fill("#E8E8E8");
+    doc.rect(tableX, liabColHeaderY, labelColW, 22).stroke(gridColor);
+    doc.rect(tableX + labelColW, liabColHeaderY, valueColW, 22).stroke(gridColor);
+    doc.rect(tableX + labelColW + valueColW, liabColHeaderY, valueColW, 22).stroke(gridColor);
+    doc
+        .font(fonts.bold)
+        .fontSize(8)
+        .fillColor("#374151")
+        .text("Liability Category", tableX + 10, liabColHeaderY + 8, { lineBreak: false });
+    doc
+        .font(fonts.bold)
+        .fontSize(8)
+        .fillColor("#374151")
+        .text("Book Value", tableX + labelColW + 8, liabColHeaderY + 8, { width: valueColW - 16, align: "center", lineBreak: false });
+    doc
+        .font(fonts.bold)
+        .fontSize(8)
+        .fillColor("#374151")
+        .text("Fair Market Value", tableX + labelColW + valueColW + 8, liabColHeaderY + 8, { width: valueColW - 16, align: "center", lineBreak: false });
+    // Liability rows
     const liabilityRows = [
-        { label: "Loans", value: liabilities.loans },
-        { label: "Annual Leave Provision", value: liabilities.annualLeave },
-        { label: "Long Service Leave Provision", value: liabilities.longServiceLeave },
-        { label: "Other Liabilities", value: liabilities.otherLiabilities },
-        { label: "Total Liabilities", value: totalLiabilities, highlight: true },
+        { label: "Liabilities", bv: Number(liabilities.liabilities_bv) || 0, fmv: Number(liabilities.liabilities_fmv) || 0 },
+        { label: "Accounts Payable", bv: Number(liabilities.accountsPayable_bv) || 0, fmv: Number(liabilities.accountsPayable_fmv) || 0 },
+        { label: "Loans & Debt", bv: Number(liabilities.loansAndDebt_bv) || 0, fmv: Number(liabilities.loansAndDebt_fmv) || 0 },
+        { label: "Other Liabilities", bv: Number(liabilities.otherLiabilities_bv) || 0, fmv: Number(liabilities.otherLiabilities_fmv) || 0 },
+        { label: "TOTAL LIABILITIES", bv: totalLiabilitiesBV, fmv: totalLiabilitiesFMV, highlight: true },
     ];
-    rowY = liabHeaderY + 22;
+    rowY = liabColHeaderY + 22;
     liabilityRows.forEach((row, idx) => {
         const bg = row.highlight ? "#A5C9EB" : idx % 2 === 0 ? "#FFFFFF" : "#F9FAFB";
         doc.rect(tableX, rowY, tableW, rowH).fill(bg);
         doc.rect(tableX, rowY, labelColW, rowH).stroke(gridColor);
         doc.rect(tableX + labelColW, rowY, valueColW, rowH).stroke(gridColor);
+        doc.rect(tableX + labelColW + valueColW, rowY, valueColW, rowH).stroke(gridColor);
         doc
             .font(row.highlight ? fonts.bold : fonts.regular)
-            .fontSize(9)
+            .fontSize(8)
             .fillColor("#111827")
-            .text(row.label, tableX + 10, rowY + 7, { lineBreak: false });
+            .text(row.label, tableX + 10, rowY + 6, { lineBreak: false });
         doc
             .font(row.highlight ? fonts.bold : fonts.regular)
-            .fontSize(9)
+            .fontSize(8)
             .fillColor("#111827")
-            .text(moneyComma(row.value, data.currencySymbol, data.currencyCode), tableX + labelColW + 8, rowY + 7, { width: valueColW - 16, align: "right", lineBreak: false });
+            .text(moneyComma(row.bv, data.currencySymbol, data.currencyCode), tableX + labelColW + 8, rowY + 6, { width: valueColW - 16, align: "center", lineBreak: false });
+        doc
+            .font(row.highlight ? fonts.bold : fonts.regular)
+            .fontSize(8)
+            .fillColor("#111827")
+            .text(moneyComma(row.fmv, data.currencySymbol, data.currencyCode), tableX + labelColW + valueColW + 8, rowY + 6, { width: valueColW - 16, align: "center", lineBreak: false });
         rowY += rowH;
     });
-    // business strength assessment block
-    const assessmentY = rowY + 12;
-    const assessmentW = PAGE.width - PAGE.marginX * 2;
-    const assessmentH = 52;
-    doc.roundedRect(PAGE.marginX, assessmentY, assessmentW, assessmentH, 8).fillAndStroke("#FFFFFF", "#DBEAFE");
-    doc
-        .font(fonts.regular)
-        .fontSize(10)
-        .fillColor("#6B7280")
-        .text("Business Strength Assessment", PAGE.marginX + 12, assessmentY + 10, { lineBreak: false });
+    // Net Asset Value row
+    const navY = rowY + 8;
+    doc.rect(tableX, navY, tableW, 24).fill("#DBEAFE");
+    doc.rect(tableX, navY, labelColW, 24).stroke(gridColor);
+    doc.rect(tableX + labelColW, navY, valueColW, 24).stroke(gridColor);
+    doc.rect(tableX + labelColW + valueColW, navY, valueColW, 24).stroke(gridColor);
     doc
         .font(fonts.bold)
-        .fontSize(18)
-        .fillColor("#2563EB")
-        .text(`${strengthScore}/50`, PAGE.marginX + 12, assessmentY + 26, { lineBreak: false });
+        .fontSize(9)
+        .fillColor("#111827")
+        .text("NET ASSET VALUE", tableX + 10, navY + 8, { lineBreak: false });
     doc
-        .font(fonts.regular)
-        .fontSize(10)
-        .fillColor("#6B7280")
-        .text("Rating", PAGE.marginX + assessmentW - 90, assessmentY + 10, { width: 72, align: "right", lineBreak: false });
-    doc.roundedRect(PAGE.marginX + assessmentW - 78, assessmentY + 24, 66, 20, 10).fill(strengthRating.bg);
+        .font(fonts.bold)
+        .fontSize(9)
+        .fillColor("#111827")
+        .text(moneyComma(netAssetValueBV, data.currencySymbol, data.currencyCode), tableX + labelColW + 8, navY + 8, { width: valueColW - 16, align: "center", lineBreak: false });
     doc
-        .font(fonts.medium)
-        .fontSize(8)
-        .fillColor(strengthRating.text)
-        .text(strengthRating.label, PAGE.marginX + assessmentW - 78, assessmentY + 30, { width: 66, align: "center", lineBreak: false });
+        .font(fonts.bold)
+        .fontSize(9)
+        .fillColor("#1E40AF")
+        .text(moneyComma(netAssetValueFMV, data.currencySymbol, data.currencyCode), tableX + labelColW + valueColW + 8, navY + 8, { width: valueColW - 16, align: "center", lineBreak: false });
+    // Business strength assessment
+    const assessmentY = navY + 36;
+    drawBusinessStrengthAssessmentPanel(doc, data, fonts, assessmentY);
+    // Final valuation panel
     const panelX = PAGE.marginX;
     const panelY = assessmentY + 64;
     const panelW = PAGE.width - PAGE.marginX * 2;
-    const panelH = 110;
-    doc.roundedRect(panelX, panelY, panelW, panelH, 12).fill("#2F80ED");
-    doc
-        .font(fonts.regular)
-        .fontSize(12)
-        .fillColor("#EAF2FF")
-        .text("Estimated Business Valuation", panelX + 12, panelY + 14, { lineBreak: false });
-    doc
-        .font(fonts.bold)
-        .fontSize(32)
-        .fillColor("#FFFFFF")
-        .text(moneyComma(netAssetValue, data.currencySymbol, data.currencyCode), panelX + 12, panelY + 34, { lineBreak: false });
-    doc
-        .moveTo(panelX + 12, panelY + 80)
-        .lineTo(panelX + panelW - 12, panelY + 80)
-        .lineWidth(1)
-        .strokeColor("#5FA6FF")
-        .stroke();
+    const panelH = 90;
+    doc.roundedRect(panelX, panelY, panelW, panelH, 12).fill("#2563EB");
     doc
         .font(fonts.regular)
         .fontSize(11)
-        .fillColor("#EAF2FF")
-        .text("Method: Asset Method", panelX + 12, panelY + 88, { lineBreak: false });
+        .fillColor("#DBEAFE")
+        .text("Estimated Business Valuation (Fair Market Value)", panelX + 12, panelY + 12, { lineBreak: false });
+    doc
+        .font(fonts.bold)
+        .fontSize(28)
+        .fillColor("#FFFFFF")
+        .text(moneyComma(netAssetValueFMV, data.currencySymbol, data.currencyCode), panelX + 12, panelY + 32, { lineBreak: false });
+    doc
+        .moveTo(panelX + 12, panelY + 68)
+        .lineTo(panelX + panelW - 12, panelY + 68)
+        .lineWidth(1)
+        .strokeColor("#60A5FA")
+        .stroke();
+    doc
+        .font(fonts.regular)
+        .fontSize(10)
+        .fillColor("#DBEAFE")
+        .text("Method: Asset Method", panelX + 12, panelY + 74, { lineBreak: false });
     // Trophy image
     const trophyPath = path_1.default.join(__dirname, "../assets/win.png");
     if (fs_1.default.existsSync(trophyPath)) {
-        doc.image(trophyPath, panelX + panelW - 52, panelY + 20, { width: 40 });
+        doc.image(trophyPath, panelX + panelW - 48, panelY + 16, { width: 36 });
     }
-    const narrative = "This valuation estimate is generated from your financial performance, adjusted EBIT and selected valuation method. It is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
+    // Disclaimer
+    const narrative = "This valuation estimate is generated from your asset and liability data. It is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
     doc
         .font(fonts.regular)
-        .fontSize(9)
+        .fontSize(8)
         .fillColor("#111827")
         .text(narrative, PAGE.marginX, panelY + panelH + 12, {
         width: PAGE.width - PAGE.marginX * 2,
-        align: "left",
-        lineGap: 1.4,
+        align: "justify",
+        lineGap: 1.3,
     });
+    // Page number
     const footerY = PAGE.height - PAGE.marginX - 20;
     doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("3", 0, footerY, {
         width: PAGE.width,
         align: "center",
         lineBreak: false,
     });
+}
+function drawQuestionnaireResponsesPage(doc, data, fonts) {
+    // This function is defined later in the file
 }
 function drawEarlyDisclaimerPage(doc, data, fonts) {
     doc.addPage();

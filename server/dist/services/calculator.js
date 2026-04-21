@@ -100,8 +100,8 @@ class CalculatorService {
         const totalAssetsBV = (Number(assets.cashAndBank_bv) || 0) + (Number(assets.accountsReceivable_bv) || 0) + (Number(assets.inventory_bv) || 0) + (Number(assets.plantEquipment_bv) || 0) + (Number(assets.vehicles_bv) || 0) + (Number(assets.realEstate_bv) || 0) + (Number(assets.intellectualProperty_bv) || 0) + (Number(assets.otherAssets_bv) || 0) + (Number(assets.landUseRights_bv) || 0);
         const totalAssetsFMV = (Number(assets.cashAndBank_fmv) || 0) + (Number(assets.accountsReceivable_fmv) || 0) + (Number(assets.inventory_fmv) || 0) + (Number(assets.plantEquipment_fmv) || 0) + (Number(assets.vehicles_fmv) || 0) + (Number(assets.realEstate_fmv) || 0) + (Number(assets.intellectualProperty_fmv) || 0) + (Number(assets.otherAssets_fmv) || 0) + (Number(assets.landUseRights_fmv) || 0);
         // Calculate total liabilities for both Book Value and Fair Market Value
-        const totalLiabilitiesBV = (Number(liabilities.accountsPayable_bv) || 0) + (Number(liabilities.loansAndDebt_bv) || 0) + (Number(liabilities.otherLiabilities_bv) || 0);
-        const totalLiabilitiesFMV = (Number(liabilities.accountsPayable_fmv) || 0) + (Number(liabilities.loansAndDebt_fmv) || 0) + (Number(liabilities.otherLiabilities_fmv) || 0);
+        const totalLiabilitiesBV = (Number(liabilities.liabilities_bv) || 0) + (Number(liabilities.accountsPayable_bv) || 0) + (Number(liabilities.loansAndDebt_bv) || 0) + (Number(liabilities.otherLiabilities_bv) || 0);
+        const totalLiabilitiesFMV = (Number(liabilities.liabilities_fmv) || 0) + (Number(liabilities.accountsPayable_fmv) || 0) + (Number(liabilities.loansAndDebt_fmv) || 0) + (Number(liabilities.otherLiabilities_fmv) || 0);
         // Calculate net asset value for both (use FMV as the primary valuation)
         const netAssetValueBV = totalAssetsBV - totalLiabilitiesBV;
         const netAssetValueFMV = totalAssetsFMV - totalLiabilitiesFMV;

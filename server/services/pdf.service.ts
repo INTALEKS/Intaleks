@@ -93,17 +93,34 @@ export interface ValuationPDFData {
 
   // Asset method specific
   assets?: {
-    plantEquipment: number;
-    inventory: number;
-    vehicles: number;
-    goodwill: number;
-    otherIntangible: number;
+    cashAndBank_bv?: number;
+    cashAndBank_fmv?: number;
+    accountsReceivable_bv?: number;
+    accountsReceivable_fmv?: number;
+    inventory_bv?: number;
+    inventory_fmv?: number;
+    plantEquipment_bv?: number;
+    plantEquipment_fmv?: number;
+    vehicles_bv?: number;
+    vehicles_fmv?: number;
+    realEstate_bv?: number;
+    realEstate_fmv?: number;
+    intellectualProperty_bv?: number;
+    intellectualProperty_fmv?: number;
+    otherAssets_bv?: number;
+    otherAssets_fmv?: number;
+    landUseRights_bv?: number;
+    landUseRights_fmv?: number;
   };
   liabilities?: {
-    loans: number;
-    annualLeave: number;
-    longServiceLeave: number;
-    otherLiabilities: number;
+    liabilities_bv?: number;
+    liabilities_fmv?: number;
+    accountsPayable_bv?: number;
+    accountsPayable_fmv?: number;
+    loansAndDebt_bv?: number;
+    loansAndDebt_fmv?: number;
+    otherLiabilities_bv?: number;
+    otherLiabilities_fmv?: number;
   };
   totalAssets?: number;
   totalLiabilities?: number;

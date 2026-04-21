@@ -24,6 +24,7 @@ const assetItems = [
 ];
 
 const liabilityItems = [
+  { key: "liabilities", label: "Liabilities" },
   { key: "accountsPayable", label: "Accounts Payable" },
   { key: "loansAndDebt", label: "Loans & Debt" },
   { key: "otherLiabilities", label: "Other Liabilities" },
