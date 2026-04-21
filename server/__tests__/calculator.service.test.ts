@@ -95,47 +95,57 @@ describe("CalculatorService", () => {
   describe("calculateAssetValuation", () => {
     it("should calculate asset valuation correctly", () => {
       const assets = {
-        plantEquipment: 100000,
-        inventory: 50000,
-        vehicles: 30000,
-        goodwill: 20000,
-        otherIntangible: 10000,
+        cashAndBank_bv: 50000,
+        cashAndBank_fmv: 50000,
+        accountsReceivable_bv: 30000,
+        accountsReceivable_fmv: 30000,
+        inventory_bv: 50000,
+        inventory_fmv: 55000,
+        plantEquipment_bv: 100000,
+        plantEquipment_fmv: 120000,
+        vehicles_bv: 30000,
+        vehicles_fmv: 35000,
+        realEstate_bv: 200000,
+        realEstate_fmv: 250000,
+        intellectualProperty_bv: 50000,
+        intellectualProperty_fmv: 75000,
+        otherAssets_bv: 10000,
+        otherAssets_fmv: 15000,
       };
 
       const liabilities = {
-        loans: 80000,
-        annualLeave: 15000,
-        longServiceLeave: 10000,
-        otherLiabilities: 5000,
+        accountsPayable_bv: 25000,
+        accountsPayable_fmv: 25000,
+        loansAndDebt_bv: 80000,
+        loansAndDebt_fmv: 80000,
+        otherLiabilities_bv: 5000,
+        otherLiabilities_fmv: 5000,
       };
 
       const result = CalculatorService.calculateAssetValuation(assets, liabilities);
 
-      // Total Assets = 100k + 50k + 30k + 20k + 10k = 210k
-      expect(result.totalAssets).toBe(210000);
+      // Total Assets FMV = 50k + 30k + 55k + 120k + 35k + 250k + 75k + 15k = 630k
+      expect(result.totalAssets).toBe(630000);
 
-      // Total Liabilities = 80k + 15k + 10k + 5k = 110k
+      // Total Liabilities FMV = 25k + 80k + 5k = 110k
       expect(result.totalLiabilities).toBe(110000);
 
-      // Net Asset Value = 210k - 110k = 100k
-      expect(result.netAssetValue).toBe(100000);
-      expect(result.finalValuation).toBe(100000);
+      // Net Asset Value FMV = 630k - 110k = 520k
+      expect(result.netAssetValue).toBe(520000);
+      expect(result.finalValuation).toBe(520000);
     });
 
     it("should handle negative net asset value", () => {
       const assets = {
-        plantEquipment: 50000,
-        inventory: 20000,
-        vehicles: 10000,
-        goodwill: 0,
-        otherIntangible: 0,
+        plantEquipment_fmv: 50000,
+        inventory_fmv: 20000,
+        vehicles_fmv: 10000,
       };
 
       const liabilities = {
-        loans: 100000,
-        annualLeave: 10000,
-        longServiceLeave: 5000,
-        otherLiabilities: 5000,
+        loansAndDebt_fmv: 100000,
+        accountsPayable_fmv: 10000,
+        otherLiabilities_fmv: 10000,
       };
 
       const result = CalculatorService.calculateAssetValuation(assets, liabilities);
@@ -177,23 +187,22 @@ describe("CalculatorService", () => {
     it("should validate and calculate asset method", () => {
       const data = {
         assets: {
-          plantEquipment: 100000,
-          inventory: 50000,
-          vehicles: 30000,
-          goodwill: 20000,
-          otherIntangible: 10000,
+          cashAndBank_fmv: 50000,
+          plantEquipment_fmv: 100000,
+          inventory_fmv: 50000,
+          vehicles_fmv: 30000,
         },
         liabilities: {
-          loans: 80000,
-          annualLeave: 15000,
-          longServiceLeave: 10000,
-          otherLiabilities: 5000,
+          loansAndDebt_fmv: 80000,
+          accountsPayable_fmv: 25000,
+          otherLiabilities_fmv: 5000,
         },
       };
 
       const result = CalculatorService.validateAndCalculate("asset", data);
 
-      expect(result.finalValuation).toBe(100000);
+      // Total Assets = 230k, Total Liabilities = 110k, Net = 120k
+      expect(result.finalValuation).toBe(120000);
     });
 
     it("should throw error for invalid profit data", () => {

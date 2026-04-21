@@ -96,22 +96,25 @@ class CalculatorService {
      * Calculate asset-based valuation
      */
     static calculateAssetValuation(assets, liabilities) {
-        // Calculate total assets (landUseRights is China-only, included when present)
-        const totalAssets = (Number(assets.plantEquipment) || 0) + (Number(assets.inventory) || 0) + (Number(assets.vehicles) || 0) + (Number(assets.goodwill) || 0) + (Number(assets.otherIntangible) || 0) + (Number(assets.landUseRights) || 0);
-        // Calculate total liabilities
-        const totalLiabilities = (Number(liabilities.loans) || 0) + (Number(liabilities.annualLeave) || 0) + (Number(liabilities.longServiceLeave) || 0) + (Number(liabilities.otherLiabilities) || 0);
-        // Calculate net asset value
-        const netAssetValue = totalAssets - totalLiabilities;
+        // Calculate total assets for both Book Value and Fair Market Value
+        const totalAssetsBV = (Number(assets.cashAndBank_bv) || 0) + (Number(assets.accountsReceivable_bv) || 0) + (Number(assets.inventory_bv) || 0) + (Number(assets.plantEquipment_bv) || 0) + (Number(assets.vehicles_bv) || 0) + (Number(assets.realEstate_bv) || 0) + (Number(assets.intellectualProperty_bv) || 0) + (Number(assets.otherAssets_bv) || 0) + (Number(assets.landUseRights_bv) || 0);
+        const totalAssetsFMV = (Number(assets.cashAndBank_fmv) || 0) + (Number(assets.accountsReceivable_fmv) || 0) + (Number(assets.inventory_fmv) || 0) + (Number(assets.plantEquipment_fmv) || 0) + (Number(assets.vehicles_fmv) || 0) + (Number(assets.realEstate_fmv) || 0) + (Number(assets.intellectualProperty_fmv) || 0) + (Number(assets.otherAssets_fmv) || 0) + (Number(assets.landUseRights_fmv) || 0);
+        // Calculate total liabilities for both Book Value and Fair Market Value
+        const totalLiabilitiesBV = (Number(liabilities.accountsPayable_bv) || 0) + (Number(liabilities.loansAndDebt_bv) || 0) + (Number(liabilities.otherLiabilities_bv) || 0);
+        const totalLiabilitiesFMV = (Number(liabilities.accountsPayable_fmv) || 0) + (Number(liabilities.loansAndDebt_fmv) || 0) + (Number(liabilities.otherLiabilities_fmv) || 0);
+        // Calculate net asset value for both (use FMV as the primary valuation)
+        const netAssetValueBV = totalAssetsBV - totalLiabilitiesBV;
+        const netAssetValueFMV = totalAssetsFMV - totalLiabilitiesFMV;
         return {
             yearlyMetrics: {},
             totalAddbacksByYear: {},
             totalAddbacks: 0,
             adjustedEbitByYear: {},
             averageAdjustedEbit: 0,
-            finalValuation: netAssetValue,
-            totalAssets,
-            totalLiabilities,
-            netAssetValue,
+            finalValuation: netAssetValueFMV, // Use Fair Market Value as the final valuation
+            totalAssets: totalAssetsFMV,
+            totalLiabilities: totalLiabilitiesFMV,
+            netAssetValue: netAssetValueFMV,
         };
     }
     /**
