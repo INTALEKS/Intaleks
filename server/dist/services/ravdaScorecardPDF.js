@@ -1584,9 +1584,10 @@ function drawAssetSummaryPage(doc, data, fonts) {
             .text(moneyComma(row.fmv, data.currencySymbol, data.currencyCode), tableX + labelColW + valueColW + 8, rowY + 6, { width: valueColW - 16, align: "center", lineBreak: false });
         rowY += rowH;
     });
-    // Net Asset Value row
+    // Net Asset Value rows - show both BV and FMV separately
     const navY = rowY + 8;
-    doc.rect(tableX, navY, tableW, 24).fill("#DBEAFE");
+    // Net Asset Value (Book Value) row
+    doc.rect(tableX, navY, tableW, 24).fill("#F3F4F6");
     doc.rect(tableX, navY, labelColW, 24).stroke(gridColor);
     doc.rect(tableX + labelColW, navY, valueColW, 24).stroke(gridColor);
     doc.rect(tableX + labelColW + valueColW, navY, valueColW, 24).stroke(gridColor);
@@ -1594,19 +1595,40 @@ function drawAssetSummaryPage(doc, data, fonts) {
         .font(fonts.bold)
         .fontSize(9)
         .fillColor("#111827")
-        .text("NET ASSET VALUE", tableX + 10, navY + 8, { lineBreak: false });
+        .text("Net Asset Value (Book Value)", tableX + 10, navY + 8, { lineBreak: false });
     doc
         .font(fonts.bold)
         .fontSize(9)
         .fillColor("#111827")
         .text(moneyComma(netAssetValueBV, data.currencySymbol, data.currencyCode), tableX + labelColW + 8, navY + 8, { width: valueColW - 16, align: "center", lineBreak: false });
     doc
+        .font(fonts.regular)
+        .fontSize(9)
+        .fillColor("#9CA3AF")
+        .text("—", tableX + labelColW + valueColW + 8, navY + 8, { width: valueColW - 16, align: "center", lineBreak: false });
+    // Net Asset Value (Fair Market Value) row
+    const navFMVY = navY + 24;
+    doc.rect(tableX, navFMVY, tableW, 24).fill("#DBEAFE");
+    doc.rect(tableX, navFMVY, labelColW, 24).stroke(gridColor);
+    doc.rect(tableX + labelColW, navFMVY, valueColW, 24).stroke(gridColor);
+    doc.rect(tableX + labelColW + valueColW, navFMVY, valueColW, 24).stroke(gridColor);
+    doc
+        .font(fonts.bold)
+        .fontSize(9)
+        .fillColor("#111827")
+        .text("Net Asset Value (Fair Market Value)", tableX + 10, navFMVY + 8, { lineBreak: false });
+    doc
+        .font(fonts.regular)
+        .fontSize(9)
+        .fillColor("#9CA3AF")
+        .text("—", tableX + labelColW + 8, navFMVY + 8, { width: valueColW - 16, align: "center", lineBreak: false });
+    doc
         .font(fonts.bold)
         .fontSize(9)
         .fillColor("#1E40AF")
-        .text(moneyComma(netAssetValueFMV, data.currencySymbol, data.currencyCode), tableX + labelColW + valueColW + 8, navY + 8, { width: valueColW - 16, align: "center", lineBreak: false });
+        .text(moneyComma(netAssetValueFMV, data.currencySymbol, data.currencyCode), tableX + labelColW + valueColW + 8, navFMVY + 8, { width: valueColW - 16, align: "center", lineBreak: false });
     // Business strength assessment
-    const assessmentY = navY + 36;
+    const assessmentY = navFMVY + 36;
     drawBusinessStrengthAssessmentPanel(doc, data, fonts, assessmentY);
     // Final valuation panel
     const panelX = PAGE.marginX;
@@ -1641,7 +1663,7 @@ function drawAssetSummaryPage(doc, data, fonts) {
         doc.image(trophyPath, panelX + panelW - 48, panelY + 16, { width: 36 });
     }
     // Disclaimer
-    const narrative = "This valuation estimate is generated from your asset and liability data. It is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
+    const narrative = "This valuation estimate is generated from your asset and liability data, showing both Book Value and Fair Market Value. The Estimated Business Valuation uses the Fair Market Value calculation. This is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
     doc
         .font(fonts.regular)
         .fontSize(8)

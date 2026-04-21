@@ -23,6 +23,8 @@ interface ValuationSummaryCardProps {
   // Asset Method (optional)
   totalAssets?: number;
   totalLiabilities?: number;
+  netAssetValueBV?: number;
+  netAssetValueFMV?: number;
 
   // Questionnaire (optional)
   questionnaireScore?: number;
@@ -37,7 +39,7 @@ interface ValuationSummaryCardProps {
   onShowReport?: () => void;
 }
 
-export function ValuationSummaryCard({ companyName, country, industry, averageSales, averageCOGS, averageEbit, averageAddbacks, adjustedEbit, valuationMethod, valuationMultiple, finalValuation, totalAssets, totalLiabilities, questionnaireScore, questionnaireCategory, isAuthenticated, hasActiveSubscription, showReport, onShowReport }: ValuationSummaryCardProps) {
+export function ValuationSummaryCard({ companyName, country, industry, averageSales, averageCOGS, averageEbit, averageAddbacks, adjustedEbit, valuationMethod, valuationMultiple, finalValuation, totalAssets, totalLiabilities, netAssetValueBV, netAssetValueFMV, questionnaireScore, questionnaireCategory, isAuthenticated, hasActiveSubscription, showReport, onShowReport }: ValuationSummaryCardProps) {
   // Helper function to get badge color based on score
   const getCategoryColor = (score?: number) => {
     if (!score) return { bg: "bg-gray-100", text: "text-gray-800", border: "border-gray-200" };
@@ -116,12 +118,7 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
                   <MetricCard label="Average Addbacks" value={formatCurrency(averageAddbacks)} icon="➕" color="gray" />
                   {/* Average Adjusted EBIT gets a distinct purple scheme */}
                   <MetricCard label="Average Adjusted EBIT" value={formatCurrency(adjustedEbit)} icon="✨" color="purple" />
-                  <MetricCard
-                    label="Valuation Multiple"
-                    value={valuationMultiple ? `${valuationMultiple.toFixed(2)}x` : "N/A"}
-                    icon="🎯"
-                    color={getValuationMultipleColor(questionnaireScore)}
-                  />
+                  <MetricCard label="Valuation Multiple" value={valuationMultiple ? `${valuationMultiple.toFixed(2)}x` : "N/A"} icon="🎯" color={getValuationMultipleColor(questionnaireScore)} />
                 </>
               )}
 
@@ -130,7 +127,8 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
                 <>
                   <MetricCard label="Total Assets" value={formatCurrency(totalAssets || 0)} icon="🏢" color="blue" />
                   <MetricCard label="Total Liabilities" value={formatCurrency(totalLiabilities || 0)} icon="📋" color="red" />
-                  <MetricCard label="Net Asset Value" value={formatCurrency((totalAssets || 0) - (totalLiabilities || 0))} icon="💎" color="green" />
+                  <MetricCard label="Net Asset Value (Book Value)" value={formatCurrency(netAssetValueBV || 0)} icon="📖" color="gray" />
+                  <MetricCard label="Net Asset Value (Fair Market Value)" value={formatCurrency(netAssetValueFMV || 0)} icon="💎" color="green" />
                 </>
               )}
             </div>

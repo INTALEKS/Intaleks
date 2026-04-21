@@ -394,18 +394,58 @@ export default function CalculatorPage() {
   const finalValuation = useMemo(() => {
     if (selectedMethod === "asset") {
       const isChina = country.toLowerCase() === "china";
-      const totalAssets = Object.entries(assets).reduce((sum, [key, val]) => {
-        if (key === "landUseRights" && !isChina) return sum;
-        return sum + (parseFloat(val) || 0);
+      // Calculate FMV total (this is the primary valuation)
+      const totalAssetsFMV = Object.entries(assets).reduce((sum, [key, val]) => {
+        // Only include FMV fields
+        if (!key.endsWith("_fmv")) return sum;
+        if (key === "landUseRights_fmv" && !isChina) return sum;
+        return sum + (parseFloat(String(val)) || 0);
       }, 0);
-      const totalLiabilities = Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-      return totalAssets - totalLiabilities;
+      const totalLiabilitiesFMV = Object.entries(liabilities).reduce((sum, [key, val]) => {
+        // Only include FMV fields
+        if (!key.endsWith("_fmv")) return sum;
+        return sum + (parseFloat(String(val)) || 0);
+      }, 0);
+      return totalAssetsFMV - totalLiabilitiesFMV;
     } else if (selectedMethod === "profit") {
       // Valuation = Average Adjusted EBIT × Effective Multiple
       return averageAdjustedEbit * effectiveProfitMultiple;
     }
     return 0;
-  }, [selectedMethod, assets, liabilities, averageAdjustedEbit, effectiveProfitMultiple]);
+  }, [selectedMethod, assets, liabilities, country, averageAdjustedEbit, effectiveProfitMultiple]);
+
+  // Calculate Book Value and Fair Market Value separately for Asset Method
+  const assetMethodValues = useMemo(() => {
+    if (selectedMethod !== "asset") return { bookValue: 0, fairMarketValue: 0 };
+
+    const isChina = country.toLowerCase() === "china";
+
+    // Calculate Book Value
+    const totalAssetsBV = Object.entries(assets).reduce((sum, [key, val]) => {
+      if (!key.endsWith("_bv")) return sum;
+      if (key === "landUseRights_bv" && !isChina) return sum;
+      return sum + (parseFloat(String(val)) || 0);
+    }, 0);
+    const totalLiabilitiesBV = Object.entries(liabilities).reduce((sum, [key, val]) => {
+      if (!key.endsWith("_bv")) return sum;
+      return sum + (parseFloat(String(val)) || 0);
+    }, 0);
+    const bookValue = totalAssetsBV - totalLiabilitiesBV;
+
+    // Calculate Fair Market Value
+    const totalAssetsFMV = Object.entries(assets).reduce((sum, [key, val]) => {
+      if (!key.endsWith("_fmv")) return sum;
+      if (key === "landUseRights_fmv" && !isChina) return sum;
+      return sum + (parseFloat(String(val)) || 0);
+    }, 0);
+    const totalLiabilitiesFMV = Object.entries(liabilities).reduce((sum, [key, val]) => {
+      if (!key.endsWith("_fmv")) return sum;
+      return sum + (parseFloat(String(val)) || 0);
+    }, 0);
+    const fairMarketValue = totalAssetsFMV - totalLiabilitiesFMV;
+
+    return { bookValue, fairMarketValue };
+  }, [selectedMethod, assets, liabilities, country]);
 
   // Equity Value = Enterprise Value (finalValuation) - Total Debt + Cash & Equivalents
   // Only relevant for China & Indonesia
@@ -1376,7 +1416,7 @@ export default function CalculatorPage() {
         <AccordionSection title="Download Valuation Document (PDF)" stepNumber={5} isOpen={openSections[5]} onToggle={() => toggleSection(5)}>
           <div className="py-6 space-y-6">
             {/* Comprehensive Valuation Summary Card */}
-            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageSales : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageCOGS : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageEbit : financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} averageAddbacks={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageAddbacks : financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0) / financialYears.length} adjustedEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.adjustedEbit : averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.valuationMultiple : effectiveProfitMultiple} finalValuation={serverCalculatedValues?.finalValuation ?? finalValuation} totalAssets={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalAssets : selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalLiabilities : selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} hasActiveSubscription={hasCalculatorAccess} showReport={showValuationReport} onShowReport={handleShowReport} />
+            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageSales : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageCOGS : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageEbit : financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} averageAddbacks={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageAddbacks : financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0) / financialYears.length} adjustedEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.adjustedEbit : averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.valuationMultiple : effectiveProfitMultiple} finalValuation={serverCalculatedValues?.finalValuation ?? finalValuation} totalAssets={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalAssets : selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalLiabilities : selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} netAssetValueBV={selectedMethod === "asset" ? assetMethodValues.bookValue : undefined} netAssetValueFMV={selectedMethod === "asset" ? assetMethodValues.fairMarketValue : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} hasActiveSubscription={hasCalculatorAccess} showReport={showValuationReport} onShowReport={handleShowReport} />
 
             {/* Equity Value Card — China & Indonesia only */}
             {(country.toLowerCase() === "china" || country.toLowerCase() === "indonesia") && selectedMethod === "profit" && (
