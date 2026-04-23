@@ -165,7 +165,6 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
                     <p className="text-2xl sm:text-4xl font-bold break-all">{formatCurrency(finalValuation)}</p>
                     {(!isAuthenticated || !hasActiveSubscription) && <p className="text-blue-200 text-xs mt-2 italic">* Client-side calculation for preview only</p>}
                   </div>
-                  <div className="text-4xl sm:text-6xl opacity-20">🏆</div>
                 </div>
                 <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-blue-500">
                   <p className="text-blue-100 text-xs">

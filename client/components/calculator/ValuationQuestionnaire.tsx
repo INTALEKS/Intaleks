@@ -402,7 +402,7 @@ export function ValuationQuestionnaire({ scores, onScoresChange, onCalculate, is
               </span>
             </div>
           </div>
-          <p className="text-xs text-gray-500 mt-2">Example: If your industry base multiple is 5.0x and you score 35 points, your multiple = 5.0 × 0.8 = 4.0x</p>
+          <p className="text-xs text-gray-500 mt-2">Example: If your industry base multiple is 5.0x and you scored 35 points, your multiple = 5.0 × 0.8 = 4.0x</p>
         </div>
       </div>
     </div>

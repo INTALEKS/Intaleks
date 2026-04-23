@@ -92,7 +92,7 @@ export function CompanyQuestionnaire({ companyName, onCompanyNameChange, started
           ) : (
             <Upload className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mb-3 sm:mb-4" />
           )}
-          <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-4">Upload your company logo</p>
+          <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-4">Upload your company logo (optional)</p>
           <p className="text-gray-500 text-xs mb-3 sm:mb-4">PNG or JPEG only</p>
           <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/jpg" onChange={handleFileChange} className="hidden" />
           <Button onClick={handleChooseFile} className="bg-blue-500 hover:bg-blue-600 text-white px-4 sm:px-6 text-sm">

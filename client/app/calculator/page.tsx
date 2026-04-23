@@ -804,10 +804,9 @@ export default function CalculatorPage() {
     const hasStage = stage.trim().length > 0;
     const hasCountry = country.trim().length > 0;
     const hasIndustry = industry.trim().length > 0;
-    const hasLogo = companyLogo !== null;
 
-    return hasCompanyName && hasStartedYear && hasEmployees && hasStage && hasCountry && hasIndustry && hasLogo;
-  }, [companyName, startedYear, employees, stage, country, industry, companyLogo]);
+    return hasCompanyName && hasStartedYear && hasEmployees && hasStage && hasCountry && hasIndustry;
+  }, [companyName, startedYear, employees, stage, country, industry]);
 
   // Step 2 is only complete after Step 1 is complete and questionnaire multiple is calculated
   const isStep2Complete = useMemo(() => {
@@ -869,6 +868,58 @@ export default function CalculatorPage() {
 
   // Can download only if all steps are complete
   const canAttemptDownload = isStep4Complete;
+
+  // Helper function to get missing requirements
+  const getMissingRequirements = useMemo(() => {
+    const missing: string[] = [];
+
+    if (!isStep1Complete) {
+      if (!companyName.trim()) missing.push("Company name");
+      if (!startedYear.trim()) missing.push("Started year");
+      if (!employees.trim()) missing.push("Number of employees");
+      if (!stage) missing.push("Company stage");
+      if (!country) missing.push("Country");
+      if (!industry) missing.push("Industry");
+    }
+
+    if (isStep1Complete && !isStep2Complete) {
+      if (!useQuestionnaireMultiple || calculatedMultiple === undefined) {
+        missing.push("Calculate valuation multiple");
+      }
+    }
+
+    if (isStep2Complete && !isStep3Complete) {
+      if (!selectedMethod) {
+        missing.push("Select valuation method");
+      }
+    }
+
+    if (isStep3Complete && !isStep4Complete) {
+      if (!isAuthenticated) {
+        missing.push("Log in to continue");
+      } else if (!hasCalculatorAccess) {
+        missing.push("Active subscription or coupon");
+      } else if (selectedMethod === "profit") {
+        const missingSalesYears = financialYears.filter((year) => {
+          const sales = parseFloat((financialData?.sales?.[year] as string) || "0");
+          return sales <= 0;
+        });
+        if (missingSalesYears.length > 0) {
+          missing.push(`Sales data for ${missingSalesYears.join(", ")}`);
+        }
+        if (!validateAddbacks) {
+          missing.push("Complete or remove incomplete addbacks");
+        }
+      } else if (selectedMethod === "asset") {
+        const hasAssets = Object.values(assets).some((val) => parseFloat(val) > 0);
+        if (!hasAssets) {
+          missing.push("At least one asset value");
+        }
+      }
+    }
+
+    return missing;
+  }, [isStep1Complete, isStep2Complete, isStep3Complete, isStep4Complete, companyName, startedYear, employees, stage, country, industry, useQuestionnaireMultiple, calculatedMultiple, selectedMethod, isAuthenticated, hasCalculatorAccess, financialYears, financialData, assets, validateAddbacks]);
 
   const completedSteps = useMemo(() => {
     const steps: number[] = [];
@@ -1185,6 +1236,21 @@ export default function CalculatorPage() {
             </>
           )}
         </Button>
+
+        {/* Show missing requirements */}
+        {!canAttemptDownload && getMissingRequirements.length > 0 && (
+          <div className="mt-4 max-w-md mx-auto bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <p className="text-sm font-medium text-orange-800 mb-2">Please complete the following:</p>
+            <ul className="text-sm text-orange-700 space-y-1">
+              {getMissingRequirements.map((requirement, index) => (
+                <li key={index} className="flex items-start">
+                  <span className="mr-2">•</span>
+                  <span>{requirement}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       {/* Educational Sections */}

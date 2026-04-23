@@ -225,23 +225,11 @@ function drawClientLogo(doc: PDFKit.PDFDocument, data: RAVDAData): void {
       return;
     } catch (error) {
       console.error("Error loading client logo:", error);
-      // Fall through to placeholder
+      // Fall through - no logo will be displayed
     }
   }
 
-  // Fallback: Draw placeholder when no logo is uploaded
-  doc.rect(logoX, logoY, 150, 100).fill("#DC2626");
-
-  // Add placeholder text below
-  doc
-    .font("Helvetica-Bold")
-    .fontSize(14)
-    .fillColor("#4B5563")
-    .text("CLIENT LOGO", logoX, logoY + 110, {
-      width: 150,
-      align: "center",
-      lineBreak: false,
-    });
+  // No logo provided - skip rendering entirely (logo is optional)
 }
 
 function registerInterFonts(doc: PDFKit.PDFDocument): PdfFonts {
@@ -919,7 +907,7 @@ function drawMultipleCalculationFormulaSection(doc: PDFKit.PDFDocument, fonts: P
 
   // Example line
   const exampleY = tableTop + tableHeight + 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("Example: If your industry base multiple is 5.0x and you score 35 points, your multiple = 5.0 × 0.8 = 4.0x", x, exampleY, {
+  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("Example: If your industry base multiple is 5.0x and you scored 35 points, your multiple = 5.0 × 0.8 = 4.0x", x, exampleY, {
     width,
     align: "left",
   });
