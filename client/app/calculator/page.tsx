@@ -515,24 +515,21 @@ export default function CalculatorPage() {
           years: financialYears,
         };
       } else {
-        // Asset method
-        const isChina = country.toLowerCase() === "china";
+        // Asset method - convert string values to numbers
+        const convertedAssets: Record<string, number> = {};
+        Object.entries(assets).forEach(([key, value]) => {
+          convertedAssets[key] = parseFloat(value as string) || 0;
+        });
+
+        const convertedLiabilities: Record<string, number> = {};
+        Object.entries(liabilities).forEach(([key, value]) => {
+          convertedLiabilities[key] = parseFloat(value as string) || 0;
+        });
+
         calculationData = {
           valuationMethod: "asset" as const,
-          assets: {
-            plantEquipment: parseFloat(assets.plantEquipment) || 0,
-            inventory: parseFloat(assets.inventory) || 0,
-            vehicles: parseFloat(assets.vehicles) || 0,
-            goodwill: parseFloat(assets.goodwill) || 0,
-            otherIntangible: parseFloat(assets.otherIntangible) || 0,
-            ...(isChina && { landUseRights: parseFloat(assets.landUseRights as string) || 0 }),
-          },
-          liabilities: {
-            loans: parseFloat(liabilities.loans) || 0,
-            annualLeave: parseFloat(liabilities.annualLeave) || 0,
-            longServiceLeave: parseFloat(liabilities.longServiceLeave) || 0,
-            otherLiabilities: parseFloat(liabilities.otherLiabilities) || 0,
-          },
+          assets: convertedAssets,
+          liabilities: convertedLiabilities,
         };
       }
 
@@ -752,23 +749,19 @@ export default function CalculatorPage() {
 
       // Add method-specific data
       if (selectedMethod === "asset") {
-        const isChina = country.toLowerCase() === "china";
-        reportData.assets = {
-          plantEquipment: parseFloat(assets.plantEquipment) || 0,
-          inventory: parseFloat(assets.inventory) || 0,
-          vehicles: parseFloat(assets.vehicles) || 0,
-          goodwill: parseFloat(assets.goodwill) || 0,
-          otherIntangible: parseFloat(assets.otherIntangible) || 0,
-          ...(isChina && { landUseRights: parseFloat(assets.landUseRights as string) || 0 }),
-        };
-        reportData.liabilities = {
-          loans: parseFloat(liabilities.loans) || 0,
-          annualLeave: parseFloat(liabilities.annualLeave) || 0,
-          longServiceLeave: parseFloat(liabilities.longServiceLeave) || 0,
-          otherLiabilities: parseFloat(liabilities.otherLiabilities) || 0,
-        };
-        reportData.totalAssets = Object.values(reportData.assets).reduce((a, b) => a + b, 0);
-        reportData.totalLiabilities = Object.values(reportData.liabilities).reduce((a, b) => a + b, 0);
+        // Convert string values to numbers and pass complete assets/liabilities with _bv and _fmv fields
+        const convertedAssets: Record<string, number> = {};
+        Object.entries(assets).forEach(([key, value]) => {
+          convertedAssets[key] = parseFloat(value as string) || 0;
+        });
+
+        const convertedLiabilities: Record<string, number> = {};
+        Object.entries(liabilities).forEach(([key, value]) => {
+          convertedLiabilities[key] = parseFloat(value as string) || 0;
+        });
+
+        reportData.assets = convertedAssets;
+        reportData.liabilities = convertedLiabilities;
         reportData.assetValuation = finalValuation;
       } else if (selectedMethod === "profit") {
         reportData.profitValuation = finalValuation;

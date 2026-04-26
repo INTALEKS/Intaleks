@@ -1646,11 +1646,6 @@ function drawAssetSummaryPage(doc, data, fonts) {
         .fontSize(10)
         .fillColor("#DBEAFE")
         .text("Method: Asset Method", panelX + 12, panelY + 74, { lineBreak: false });
-    // Trophy image
-    const trophyPath = path_1.default.join(__dirname, "../assets/win.png");
-    if (fs_1.default.existsSync(trophyPath)) {
-        doc.image(trophyPath, panelX + panelW - 48, panelY + 16, { width: 36 });
-    }
     // Disclaimer
     const narrative = "This valuation estimate is generated from your asset and liability data, showing both Book Value and Fair Market Value. The Estimated Business Valuation uses the Fair Market Value calculation. This is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
     doc

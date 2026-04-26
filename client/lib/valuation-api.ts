@@ -39,20 +39,8 @@ export interface ValuationReportData {
   multipleSource?: "questionnaire" | "industry" | "custom";
 
   // Asset Method
-  assets?: {
-    plantEquipment: number;
-    inventory: number;
-    vehicles: number;
-    goodwill: number;
-    otherIntangible: number;
-    landUseRights?: number;
-  };
-  liabilities?: {
-    loans: number;
-    annualLeave: number;
-    longServiceLeave: number;
-    otherLiabilities: number;
-  };
+  assets?: Record<string, number>;
+  liabilities?: Record<string, number>;
   totalAssets?: number;
   totalLiabilities?: number;
   assetValuation?: number;
