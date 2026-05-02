@@ -4,9 +4,8 @@ import Joi from "joi";
  * Validation schema for creating a valuation document
  */
 export const valuationDocumentSchema = Joi.object({
-  companyName: Joi.string().min(1).required().messages({
-    "string.empty": "Company name is required",
-    "any.required": "Company name is required",
+  companyName: Joi.string().allow("").optional().messages({
+    "string.base": "Company name must be a string",
   }),
   country: Joi.string().min(1).required().messages({
     "string.empty": "Country is required",
@@ -29,7 +28,7 @@ export const valuationDocumentSchema = Joi.object({
 });
 
 export interface ValuationDocumentInput {
-  companyName: string;
+  companyName?: string;
   country: string;
   industry: string;
   method: "asset" | "profit";

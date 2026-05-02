@@ -129,8 +129,8 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
       financialDataKeys: data.financialData ? Object.keys(data.financialData) : [],
     });
 
-    if (!data.companyName || !data.valuationMethod) {
-      return res.status(400).json({ error: "Missing required fields: companyName, valuationMethod" });
+    if (!data.valuationMethod) {
+      return res.status(400).json({ error: "Missing required field: valuationMethod" });
     }
 
     const normalizedYears = [...(Array.isArray(data.years) ? data.years : []), ...(Array.isArray(data.financialYears) ? data.financialYears : [])].map((year) => (typeof year === "string" ? year.trim() : "")).filter((year) => year.length > 0);
@@ -222,7 +222,7 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
     }
 
     // Log for audit trail
-    console.log(`[AUDIT] User ${userId} generated valuation for ${data.companyName}: $${finalValuation.toFixed(2)}`);
+    console.log(`[AUDIT] User ${userId} generated valuation for ${data.companyName || "Unnamed Company"}: $${finalValuation.toFixed(2)}`);
 
     // Generate RAVDA Scorecard PDF with server-validated data
     const pdfBuffer = await generateValuationPDF(data);
@@ -233,7 +233,7 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
 
     try {
       // Generate consistent filename format for both download and storage
-      const sanitizedCompanyName = data.companyName.replace(/[<>:"/\\|?*]/g, "").trim();
+      const sanitizedCompanyName = (data.companyName || "Business-Valuation").replace(/[<>:"/\\|?*]/g, "").trim();
       const storageFilename = `${sanitizedCompanyName.replace(/\s+/g, "-").toLowerCase()}-intaleks-business-valuation-report-${Date.now()}.pdf`;
       const uploadResult = await StorageService.uploadPDF(pdfBuffer, storageFilename);
       fileUrl = uploadResult.url;
@@ -248,7 +248,7 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
     try {
       await ValuationService.createDocument({
         userId,
-        companyName: data.companyName,
+        companyName: data.companyName || "Unnamed Company",
         country: data.country || "Unknown",
         industry: data.industry || "Unknown",
         method: "ravda",
@@ -276,7 +276,7 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
     }
 
     // Generate filename in format: "Company Name - Intaleks Business Valuation Report.pdf"
-    const sanitizedCompanyName = data.companyName.replace(/[<>:"/\\|?*]/g, "").trim();
+    const sanitizedCompanyName = (data.companyName || "Business-Valuation").replace(/[<>:"/\\|?*]/g, "").trim();
     const filename = `${sanitizedCompanyName} - Intaleks Business Valuation Report.pdf`;
 
     res.setHeader("Content-Type", "application/pdf");

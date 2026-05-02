@@ -9,9 +9,8 @@ const joi_1 = __importDefault(require("joi"));
  * Validation schema for creating a valuation document
  */
 exports.valuationDocumentSchema = joi_1.default.object({
-    companyName: joi_1.default.string().min(1).required().messages({
-        "string.empty": "Company name is required",
-        "any.required": "Company name is required",
+    companyName: joi_1.default.string().allow("").optional().messages({
+        "string.base": "Company name must be a string",
     }),
     country: joi_1.default.string().min(1).required().messages({
         "string.empty": "Country is required",

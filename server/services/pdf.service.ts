@@ -1,7 +1,7 @@
 import { generateRAVDAScorecardPDF } from "./ravdaScorecardPDF";
 
 export interface ValuationPDFData {
-  companyName: string;
+  companyName?: string;
   country: string;
   industry: string;
   customMultiple: string;

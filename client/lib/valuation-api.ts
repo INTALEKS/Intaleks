@@ -11,7 +11,7 @@ export interface Addback {
 
 export interface ValuationReportData {
   // Company Info
-  companyName: string;
+  companyName?: string;
   country: string;
   industry: string;
 

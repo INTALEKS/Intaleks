@@ -48,7 +48,7 @@ function getCurrencyCodeForCountry(country?: string): string {
 }
 
 export interface RAVDAData {
-  companyName: string;
+  companyName?: string;
   country?: string;
   currencySymbol?: string;
   /** ISO 4217 currency code, e.g. "AUD", "USD", "CAD" */

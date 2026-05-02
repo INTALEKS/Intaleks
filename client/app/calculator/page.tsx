@@ -795,17 +795,16 @@ export default function CalculatorPage() {
   // STEP COMPLETION LOGIC
   // ============================================
 
-  // Step 1 is complete only when all required fields have meaningful values including logo
+  // Step 1 is complete only when all required fields have meaningful values
   const isStep1Complete = useMemo(() => {
-    const hasCompanyName = companyName.trim().length > 0;
     const hasStartedYear = startedYear.trim().length > 0;
     const hasEmployees = employees.trim().length > 0;
     const hasStage = stage.trim().length > 0;
     const hasCountry = country.trim().length > 0;
     const hasIndustry = industry.trim().length > 0;
 
-    return hasCompanyName && hasStartedYear && hasEmployees && hasStage && hasCountry && hasIndustry;
-  }, [companyName, startedYear, employees, stage, country, industry]);
+    return hasStartedYear && hasEmployees && hasStage && hasCountry && hasIndustry;
+  }, [startedYear, employees, stage, country, industry]);
 
   // Step 2 is only complete after Step 1 is complete and questionnaire multiple is calculated
   const isStep2Complete = useMemo(() => {
@@ -873,7 +872,6 @@ export default function CalculatorPage() {
     const missing: string[] = [];
 
     if (!isStep1Complete) {
-      if (!companyName.trim()) missing.push("Company name");
       if (!startedYear.trim()) missing.push("Started year");
       if (!employees.trim()) missing.push("Number of employees");
       if (!stage) missing.push("Company stage");

@@ -104,7 +104,7 @@ export function CompanyQuestionnaire({ companyName, onCompanyNameChange, started
       {/* Right Column - Form Fields */}
       <div className="space-y-4 sm:space-y-6">
         <div>
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Company Name</label>
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Company Name (optional)</label>
           <Input type="text" value={companyName} onChange={(e) => onCompanyNameChange(e.target.value)} placeholder="Enter your company name" className="w-full bg-gray-100 border-gray-200 text-sm" />
         </div>
 

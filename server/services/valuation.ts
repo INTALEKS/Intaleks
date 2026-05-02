@@ -6,7 +6,7 @@ import { NotFoundError } from "../errors";
  */
 export interface CreateValuationDocumentData {
   userId: string;
-  companyName: string;
+  companyName?: string;
   country: string;
   industry: string;
   method: string;
@@ -20,7 +20,7 @@ export interface CreateValuationDocumentData {
  */
 export interface ValuationDocumentResponse {
   id: string;
-  companyName: string;
+  companyName?: string;
   country: string;
   industry: string;
   method: string;
