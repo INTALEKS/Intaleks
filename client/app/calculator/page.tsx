@@ -613,7 +613,13 @@ export default function CalculatorPage() {
   const handleDownloadPDF = async () => {
     // Check if all steps are complete first
     if (!isStep4Complete) {
-      toast.error("Please complete all steps before downloading");
+      // Show toast with missing requirements
+      if (getMissingRequirements.length > 0) {
+        const missingList = getMissingRequirements.join(", ");
+        toast.error(`Please complete the following: ${missingList}`);
+      } else {
+        toast.error("Please complete all steps before downloading");
+      }
       return;
     }
 
@@ -1229,21 +1235,6 @@ export default function CalculatorPage() {
             </>
           )}
         </Button>
-
-        {/* Show missing requirements */}
-        {!canAttemptDownload && getMissingRequirements.length > 0 && (
-          <div className="mt-4 max-w-md mx-auto bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <p className="text-sm font-medium text-orange-800 mb-2">Please complete the following:</p>
-            <ul className="text-sm text-orange-700 space-y-1">
-              {getMissingRequirements.map((requirement, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="mr-2">•</span>
-                  <span>{requirement}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </section>
 
       {/* Educational Sections */}
