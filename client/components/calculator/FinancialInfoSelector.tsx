@@ -25,6 +25,17 @@ interface FinancialInfoSelectorProps {
 
 const MAX_COLUMNS = 3;
 
+// Helper function to check if a year is a leap year
+function isLeapYear(year: number): boolean {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+}
+
+// Helper function to get max days for a given year
+function getMaxDaysForYear(date: Date | undefined): number {
+  if (!date) return 366; // Allow up to 366 if no date is set
+  return isLeapYear(date.getFullYear()) ? 366 : 365;
+}
+
 // Date input component with DD/MM/YYYY format
 function DateInput({ value, onChange, disabled }: { value: Date | undefined; onChange: (date: Date | undefined) => void; disabled: boolean }) {
   const [inputValue, setInputValue] = useState(value ? format(value, "dd/MM/yyyy") : "");
@@ -85,7 +96,22 @@ export function FinancialInfoSelector({ columns, onColumnsChange, disabled = fal
   };
 
   const updateColumn = (type: ColumnType, patch: Partial<FinancialColumn>) => {
-    onColumnsChange(columns.map((c) => (c.type === type ? { ...c, ...patch } : c)));
+    onColumnsChange(
+      columns.map((c) => {
+        if (c.type !== type) return c;
+        const updated = { ...c, ...patch };
+
+        // If period date changed, adjust daysInPeriod if it exceeds the max for that year
+        if (patch.periodDate !== undefined) {
+          const maxDays = getMaxDaysForYear(patch.periodDate);
+          if (updated.daysInPeriod > maxDays) {
+            updated.daysInPeriod = maxDays;
+          }
+        }
+
+        return updated;
+      }),
+    );
   };
 
   return (
@@ -144,7 +170,7 @@ export function FinancialInfoSelector({ columns, onColumnsChange, disabled = fal
                         <Info className="w-3.5 h-3.5 text-gray-400 cursor-help shrink-0" />
                       </TooltipTrigger>
                       <TooltipContent side="right">
-                        <p className="text-xs max-w-[200px]">Number of days in the financial reporting period. Use 365 for a standard full year.</p>
+                        <p className="text-xs max-w-[200px]">Number of days in the financial reporting period. Use 365 for a standard full year, or 366 for a leap year.</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -153,18 +179,19 @@ export function FinancialInfoSelector({ columns, onColumnsChange, disabled = fal
               </td>
               {COLUMN_TYPES.map((type) => {
                 const col = columns.find((c) => c.type === type);
+                const maxDays = col ? getMaxDaysForYear(col.periodDate) : 366;
                 return (
                   <td key={type} className="px-3 py-3">
                     {col ? (
                       <Input
                         type="number"
                         min={1}
-                        max={365}
+                        max={maxDays}
                         value={col.daysInPeriod}
                         onChange={(e) => {
                           const raw = parseInt(e.target.value);
                           if (!isNaN(raw)) {
-                            updateColumn(type, { daysInPeriod: Math.min(365, Math.max(1, raw)) });
+                            updateColumn(type, { daysInPeriod: Math.min(maxDays, Math.max(1, raw)) });
                           }
                         }}
                         disabled={disabled}
