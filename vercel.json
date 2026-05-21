@@ -1,0 +1,9 @@
+{
+  "experimentalServices": {
+    "client": {
+      "root": "affilliate",
+      "routePrefix": "/",
+      "framework": "nextjs"
+    }
+  }
+}
