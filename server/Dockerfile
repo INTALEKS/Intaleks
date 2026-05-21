@@ -5,10 +5,13 @@ FROM node:22-alpine
 WORKDIR /app
 
 # Install system dependencies for Prisma and pnpm
-RUN apk add --no-cache openssl && npm install -g pnpm
+RUN apk add --no-cache openssl && npm install -g pnpm@10.18.1
 
-# Copy package files
-COPY package.json pnpm-lock.yaml* ./
+# Copy package files and configurations
+COPY package.json pnpm-lock.yaml* .npmrc* pnpm-workspace.yaml* ./
+
+# Approve all dependency builds to prevent ERR_PNPM_IGNORED_BUILDS
+RUN pnpm approve-builds --all
 
 # Install ALL dependencies (including dev dependencies needed for build)
 RUN pnpm install
