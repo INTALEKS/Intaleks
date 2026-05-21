@@ -12,7 +12,13 @@ RUN npm install -g pnpm
 COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies
-RUN pnpm install
+RUN echo "allowBuilds:" > pnpm-workspace.yaml && \
+    echo "  bcrypt: true" >> pnpm-workspace.yaml && \
+    echo "  '@prisma/client': true" >> pnpm-workspace.yaml && \
+    echo "  prisma: true" >> pnpm-workspace.yaml && \
+    echo "  esbuild: true" >> pnpm-workspace.yaml && \
+    echo "  '@prisma/engines': true" >> pnpm-workspace.yaml && \
+    pnpm install
 
 # Copy prisma schema and generate client
 COPY prisma ./prisma

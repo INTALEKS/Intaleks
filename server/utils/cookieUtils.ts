@@ -19,10 +19,14 @@ export class CookieUtils {
     const isProduction = config.env === "production";
     console.log("NODE ENVIRONMENT: ", isProduction);
 
+    // Dynamic root domain mapping for secure cookie distribution across subdomains
+    const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
+
     return {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      sameSite: "lax", // Enforce Lax sameSite to prevent CSRF attacks in production
+      domain: isProduction ? cookieDomain : undefined,
       path: "/",
     };
   }
@@ -46,10 +50,12 @@ export class CookieUtils {
   /*** Clear authentication token cookie ***/
   static clearAuthToken(res: Response): void {
     const isProduction = config.env === "production";
+    const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
     res.clearCookie(this.AUTH_TOKEN_COOKIE, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
+      sameSite: "lax",
+      domain: isProduction ? cookieDomain : undefined,
       path: "/",
     });
   }

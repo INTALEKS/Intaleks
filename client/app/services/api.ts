@@ -36,6 +36,12 @@ export interface User {
     billingPeriod: BillingPeriod;
     features: string[];
   } | null;
+  affiliateProfile?: {
+    id: string;
+    status: string;
+    code?: string | null;
+    company?: string | null;
+  } | null;
 }
 
 export interface SubscriptionPlan {

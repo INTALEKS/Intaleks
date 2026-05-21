@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { prisma } from "./config/db";
 import adminRoutes from "./routes/admin.routes";
 import authRoutes from "./routes/auth.routes";
@@ -20,6 +22,8 @@ import invoiceRoutes from "./routes/invoice.routes";
 import profileRoutes from "./routes/profile.routes";
 import contactRoutes from "./routes/contact.routes";
 import calculatorRoutes from "./routes/calculator.routes";
+import affiliateAdminRoutes from "./routes/affiliateAdmin.routes";
+import userAffiliateRoutes from "./routes/userAffiliate.routes";
 import { couponRouter, adminCouponRouter } from "./routes/coupon.routes";
 import startupSeed from "./scripts/startup-seed";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
@@ -29,14 +33,16 @@ dotenv.config();
 const app = express();
 const PORT = Number(process.env.PORT) || 4545;
 
-// Health check - BEFORE CORS middleware so Railway healthcheck works
-// Must return immediately without database dependency to ensure Railway healthchecks pass
+// Health check - BEFORE CORS and Helmet middleware so health check probes work cleanly
 app.get("/health", (req, res) => {
   res.status(200).json({
     status: "OK",
     timestamp: new Date().toISOString(),
   });
 });
+
+// Configure Helmet security headers
+app.use(helmet());
 
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000")
   .split(",")
@@ -57,13 +63,44 @@ app.use(
 );
 
 // Stripe webhook route - must be before express.json() to get raw body
-// Requirements: 3.1, 3.7
 app.use("/api/webhooks", express.raw({ type: "application/json" }), webhookRouter);
 
 // Increase body parser limit for valuation documents and large payloads
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser()); // Add cookie parser middleware
+
+// Rate Limiting Middlewares
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per 15 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: "Too many login/registration attempts, please try again after 15 minutes.",
+  },
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 300, // Limit each IP to 300 requests per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: "Too many requests, please slow down.",
+  },
+});
+
+// Apply rate limiting to credential / password reset endpoints
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
+app.use("/api/auth/forgot-password", authLimiter);
+app.use("/api/auth/reset-password", authLimiter);
+
+// Apply global rate limiting to all standard APIs (Stripe webhooks are already handled and exempt)
+app.use("/api", apiLimiter);
 
 // API Routes
 app.use("/api/auth", authRoutes);
@@ -92,9 +129,18 @@ app.use("/api/upload", profileRoutes); // For avatar uploads
 app.use("/api/calculator", calculatorRoutes); // Calculator with server-side validation
 app.use("/api/coupons", couponRouter); // User coupon redemption
 app.use("/api/admin/coupons", adminCouponRouter); // Super Admin coupon management
+app.use("/api/admin/affiliate", affiliateAdminRoutes);
+app.use("/api/users/affiliate", userAffiliateRoutes);
 
-// Test database connection
+// Test database connection - Disabled in production for diagnostics security
 app.get("/db-test", async (req, res) => {
+  if (process.env.NODE_ENV === "production") {
+    return res.status(403).json({
+      success: false,
+      error: "Forbidden",
+      message: "Database diagnostics are disabled in production mode.",
+    });
+  }
   try {
     await prisma.$connect();
     res.json({ database: "Connected successfully" });

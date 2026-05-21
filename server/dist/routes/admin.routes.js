@@ -22,7 +22,7 @@ router.post("/auth/login", (0, authValidation_1.validateRequest)(authValidation_
         return res.status(200).json({
             success: true,
             message: result.message,
-            data: { user: result.user },
+            data: { user: result.user, token: result.token },
         });
     }
     catch (error) {

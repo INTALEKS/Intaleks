@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Navbar, HeroSection, TrustedCompanies, HowItWorks, WhyValuation, StatsSection, FoundersSay, WhySmallBusinessesLoveUs, UnderstandBusinessValue, PricingSection, FAQSection, AboutFounder, CountriesWeService, BusinessValuationFeatures, Footer, ExecutiveBusinessValuers } from "@/components/home";
 import { OrganizationJsonLd, WebApplicationJsonLd, FAQJsonLd } from "@/components/seo/JsonLd";
@@ -105,10 +105,19 @@ const stats = [
  * and redirects new users (authenticated but no subscription) to checkout
  * Wrapped in Suspense because it uses useSearchParams
  */
-function SubscribeHandler() {
+function SubscribeHandler({ onSkippedCheckout }: { onSkippedCheckout: (show: boolean) => void }) {
   const searchParams = useSearchParams();
-  const { isAuthenticated, isAuthentiating, subscriptionStatus, hasActiveSubscription } = useAuthState();
+  const { user, isAuthenticated, isAuthentiating, subscriptionStatus, hasActiveSubscription } = useAuthState();
   const createCheckout = useCreateCheckout();
+
+  // Set sessionStorage if canceled=true
+  useEffect(() => {
+    const canceledParam = searchParams.get("canceled");
+    if (canceledParam === "true") {
+      sessionStorage.setItem("skippedCheckout", "true");
+      onSkippedCheckout(true);
+    }
+  }, [searchParams, onSkippedCheckout]);
 
   // Handle subscribe query parameter for users returning from login (Requirement: 8.3)
   useEffect(() => {
@@ -136,13 +145,33 @@ function SubscribeHandler() {
     const canceledParam = searchParams.get("canceled");
     const subscribeParam = searchParams.get("subscribe");
 
-    // Don't redirect if:
+    // Check sessionStorage
+    const isSkipped = typeof window !== "undefined" && sessionStorage.getItem("skippedCheckout") === "true";
+
+    // Bypass check:
     // - User is still authenticating
     // - User has active subscription
     // - User just came back from checkout (success or canceled)
     // - User has subscribe param (handled above)
     // - Checkout is already in progress
-    if (isAuthentiating || hasActiveSubscription || successParam || canceledParam || subscribeParam || createCheckout.isPending) {
+    // - User is an Admin, Super Admin, or has an Affiliate Profile
+    // - User already skipped checkout in the current session
+    const isAffiliate = user && (user.affiliateProfile || user.role === "ADMIN" || user.role === "SUPER_ADMIN");
+
+    if (
+      isAuthentiating ||
+      hasActiveSubscription ||
+      successParam ||
+      canceledParam ||
+      subscribeParam ||
+      createCheckout.isPending ||
+      isSkipped ||
+      isAffiliate
+    ) {
+      // If user is not an affiliate, but skipped or canceled, ensure we show the banner
+      if (!isAffiliate && (isSkipped || canceledParam)) {
+        onSkippedCheckout(true);
+      }
       return;
     }
 
@@ -164,21 +193,52 @@ function SubscribeHandler() {
           console.error("Failed to fetch plans:", error);
         });
     }
-  }, [isAuthenticated, isAuthentiating, subscriptionStatus, hasActiveSubscription, searchParams, createCheckout]);
+  }, [isAuthenticated, isAuthentiating, subscriptionStatus, hasActiveSubscription, searchParams, createCheckout, user, onSkippedCheckout]);
 
   return null;
 }
 
 export default function Home() {
+  const [showCheckoutBanner, setShowCheckoutBanner] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const skipped = sessionStorage.getItem("skippedCheckout") === "true";
+      setShowCheckoutBanner(skipped);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
+      {showCheckoutBanner && (
+        <div className="bg-blue-600 text-white py-3 px-4 text-center font-medium text-sm flex flex-wrap items-center justify-center gap-x-2 gap-y-1 relative z-50 animate-in fade-in slide-in-from-top duration-300">
+          <span>✨ Complete your subscription to unlock the Business Valuation Calculators.</span>
+          <button
+            onClick={() => {
+              ApiClient.getPublicPlans()
+                .then((response) => {
+                  const paidPlan = response.data.find((plan) => plan.price > 0);
+                  if (paidPlan) {
+                    window.location.href = `/?subscribe=${paidPlan.id}`;
+                  }
+                })
+                .catch((error) => {
+                  console.error("Failed to fetch plans:", error);
+                });
+            }}
+            className="underline hover:text-blue-100 font-bold transition duration-200"
+          >
+            Proceed to Secure Checkout &rarr;
+          </button>
+        </div>
+      )}
       <OrganizationJsonLd />
       <WebApplicationJsonLd />
       <FAQJsonLd />
 
       {/* Handle subscribe query parameter - wrapped in Suspense for useSearchParams */}
       <Suspense fallback={null}>
-        <SubscribeHandler />
+        <SubscribeHandler onSkippedCheckout={setShowCheckoutBanner} />
       </Suspense>
 
       {/* Handle scroll to section - wrapped in Suspense for useSearchParams */}

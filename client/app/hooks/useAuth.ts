@@ -36,7 +36,11 @@ export function useAuth(returnUrl: string = "/") {
       queryClient.invalidateQueries({ queryKey: AUTH_KEYS.user });
       toast.success("Login successful");
       // Redirect to return URL or home page (Requirement 7.5)
-      router.replace(returnUrl);
+      if (returnUrl.startsWith("http://") || returnUrl.startsWith("https://")) {
+        window.location.href = returnUrl;
+      } else {
+        router.replace(returnUrl);
+      }
     },
     onError: (error: Error) => {
       toast.error(error.message || "Login failed");

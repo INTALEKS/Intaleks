@@ -25,7 +25,7 @@ router.post("/auth/login", validateRequest(loginSchema), async (req: Request, re
     return res.status(200).json({
       success: true,
       message: result.message,
-      data: { user: result.user },
+      data: { user: result.user, token: result.token },
     });
   } catch (error) {
     console.error("Login endpoint error:", error);

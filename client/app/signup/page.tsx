@@ -23,7 +23,20 @@ interface FormErrors {
  */
 function SignupForm() {
   const searchParams = useSearchParams();
-  const returnUrl = searchParams.get("returnUrl");
+  const returnUrlParam = searchParams.get("returnUrl");
+  const nextParam = searchParams.get("next");
+
+  // Reconcile returnUrl and next redirect parameter
+  let returnUrl = returnUrlParam || "/";
+  if (nextParam) {
+    const affiliateOrigin = process.env.NEXT_PUBLIC_AFFILIATE_APP_URL || "http://localhost:3001";
+    if (nextParam.startsWith("http://") || nextParam.startsWith("https://")) {
+      returnUrl = nextParam;
+    } else {
+      const cleanNext = nextParam.startsWith("/") ? nextParam : `/${nextParam}`;
+      returnUrl = `${affiliateOrigin}${cleanNext}`;
+    }
+  }
 
   const [formData, setFormData] = useState({
     email: "",
@@ -40,7 +53,7 @@ function SignupForm() {
     lastName: "",
   });
 
-  const { register, isRegistering, registerError } = useAuth(returnUrl || "/");
+  const { register, isRegistering, registerError } = useAuth(returnUrl);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {
@@ -115,7 +128,7 @@ function SignupForm() {
     <AuthFormLayout title="Create your account">
       <form onSubmit={handleSubmit} className="flex flex-col gap-y-4">
         {/* Return URL info */}
-        {returnUrl && <div className="bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded-lg text-sm">Create an account to continue</div>}
+        {(returnUrlParam || nextParam) && <div className="bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded-lg text-sm">Create an account to continue</div>}
 
         {/* Server error display */}
         {registerError && <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">{registerError.message}</div>}
@@ -218,7 +231,7 @@ function SignupForm() {
         {/* Link to login page */}
         <p className="text-center text-gray-600 text-sm mt-2">
           Already have an account?{" "}
-          <Link href={returnUrl ? `/login?returnUrl=${encodeURIComponent(returnUrl)}` : "/login"} className="text-blue-500 hover:text-blue-600 font-medium">
+          <Link href={returnUrl && returnUrl !== "/" ? `/login?returnUrl=${encodeURIComponent(returnUrl)}` : "/login"} className="text-blue-500 hover:text-blue-600 font-medium">
             Log in
           </Link>
         </p>

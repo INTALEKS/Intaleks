@@ -231,6 +231,14 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
             features: true,
           },
         },
+        affiliateProfile: {
+          select: {
+            id: true,
+            status: true,
+            code: true,
+            company: true,
+          },
+        },
       },
     });
 
@@ -242,10 +250,31 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
       });
     }
 
+    let affiliateApplication = null;
+    if (!user.affiliateProfile) {
+      const appRecord = await prisma.affiliateApplication.findFirst({
+        where: { email: user.email.toLowerCase().trim() },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          status: true,
+        },
+      });
+      if (appRecord) {
+        affiliateApplication = {
+          id: appRecord.id,
+          status: appRecord.status.toLowerCase(), // frontend maps to lower-case e.g. "pending", "approved", "rejected"
+        };
+      }
+    }
+
     return res.status(200).json({
       success: true,
       message: "Profile retrieved successfully",
-      user,
+      user: {
+        ...user,
+        affiliateApplication,
+      },
     });
   } catch (error: any) {
     console.error("Get profile error:", error);

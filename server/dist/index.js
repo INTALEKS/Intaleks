@@ -40,6 +40,8 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const helmet_1 = __importDefault(require("helmet"));
+const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const db_1 = require("./config/db");
 const admin_routes_1 = __importDefault(require("./routes/admin.routes"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
@@ -58,20 +60,23 @@ const invoice_routes_1 = __importDefault(require("./routes/invoice.routes"));
 const profile_routes_1 = __importDefault(require("./routes/profile.routes"));
 const contact_routes_1 = __importDefault(require("./routes/contact.routes"));
 const calculator_routes_1 = __importDefault(require("./routes/calculator.routes"));
+const affiliateAdmin_routes_1 = __importDefault(require("./routes/affiliateAdmin.routes"));
+const userAffiliate_routes_1 = __importDefault(require("./routes/userAffiliate.routes"));
 const coupon_routes_1 = require("./routes/coupon.routes");
 const startup_seed_1 = __importDefault(require("./scripts/startup-seed"));
 const errorHandler_1 = require("./middleware/errorHandler");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = Number(process.env.PORT) || 4545;
-// Health check - BEFORE CORS middleware so Railway healthcheck works
-// Must return immediately without database dependency to ensure Railway healthchecks pass
+// Health check - BEFORE CORS and Helmet middleware so health check probes work cleanly
 app.get("/health", (req, res) => {
     res.status(200).json({
         status: "OK",
         timestamp: new Date().toISOString(),
     });
 });
+// Configure Helmet security headers
+app.use((0, helmet_1.default)());
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000")
     .split(",")
     .map((origin) => origin.trim())
@@ -87,12 +92,39 @@ app.use((0, cors_1.default)({
     credentials: true,
 }));
 // Stripe webhook route - must be before express.json() to get raw body
-// Requirements: 3.1, 3.7
 app.use("/api/webhooks", express_1.default.raw({ type: "application/json" }), payment_routes_1.webhookRouter);
 // Increase body parser limit for valuation documents and large payloads
 app.use(express_1.default.json({ limit: "10mb" }));
 app.use(express_1.default.urlencoded({ extended: true, limit: "10mb" }));
 app.use((0, cookie_parser_1.default)()); // Add cookie parser middleware
+// Rate Limiting Middlewares
+const authLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per 15 minutes
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        success: false,
+        error: "Too many login/registration attempts, please try again after 15 minutes.",
+    },
+});
+const apiLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 60 * 1000, // 1 minute
+    max: 300, // Limit each IP to 300 requests per minute
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        success: false,
+        error: "Too many requests, please slow down.",
+    },
+});
+// Apply rate limiting to credential / password reset endpoints
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
+app.use("/api/auth/forgot-password", authLimiter);
+app.use("/api/auth/reset-password", authLimiter);
+// Apply global rate limiting to all standard APIs (Stripe webhooks are already handled and exempt)
+app.use("/api", apiLimiter);
 // API Routes
 app.use("/api/auth", auth_routes_1.default);
 app.use("/api/admin", admin_routes_1.default);
@@ -119,8 +151,17 @@ app.use("/api/upload", profile_routes_1.default); // For avatar uploads
 app.use("/api/calculator", calculator_routes_1.default); // Calculator with server-side validation
 app.use("/api/coupons", coupon_routes_1.couponRouter); // User coupon redemption
 app.use("/api/admin/coupons", coupon_routes_1.adminCouponRouter); // Super Admin coupon management
-// Test database connection
+app.use("/api/admin/affiliate", affiliateAdmin_routes_1.default);
+app.use("/api/users/affiliate", userAffiliate_routes_1.default);
+// Test database connection - Disabled in production for diagnostics security
 app.get("/db-test", async (req, res) => {
+    if (process.env.NODE_ENV === "production") {
+        return res.status(403).json({
+            success: false,
+            error: "Forbidden",
+            message: "Database diagnostics are disabled in production mode.",
+        });
+    }
     try {
         await db_1.prisma.$connect();
         res.json({ database: "Connected successfully" });

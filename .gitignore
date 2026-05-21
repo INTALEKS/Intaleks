@@ -27,3 +27,8 @@ Thumbs.db
 # Docker volumes
 postgres_data/
 redis_data/
+
+# PM2 / PNPM Caching & Workspaces
+.pnpm-store/
+server/.pnpm-store/
+server/pnpm-workspace.yaml

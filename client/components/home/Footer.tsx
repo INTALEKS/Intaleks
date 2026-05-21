@@ -8,6 +8,7 @@ const navigateLinks = [
   // { label: "Subscriptions", href: "/#pricing" },
   { label: "About", href: "/#about" },
   { label: "Contact", href: "/contact" },
+  { label: "Affiliate Portal", href: process.env.NEXT_PUBLIC_AFFILIATE_APP_URL || "http://localhost:3001" },
 ];
 
 const premiumLinks = [
@@ -94,13 +95,43 @@ export function Footer() {
           <div className="col-span-1">
             <h3 className="font-semibold text-gray-900 mb-4 text-sm md:text-base">Main</h3>
             <ul className="space-y-2">
-              {navigateLinks.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+              {navigateLinks.map((link) => {
+                const isExternal = link.href.startsWith("http");
+                return (
+                  <li key={link.href}>
+                    {isExternal ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-600 hover:text-gray-900 text-sm transition-colors inline-flex items-center gap-1"
+                      >
+                        {link.label}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="opacity-60"
+                        >
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                          <polyline points="15 3 21 3 21 9"></polyline>
+                          <line x1="10" y1="14" x2="21" y2="3"></line>
+                        </svg>
+                      </a>
+                    ) : (
+                      <Link href={link.href} className="text-gray-600 hover:text-gray-900 text-sm transition-colors">
+                        {link.label}
+                      </Link>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
 

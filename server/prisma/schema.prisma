@@ -56,8 +56,113 @@ model User {
   valuationDocuments ValuationDocument[]
   questionnaireResponses QuestionnaireResponse[]
   redeemedCoupons   CouponCode[]
+  affiliateProfile  AffiliateProfile?
 
   @@map("users")
+}
+
+enum AffiliateApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AffiliateStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum AffiliateReferralStatus {
+  CONVERTED
+  PENDING
+  LEAD
+}
+
+enum AffiliateWithdrawalStatus {
+  REQUESTED
+  PROCESSED
+}
+
+model AffiliateApplication {
+  id        String                     @id @default(cuid())
+  name      String
+  email     String
+  company   String
+  website   String
+  paypal    String
+  status    AffiliateApplicationStatus @default(PENDING)
+  createdAt DateTime                   @default(now()) @map("created_at")
+  updatedAt DateTime                   @updatedAt @map("updated_at")
+
+  @@map("affiliate_applications")
+}
+
+model AffiliateProfile {
+  id            String          @id @default(cuid())
+  userId        String?         @unique @map("user_id")
+  name          String
+  email         String
+  company       String
+  code          String          @unique
+  referrals     Int             @default(0)
+  converted     Int             @default(0)
+  earned        Float           @default(0)
+  pending       Float           @default(0)
+  status        AffiliateStatus @default(ACTIVE)
+  joinedAtLabel String          @map("joined_at_label")
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("affiliate_profiles")
+}
+
+model AffiliateReferral {
+  id            String                  @id @default(cuid())
+  affiliateName String                  @map("affiliate_name")
+  clientMasked  String                  @map("client_masked")
+  plan          String
+  value         Float                   @default(0)
+  commission    Float                   @default(0)
+  conversionDate DateTime               @map("conversion_date")
+  status        AffiliateReferralStatus @default(LEAD)
+  createdAt     DateTime                @default(now()) @map("created_at")
+
+  @@index([affiliateName])
+  @@index([status])
+  @@map("affiliate_referrals")
+}
+
+model AffiliateWithdrawal {
+  id          String                    @id @default(cuid())
+  affiliateName String                  @map("affiliate_name")
+  amount      Float
+  method      String
+  payoutAccount String                  @map("payout_account")
+  requestedAt DateTime                  @map("requested_at")
+  status      AffiliateWithdrawalStatus @default(REQUESTED)
+  reference   String?
+  createdAt   DateTime                  @default(now()) @map("created_at")
+  updatedAt   DateTime                  @updatedAt @map("updated_at")
+
+  @@index([affiliateName])
+  @@index([status])
+  @@map("affiliate_withdrawals")
+}
+
+model AffiliateProgramSettings {
+  id              String   @id @default(cuid())
+  commissionRate  Int      @map("commission_rate")
+  minWithdrawal   Int      @map("min_withdrawal")
+  holdingDays     Int      @map("holding_days")
+  attributionDays Int      @map("attribution_days")
+  adminEmail      String   @map("admin_email")
+  notifications   Json
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("affiliate_program_settings")
 }
 
 model SubscriptionPlan {
@@ -188,6 +293,7 @@ model ForumPost {
   replies   ForumReply[]
   reactions ForumReaction[]
 
+  @@index([authorId])
   @@map("forum_posts")
 }
 
@@ -202,6 +308,8 @@ model ForumReply {
   author    User?           @relation(fields: [authorId], references: [id], onDelete: Cascade)
   reactions ForumReaction[]
 
+  @@index([postId])
+  @@index([authorId])
   @@map("forum_replies")
 }
 
@@ -244,6 +352,8 @@ model Payment {
   plan    SubscriptionPlan? @relation(fields: [planId], references: [id])
   invoice Invoice?
 
+  @@index([userId])
+  @@index([status])
   @@map("payments")
 }
 
@@ -270,6 +380,8 @@ model Invoice {
   user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   plan    SubscriptionPlan? @relation(fields: [planId], references: [id])
 
+  @@index([userId])
+  @@index([paymentId])
   @@map("invoices")
 }
 

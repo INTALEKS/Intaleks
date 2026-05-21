@@ -1,0 +1,18 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const affiliateAdmin_controller_1 = require("../controllers/affiliateAdmin.controller");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const router = (0, express_1.Router)();
+router.use(authMiddleware_1.authenticateToken, authMiddleware_1.requireAdmin);
+router.get("/overview", affiliateAdmin_controller_1.AffiliateAdminController.overview);
+router.get("/applications", affiliateAdmin_controller_1.AffiliateAdminController.listApplications);
+router.patch("/applications/:id/status", affiliateAdmin_controller_1.AffiliateAdminController.updateApplicationStatus);
+router.get("/affiliates", affiliateAdmin_controller_1.AffiliateAdminController.listAffiliates);
+router.patch("/affiliates/:id/toggle-status", affiliateAdmin_controller_1.AffiliateAdminController.toggleAffiliateStatus);
+router.get("/referrals", affiliateAdmin_controller_1.AffiliateAdminController.listReferrals);
+router.get("/withdrawals", affiliateAdmin_controller_1.AffiliateAdminController.listWithdrawals);
+router.patch("/withdrawals/:id/process", affiliateAdmin_controller_1.AffiliateAdminController.markWithdrawalProcessed);
+router.get("/settings", affiliateAdmin_controller_1.AffiliateAdminController.getSettings);
+router.put("/settings/:id", affiliateAdmin_controller_1.AffiliateAdminController.updateSettings);
+exports.default = router;
