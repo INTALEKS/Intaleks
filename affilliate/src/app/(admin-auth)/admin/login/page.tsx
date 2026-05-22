@@ -10,9 +10,12 @@ function getMainAppUrl() {
 
 export default function AdminLoginPage() {
   useEffect(() => {
-    const next = encodeURIComponent("/admin/overview");
+    const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3001";
+    const next = encodeURIComponent(`${origin}/admin/overview`);
     window.location.href = `${getMainAppUrl()}/login?next=${next}`;
   }, []);
+
+  const adminOverviewUrl = typeof window !== "undefined" ? `${window.location.origin}/admin/overview` : "http://localhost:3001/admin/overview";
 
   return (
     <Card className="rounded-xl border-[var(--affiliate-border)] shadow-none">
@@ -23,7 +26,7 @@ export default function AdminLoginPage() {
       <CardContent>
         <a
           className="inline-flex w-full items-center justify-center rounded-md bg-[var(--affiliate-navy)] px-4 py-2 text-sm font-medium text-white"
-          href={`${getMainAppUrl()}/login?next=${encodeURIComponent("/admin/overview")}`}
+          href={`${getMainAppUrl()}/login?next=${encodeURIComponent(adminOverviewUrl)}`}
         >
           Continue to Intaleks Login
         </a>

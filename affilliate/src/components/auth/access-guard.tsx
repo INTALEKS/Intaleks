@@ -74,11 +74,11 @@ export function AccessGuard({
           setReady(true);
         }
       } catch {
-        const currentPath =
+        const absolutePath =
           typeof window !== "undefined"
-            ? `${window.location.pathname}${window.location.search}`
+            ? `${window.location.origin}${window.location.pathname}${window.location.search}`
             : pathname;
-        const next = encodeURIComponent(currentPath);
+        const next = encodeURIComponent(absolutePath);
         window.location.href = `${getMainAppUrl()}/login?next=${next}`;
       }
     }

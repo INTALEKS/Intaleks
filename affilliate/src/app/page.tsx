@@ -79,7 +79,10 @@ export default function AffiliateLandingPage() {
   }, []);
 
   const loginRedirectUrl = useMemo(() => {
-    return `${mainAppUrl()}/login?next=%2Fdashboard`;
+    if (typeof window !== "undefined") {
+      return `${mainAppUrl()}/login?returnUrl=${encodeURIComponent(`${window.location.origin}/dashboard`)}`;
+    }
+    return `${mainAppUrl()}/login?returnUrl=http://localhost:3001/dashboard`;
   }, []);
 
   const stats = useMemo(
