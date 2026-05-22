@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { toast } from "sonner";
 import {
   Sparkles,
@@ -121,8 +122,8 @@ export function OnboardingView() {
         
         <div className="relative w-full max-w-md">
           {/* Logo Brand */}
-          <div className="mb-8 text-center">
-            <h1 className="text-xl font-bold tracking-tight text-[var(--affiliate-navy)]">intaleks</h1>
+          <div className="mb-8 flex flex-col items-center justify-center text-center">
+            <Image src="/intaleks.png" alt="Intaleks Logo" width={140} height={30} className="h-7 w-auto object-contain mb-1" />
             <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--affiliate-muted)]">Affiliate Portal</p>
           </div>
 
@@ -194,8 +195,8 @@ export function OnboardingView() {
 
         <div className="relative w-full max-w-md">
           {/* Logo Brand */}
-          <div className="mb-8 text-center">
-            <h1 className="text-xl font-bold tracking-tight text-[var(--affiliate-navy)]">intaleks</h1>
+          <div className="mb-8 flex flex-col items-center justify-center text-center">
+            <Image src="/intaleks.png" alt="Intaleks Logo" width={140} height={30} className="h-7 w-auto object-contain mb-1" />
             <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--affiliate-muted)]">Affiliate Portal</p>
           </div>
 
@@ -249,8 +250,8 @@ export function OnboardingView() {
 
       <div className="relative w-full max-w-2xl">
         {/* Logo Brand */}
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--affiliate-navy)]">intaleks</h1>
+        <div className="mb-6 flex flex-col items-center justify-center text-center">
+          <Image src="/intaleks.png" alt="Intaleks Logo" width={160} height={34} className="h-8 w-auto object-contain mb-1" />
           <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--affiliate-muted)]">Affiliate Partner Program</p>
         </div>
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 import { api } from "@/lib/api";
 
@@ -98,8 +99,8 @@ export default function AffiliateLandingPage() {
   return (
     <div className="bg-white text-[#0f2744]">
       <nav className="fixed inset-x-0 top-0 z-50 flex h-[68px] items-center justify-between border-b border-white/10 bg-[#0a1f3de8] px-6 backdrop-blur lg:px-16">
-        <div className="font-serif text-xl font-bold text-white">
-          intal<span className="text-[#5bb8e0]">eks</span>
+        <div className="flex items-center">
+          <Image src="/intaleks.png" alt="Intaleks logo" width={150} height={32} className="h-8 w-auto object-contain" />
         </div>
         <div className="hidden items-center gap-8 text-sm text-white/70 lg:flex">
           <a href="#how-it-works">How it works</a>

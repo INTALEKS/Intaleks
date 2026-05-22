@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Bell, ChevronUp, CreditCard, ExternalLink, Grid2x2, LayoutDashboard, Link2, LogOut, Menu, Settings, UserRoundCheck, Users } from "lucide-react";
 
@@ -65,7 +66,9 @@ function AdminSidebar({ appBadge, wdBadge, onNavigate }: { appBadge: number; wdB
   return (
     <aside className="flex h-full w-56 min-w-56 flex-col bg-[#0a1f3d]">
       <div className="border-b border-white/10 px-5 py-5">
-        <p className="text-sm font-semibold text-white">intaleks</p>
+        <div className="h-8 flex items-center">
+          <Image src="/intaleks.png" alt="Intaleks Logo" width={120} height={26} className="h-6 w-auto object-contain" />
+        </div>
         <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-[var(--affiliate-muted-dark)]">Admin Panel</p>
       </div>
       <p className="px-4 pt-4 pb-2 text-[10px] uppercase tracking-[0.14em] text-[var(--affiliate-section)]">Management</p>

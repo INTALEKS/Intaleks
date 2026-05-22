@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
@@ -100,7 +101,9 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <aside className="flex h-full w-56 min-w-56 flex-col bg-[var(--affiliate-navy)]">
       <div className="border-b border-white/10 px-5 py-5">
-        <p className="text-sm font-semibold text-white">intaleks</p>
+        <div className="h-8 flex items-center">
+          <Image src="/intaleks.png" alt="Intaleks Logo" width={120} height={26} className="h-6 w-auto object-contain" />
+        </div>
         <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-[var(--affiliate-muted-dark)]">Affiliate Portal</p>
       </div>
       {sections.map((section) => (
