@@ -691,7 +691,92 @@ export default function AffiliateLandingPage() {
         }
 
         .marketing-body #calculator {
-          background:var(--bg0);
+          background:#0f2744;
+          border-top:1px solid rgba(255,255,255,0.08);
+          border-bottom:1px solid rgba(255,255,255,0.08);
+        }
+
+        .marketing-body #calculator .section-head h2 {
+          color:#ffffff;
+        }
+
+        .marketing-body #calculator .section-head p {
+          color:rgba(255,255,255,0.65);
+        }
+
+        .marketing-body #calculator .calc-row-top span {
+          color:#ffffff;
+        }
+
+        .marketing-body #calculator .calc-chip {
+          color:#60a5fa;
+          background:rgba(59,130,246,0.15);
+          border:1px solid rgba(59,130,246,0.3);
+        }
+
+        .marketing-body #calculator input[type=range] {
+          background:rgba(255,255,255,0.15);
+        }
+
+        .marketing-body #calculator input[type=range]::-webkit-slider-thumb {
+          border:3px solid #0f2744;
+          box-shadow:0 0 0 1px rgba(96,165,250,.5);
+        }
+
+        .marketing-body #calculator .range-ends {
+          color:rgba(255,255,255,0.4);
+        }
+
+        .marketing-body #calculator .calc-note {
+          background:rgba(255,255,255,0.03);
+          border:1px solid rgba(255,255,255,0.08);
+          color:rgba(255,255,255,0.7);
+        }
+
+        .marketing-body #calculator .calc-note strong {
+          color:#60a5fa;
+        }
+
+        .marketing-body #calculator .calc-panel {
+          background:rgba(255,255,255,0.03);
+          border:1px solid rgba(255,255,255,0.08);
+        }
+
+        .marketing-body #calculator .calc-panel-title {
+          color:rgba(255,255,255,0.5);
+        }
+
+        .marketing-body #calculator .earn-row {
+          border-bottom:1px solid rgba(255,255,255,0.08);
+        }
+
+        .marketing-body #calculator .earn-label {
+          color:rgba(255,255,255,0.65);
+        }
+
+        .marketing-body #calculator .earn-val {
+          color:#ffffff;
+        }
+
+        .marketing-body #calculator .earn-big {
+          background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(59,130,246,.05));
+          border:1px solid rgba(59,130,246,0.3);
+        }
+
+        .marketing-body #calculator .earn-big-eyebrow {
+          color:rgba(255,255,255,0.5);
+        }
+
+        .marketing-body #calculator .earn-big-num {
+          color:#60a5fa;
+        }
+
+        .marketing-body #calculator .earn-big-sub {
+          color:rgba(255,255,255,0.55);
+        }
+
+        .marketing-body #calculator .calc-disclaimer {
+          color:rgba(255,255,255,0.4);
         }
 
         .marketing-body .calc-wrap {
