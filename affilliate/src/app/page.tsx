@@ -2649,7 +2649,7 @@ export default function AffiliateLandingPage() {
         <div className="modal-grid-2">
           <div className="modal-sidebar">
             <div className="modal-sidebar-logo">
-              intal<span>eks</span>
+              <Image src="/intaleks.png" alt="Intaleks" width={120} height={32} priority />
             </div>
             <div className="modal-sidebar-text">Create your affiliate account with your existing Intaleks identity.</div>
           </div>
@@ -2667,7 +2667,7 @@ export default function AffiliateLandingPage() {
         <div className="modal-grid-2">
           <div className="modal-sidebar">
             <div className="modal-sidebar-logo">
-              intal<span>eks</span>
+              <Image src="/intaleks.png" alt="Intaleks" width={120} height={32} priority />
             </div>
             <div className="modal-sidebar-text">Manage referrals, track commissions in real-time, and download your marketing kit.</div>
           </div>
