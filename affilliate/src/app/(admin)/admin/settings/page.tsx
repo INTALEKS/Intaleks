@@ -10,31 +10,60 @@ import { Switch } from "@/components/ui/switch";
 import { useAdminProgramSettings } from "@/hooks/use-admin-data";
 import { api } from "@/lib/api";
 
-export default function AdminSettingsPage() {
-  const { data, isLoading, isError, refetch } = useAdminProgramSettings();
-  const [commission, setCommission] = useState(data?.commission ?? 25);
-  const [minWithdrawal, setMinWithdrawal] = useState(data?.minWithdrawal ?? 250);
-  const [holdingDays, setHoldingDays] = useState(data?.holdingDays ?? 3);
-  const [attributionDays, setAttributionDays] = useState(data?.attributionDays ?? 30);
-  const [notifications, setNotifications] = useState(data?.notifications ?? []);
+function AdminSettingsForm({ data, refetch }: { data: any; refetch: () => void }) {
+  const [commission, setCommission] = useState(data.commission ?? 25);
+  const [minWithdrawal, setMinWithdrawal] = useState(data.minWithdrawal ?? 250);
+  const [holdingDays, setHoldingDays] = useState(data.holdingDays ?? 3);
+  const [attributionDays, setAttributionDays] = useState(data.attributionDays ?? 30);
+  const [notifications, setNotifications] = useState<any[]>(data.notifications ?? []);
   const [saved, setSaved] = useState(false);
-  if (isLoading) return <AdminLoadingState label="Loading settings..." />;
-  if (isError) return <AdminErrorState title="Could not load settings" description="Please retry." retry={() => void refetch()} />;
+  const [adminEmail, setAdminEmail] = useState(data.adminEmail ?? "");
+  const [password, setPassword] = useState("");
+  const [passwordUpdating, setPasswordUpdating] = useState(false);
+  const [passwordMessage, setPasswordMessage] = useState("");
 
   async function saveSettings() {
-    await api.put(`/api/admin/affiliate/settings/${data.id}`, {
-      commissionRate: commission,
-      minWithdrawal,
-      holdingDays,
-      attributionDays,
-      adminEmail: data.adminEmail,
-      notifications: notifications.reduce<Record<string, boolean>>((acc, item) => {
-        acc[item.key] = item.enabled;
-        return acc;
-      }, {}),
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1200);
+    try {
+      await api.put(`/api/admin/affiliate/settings/${data.id}`, {
+        commissionRate: commission,
+        minWithdrawal,
+        holdingDays,
+        attributionDays,
+        adminEmail,
+        notifications: notifications.reduce<Record<string, boolean>>((acc, item) => {
+          acc[item.key] = item.enabled;
+          return acc;
+        }, {}),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 1200);
+      refetch();
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function updatePassword() {
+    if (!password.trim()) return;
+    setPasswordUpdating(true);
+    setPasswordMessage("");
+    try {
+      const res = await api.put("/api/users/profile", {
+        password: password.trim(),
+      });
+      if (res.data?.success) {
+        setPasswordMessage("Password updated successfully!");
+        setPassword("");
+      } else {
+        setPasswordMessage(res.data?.message || "Failed to update password");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setPasswordMessage(err.response?.data?.message || "An error occurred");
+    } finally {
+      setPasswordUpdating(false);
+      setTimeout(() => setPasswordMessage(""), 3000);
+    }
   }
 
   return (
@@ -53,11 +82,18 @@ export default function AdminSettingsPage() {
                   <span className="text-[var(--affiliate-muted)]">{field.label}</span>
                   <span className="font-mono text-[var(--affiliate-navy)]">{field.value}</span>
                 </div>
-                <input type="range" min={field.min} max={field.max} value={field.value} onChange={(e) => field.set(Number(e.target.value))} className="w-full accent-[var(--affiliate-blue)]" />
+                <input
+                  type="range"
+                  min={field.min}
+                  max={field.max}
+                  value={field.value}
+                  onChange={(e) => field.set(Number(e.target.value))}
+                  className="w-full accent-[var(--affiliate-blue)] cursor-pointer"
+                />
               </label>
             ))}
           </div>
-          <Button className="mt-4 w-full bg-[var(--affiliate-navy)]" onClick={() => void saveSettings()}>
+          <Button className="mt-4 w-full bg-[var(--affiliate-navy)] cursor-pointer" onClick={() => void saveSettings()}>
             {saved ? "Settings saved" : "Save program settings"}
           </Button>
         </AdminPanel>
@@ -93,12 +129,30 @@ export default function AdminSettingsPage() {
 
         <AdminPanel title="Admin account">
           <div className="space-y-3">
-            <Input defaultValue={data.adminEmail} />
-            <Input type="password" placeholder="New password" />
-            <Button className="w-fit bg-[var(--affiliate-navy)]">Update password</Button>
+            <Input value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} placeholder="Admin Email" />
+            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="New password" />
+            <Button
+              className="w-fit bg-[var(--affiliate-navy)] cursor-pointer"
+              disabled={passwordUpdating}
+              onClick={() => void updatePassword()}
+            >
+              {passwordUpdating ? "Updating..." : "Update password"}
+            </Button>
+            {passwordMessage && (
+              <p className="text-xs font-medium text-emerald-600 animate-pulse">{passwordMessage}</p>
+            )}
           </div>
         </AdminPanel>
       </div>
     </div>
   );
+}
+
+export default function AdminSettingsPage() {
+  const { data, isLoading, isError, refetch } = useAdminProgramSettings();
+
+  if (isLoading) return <AdminLoadingState label="Loading settings..." />;
+  if (isError) return <AdminErrorState title="Could not load settings" description="Please retry." retry={() => void refetch()} />;
+
+  return <AdminSettingsForm data={data} refetch={refetch} />;
 }

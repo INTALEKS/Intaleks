@@ -79,6 +79,7 @@ export type ChatMessage = {
   from: "you" | "support";
   content: string;
   time: string;
+  read?: boolean;
 };
 
 export type NotificationPref = {

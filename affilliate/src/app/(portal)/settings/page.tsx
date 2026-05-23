@@ -7,16 +7,25 @@ import { Panel } from "@/components/affiliate/primitives";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { useNotificationPrefs, useUpdateProfile } from "@/hooks/use-affiliate-data";
+import { useNotificationPrefs, useSaveNotificationPrefs, useUpdateProfile } from "@/hooks/use-affiliate-data";
 
 export default function SettingsPage() {
   const { data } = useNotificationPrefs();
+  const savePrefs = useSaveNotificationPrefs();
   const user = useUser();
   const updateProfile = useUpdateProfile();
 
   const [saved, setSaved] = useState(false);
   const [company, setCompany] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  function handleTogglePref(key: string, enabled: boolean) {
+    if (!data) return;
+    const updated = data.map((pref) =>
+      pref.key === key ? { ...pref, enabled } : pref
+    );
+    savePrefs.mutate(updated);
+  }
 
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "";
   const email = user?.email ?? "";
@@ -74,7 +83,12 @@ export default function SettingsPage() {
             {data?.map((pref) => (
               <div key={pref.key} className="flex items-center justify-between border-b border-[var(--affiliate-border)] py-2 last:border-0">
                 <span className="text-sm text-[var(--affiliate-navy)]">{pref.label}</span>
-                <Switch defaultChecked={pref.enabled} aria-label={pref.label} />
+                <Switch 
+                  checked={pref.enabled} 
+                  onCheckedChange={(checked) => handleTogglePref(pref.key, checked)}
+                  disabled={savePrefs.isPending}
+                  aria-label={pref.label} 
+                />
               </div>
             ))}
           </div>

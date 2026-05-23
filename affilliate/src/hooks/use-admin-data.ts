@@ -128,6 +128,14 @@ export function useAdminWithdrawals() {
   });
 }
 
+const notificationLabels: Record<string, string> = {
+  appReceived: "Affiliate application received",
+  appReviewed: "Application approved or rejected",
+  withdrawalRequested: "Payout request submitted",
+  weeklyReport: "Weekly affiliate report",
+  monthlySummary: "Monthly program summary",
+};
+
 export function useAdminProgramSettings() {
   return useQuery({
     queryKey: ["admin-settings"],
@@ -144,7 +152,7 @@ export function useAdminProgramSettings() {
         adminEmail: getString(row, "adminEmail", "aleks@intaleks.com"),
         notifications: Object.entries(notifications).map(([key, enabled]) => ({
           key,
-          label: key,
+          label: notificationLabels[key] || key,
           enabled: Boolean(enabled),
         })),
       };

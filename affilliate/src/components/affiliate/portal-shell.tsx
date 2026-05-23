@@ -24,6 +24,7 @@ import {
 import { useUser } from "@/components/auth/access-guard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useReferrals, useChatMessages } from "@/hooks/use-affiliate-data";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,7 +39,7 @@ import { affiliateRoutes, getRouteMeta } from "@/lib/affiliate/routes";
 import type { NavSection, PortalPath } from "@/lib/affiliate/types";
 import { cn } from "@/lib/utils";
 
-const navIcons: Record<PortalPath, React.ComponentType<{ className?: string }>> = {
+const navIcons: Record<PortalPath, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
   "/dashboard": Grid2x2,
   "/referrals": Users,
   "/commissions": DollarSign,
@@ -93,66 +94,85 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const user = useUser();
   const sections: NavSection[] = ["Overview", "Resources", "Account"];
 
+  const { data: referrals } = useReferrals();
+  const { data: chatMessages } = useChatMessages();
+
+  const referralsCount = referrals?.length ?? 0;
+  const chatCount = chatMessages?.filter((m) => m.from === "support" && !m.read).length ?? 0;
+
   const initials = getInitials(user?.firstName, user?.lastName, user?.email);
   const displayName = getDisplayName(user?.firstName, user?.lastName, user?.email);
   const displayEmail = user?.email ?? "";
   const referralCode = user?.affiliateProfile?.code ?? user?.email?.split("@")[0]?.toUpperCase()?.slice(0, 8) ?? "—";
 
   return (
-    <aside className="flex h-full w-56 min-w-56 flex-col bg-[var(--affiliate-navy)]">
-      <div className="border-b border-white/10 px-5 py-5">
+    <aside className="flex h-full w-56 min-w-56 flex-col bg-white border-r border-[var(--affiliate-border)]">
+      <div className="border-b border-[var(--affiliate-border)] px-5 py-5 shrink-0">
         <div className="h-8 flex items-center">
           <Image src="/intaleks.png" alt="Intaleks Logo" width={120} height={26} className="h-6 w-auto object-contain" />
         </div>
-        <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-[var(--affiliate-muted-dark)]">Affiliate Portal</p>
+        <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-[var(--affiliate-muted)]">Affiliate Portal</p>
       </div>
-      {sections.map((section) => (
-        <div key={section} className="pt-4">
-          <p className="px-4 pb-2 text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--affiliate-section)]">{section}</p>
-          <div className="px-2">
-            {affiliateRoutes
-              .filter((route) => route.section === section)
-              .map((route) => {
-                const active = pathname === route.path;
-                const Icon = navIcons[route.path];
-                return (
-                  <Link
-                    key={route.path}
-                    href={route.path}
-                    onClick={onNavigate}
-                    className={cn(
-                      "mb-1 flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[var(--affiliate-link)] transition-colors hover:bg-white/10 hover:text-[var(--affiliate-link-active)]",
-                      active && "bg-[color:color-mix(in_oklab,var(--affiliate-blue)_20%,transparent)] text-[var(--affiliate-link-active)]"
-                    )}
-                  >
-                    <Icon className="size-4" />
-                    <span>{route.navLabel}</span>
-                    {route.badgeCount ? (
-                      <Badge className="ml-auto rounded-full bg-[var(--affiliate-red)] px-2 py-0 text-[10px] text-white">
-                        {route.badgeCount}
-                      </Badge>
-                    ) : null}
-                  </Link>
-                );
-              })}
+
+      <div className="flex-1 overflow-y-auto sidebar-scrollbar py-2">
+        {sections.map((section) => (
+          <div key={section} className="pt-4 first:pt-0">
+            <p className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">{section}</p>
+            <div className="px-2">
+              {affiliateRoutes
+                .filter((route) => route.section === section)
+                .map((route) => {
+                  const active = pathname === route.path;
+                  const Icon = navIcons[route.path];
+
+                  let currentBadge = route.badgeCount;
+                  if (route.path === "/referrals") {
+                    currentBadge = referralsCount > 0 ? referralsCount : undefined;
+                  } else if (route.path === "/chat") {
+                    currentBadge = chatCount > 0 ? chatCount : undefined;
+                  }
+
+                  return (
+                    <Link
+                      key={route.path}
+                      href={route.path}
+                      onClick={onNavigate}
+                      className={cn(
+                        "mb-1 flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors duration-200",
+                        active
+                          ? "bg-[#efefef] text-[#1e1e1e] font-medium"
+                          : "bg-transparent text-[#555] hover:bg-[#efefef] hover:text-[#1e1e1e]"
+                      )}
+                    >
+                      <Icon className="size-[18px] shrink-0" strokeWidth={1.75} />
+                      <span className="truncate">{route.navLabel}</span>
+                      {currentBadge ? (
+                        <Badge className="ml-auto rounded-full bg-[var(--affiliate-red)] px-2 py-0 text-[10px] text-white border-none">
+                          {currentBadge}
+                        </Badge>
+                      ) : null}
+                    </Link>
+                  );
+                })}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
       {/* ─── User Card with Dropdown ─── */}
-      <div className="mt-auto border-t border-white/10 p-3">
+      <div className="mt-auto border-t border-[var(--affiliate-border)] p-3 shrink-0">
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors hover:bg-white/10 focus:outline-none"
+            className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-slate-100 focus:outline-none"
           >
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--affiliate-blue)] text-xs font-semibold text-white">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--affiliate-blue)] text-xs font-semibold text-white">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-[var(--affiliate-link-active)]">{displayName}</p>
-              <p className="truncate text-[10px] text-[var(--affiliate-muted-dark)]">{displayEmail}</p>
+              <p className="truncate text-xs font-semibold text-[#1e1e1e]">{displayName}</p>
+              <p className="truncate text-[10px] text-slate-400">{displayEmail}</p>
             </div>
-            <ChevronUp className="size-4 shrink-0 text-[var(--affiliate-muted-dark)]" />
+            <ChevronUp className="size-4 shrink-0 text-slate-400" />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
@@ -220,6 +240,12 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
   const user = useUser();
   const meta = getRouteMeta(pathname);
 
+  const { data: referrals } = useReferrals();
+  const { data: chatMessages } = useChatMessages();
+
+  const referralsCount = referrals?.length ?? 0;
+  const chatCount = chatMessages?.filter((m) => m.from === "support" && !m.read).length ?? 0;
+
   const referralCode = user?.affiliateProfile?.code ?? user?.email?.split("@")[0]?.toUpperCase()?.slice(0, 8) ?? "—";
 
   // Build dynamic subtitle for the dashboard page
@@ -261,7 +287,9 @@ export function PortalShell({ children }: { children: React.ReactNode }) {
               aria-label="Notifications"
             >
               <Bell className="size-4" />
-              <span className="absolute top-1 right-1 size-2 rounded-full border border-white bg-[var(--affiliate-red)]" />
+              {chatCount > 0 ? (
+                <span className="absolute top-1 right-1 size-2 rounded-full border border-white bg-[var(--affiliate-red)]" />
+              ) : null}
             </button>
           </div>
         </header>

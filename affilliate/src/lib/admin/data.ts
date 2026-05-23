@@ -57,7 +57,7 @@ export const initialProgramSettings: AdminProgramSettings = {
   notifications: [
     { key: "app-received", label: "Affiliate application received", enabled: true },
     { key: "app-reviewed", label: "Application approved or rejected", enabled: true },
-    { key: "withdrawal-requested", label: "Withdrawal request submitted", enabled: true },
+    { key: "withdrawal-requested", label: "Payout request submitted", enabled: true },
     { key: "weekly-report", label: "Weekly affiliate report", enabled: false },
     { key: "monthly-summary", label: "Monthly program summary", enabled: true },
   ],

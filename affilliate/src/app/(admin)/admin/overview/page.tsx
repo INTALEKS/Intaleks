@@ -20,7 +20,7 @@ export default function AdminOverviewPage() {
       <section className="admin-grid-cards">
         <AdminStatCard label="Active Affiliates" value={String(active)} detail={`${pending} pending review`} />
         <AdminStatCard label="Total Commissions Paid" value={`$${totalEarned.toLocaleString("en-AU", { minimumFractionDigits: 2 })}`} detail="All time" />
-        <AdminStatCard label="Pending Withdrawals" value={String(pendingWd)} detail={`$${pendingWdAmt.toLocaleString("en-AU", { minimumFractionDigits: 2 })} total`} />
+        <AdminStatCard label="Pending Payouts" value={String(pendingWd)} detail={`$${pendingWdAmt.toLocaleString("en-AU", { minimumFractionDigits: 2 })} total`} />
         <AdminStatCard label="New Applications" value={String(pending)} detail="Awaiting review" />
       </section>
 
@@ -52,7 +52,7 @@ export default function AdminOverviewPage() {
         </AdminPanel>
       </section>
 
-      <AdminPanel title="Latest withdrawal requests">
+      <AdminPanel title="Latest payout requests">
         <div className="space-y-2">
           {data.withdrawals.filter((item) => item.status === "requested").slice(0, 4).map((item) => (
             <div key={item.id} className="flex items-center justify-between rounded-md border border-[var(--affiliate-border)] p-2">

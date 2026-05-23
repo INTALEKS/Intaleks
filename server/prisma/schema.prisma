@@ -110,6 +110,7 @@ model AffiliateProfile {
   pending       Float           @default(0)
   status        AffiliateStatus @default(ACTIVE)
   joinedAtLabel String          @map("joined_at_label")
+  notificationPrefs Json?       @map("notification_prefs")
   createdAt     DateTime        @default(now()) @map("created_at")
   updatedAt     DateTime        @updatedAt @map("updated_at")
 
@@ -532,3 +533,17 @@ model CouponCode {
 
   @@map("coupon_codes")
 }
+
+model AffiliateChatMessage {
+  id            String   @id @default(cuid())
+  affiliateName String   @map("affiliate_name")
+  from          String   // "you" or "support"
+  content       String   @db.Text
+  timeLabel     String   @map("time_label")
+  read          Boolean  @default(false)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([affiliateName])
+  @@map("affiliate_chat_messages")
+}
+

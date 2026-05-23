@@ -77,10 +77,44 @@ export function useMarketingAssets() {
 }
 
 export function useChatMessages() {
-  return useQuery({
+  return useQuery<ChatMessage[]>({
     queryKey: ["chat-messages"],
-    queryFn: async () => chatMessages,
-    initialData: chatMessages,
+    queryFn: async () => {
+      const res = await api.get("/api/users/affiliate/chat");
+      return res.data.map((m: any) => ({
+        id: m.id,
+        from: m.from,
+        content: m.content,
+        time: m.timeLabel,
+        read: m.read,
+      }));
+    },
+  });
+}
+
+export function useMarkChatAsRead() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await api.post("/api/users/affiliate/chat/read");
+      return res.data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["chat-messages"] });
+    },
+  });
+}
+
+export function useSendMessage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { content: string }) => {
+      const res = await api.post("/api/users/affiliate/chat", data);
+      return res.data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["chat-messages"] });
+    },
   });
 }
 
@@ -90,6 +124,19 @@ export function useNotificationPrefs() {
     queryFn: async () => {
       const res = await api.get("/api/users/affiliate/notification-prefs");
       return res.data;
+    },
+  });
+}
+
+export function useSaveNotificationPrefs() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (preferences: NotificationPref[]) => {
+      const res = await api.put("/api/users/affiliate/notification-prefs", { preferences });
+      return res.data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["notification-prefs"] });
     },
   });
 }

@@ -16,7 +16,7 @@ import { useUser } from "@/components/auth/access-guard";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { api } from "@/lib/api";
 
-const iconByPath: Record<AdminPath, React.ComponentType<{ className?: string }>> = {
+const iconByPath: Record<AdminPath, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
   "/admin/overview": Grid2x2,
   "/admin/applications": UserRoundCheck,
   "/admin/affiliates": Users,
@@ -64,37 +64,55 @@ function AdminSidebar({ appBadge, wdBadge, onNavigate }: { appBadge: number; wdB
   const displayRole = user?.role === "SUPER_ADMIN" ? "Super Admin" : "Administrator";
 
   return (
-    <aside className="flex h-full w-56 min-w-56 flex-col bg-[#0a1f3d]">
-      <div className="border-b border-white/10 px-5 py-5">
+    <aside className="flex h-full w-56 min-w-56 flex-col bg-white border-r border-[var(--affiliate-border)]">
+      <div className="border-b border-[var(--affiliate-border)] px-5 py-5 shrink-0">
         <div className="h-8 flex items-center">
           <Image src="/intaleks.png" alt="Intaleks Logo" width={120} height={26} className="h-6 w-auto object-contain" />
         </div>
-        <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-[var(--affiliate-muted-dark)]">Admin Panel</p>
+        <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-[var(--affiliate-muted)]">Admin Panel</p>
       </div>
-      <p className="px-4 pt-4 pb-2 text-[10px] uppercase tracking-[0.14em] text-[var(--affiliate-section)]">Management</p>
-      <div className="px-2">
-        {adminNav.map((item) => {
-          const Icon = iconByPath[item.path];
-          const active = pathname === item.path;
-          const badge = item.badgeKey === "applications" ? appBadge : item.badgeKey === "withdrawals" ? wdBadge : null;
-          return (
-            <Link key={item.path} href={item.path} onClick={onNavigate} className={cn("mb-1 flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[var(--affiliate-link)] hover:bg-white/10 hover:text-[var(--affiliate-link-active)]", active && "bg-[color:color-mix(in_oklab,var(--affiliate-blue)_20%,transparent)] text-[var(--affiliate-link-active)]")}>
-              <Icon className="size-4" />
-              <span>{item.label}</span>
-              {badge ? <Badge className="ml-auto rounded-full bg-[#5c1a7a] px-2 py-0 text-[10px] text-white">{badge}</Badge> : null}
-            </Link>
-          );
-        })}
+
+      <div className="flex-1 overflow-y-auto sidebar-scrollbar py-2">
+        <p className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Management</p>
+        <div className="px-2">
+          {adminNav.map((item) => {
+            const Icon = iconByPath[item.path];
+            const active = pathname === item.path;
+            const badge = item.badgeKey === "applications" ? appBadge : item.badgeKey === "withdrawals" ? wdBadge : null;
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                onClick={onNavigate}
+                className={cn(
+                  "mb-1 flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors duration-200",
+                  active
+                    ? "bg-[#efefef] text-[#1e1e1e] font-medium"
+                    : "bg-transparent text-[#555] hover:bg-[#efefef] hover:text-[#1e1e1e]"
+                )}
+              >
+                <Icon className="size-[18px] shrink-0" strokeWidth={1.75} />
+                <span>{item.label}</span>
+                {badge ? (
+                  <Badge className="ml-auto rounded-full bg-[#5c1a7a] px-2 py-0 text-[10px] text-white border-none">
+                    {badge}
+                  </Badge>
+                ) : null}
+              </Link>
+            );
+          })}
+        </div>
       </div>
-      <div className="mt-auto border-t border-white/10 p-3">
+
+      <div className="mt-auto border-t border-[var(--affiliate-border)] p-3 shrink-0">
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-left transition-colors hover:bg-white/10 focus:outline-none">
+          <DropdownMenuTrigger className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-slate-100 focus:outline-none">
             <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[var(--affiliate-blue)] text-xs font-semibold text-white">{initials}</div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium text-[var(--affiliate-link-active)]">{displayName}</p>
-              <p className="truncate text-[10px] text-[var(--affiliate-muted-dark)]">{displayRole}</p>
+              <p className="truncate text-xs font-semibold text-[#1e1e1e]">{displayName}</p>
+              <p className="truncate text-[10px] text-slate-400">{displayRole}</p>
             </div>
-            <ChevronUp className="size-4 shrink-0 text-[var(--affiliate-muted-dark)]" />
+            <ChevronUp className="size-4 shrink-0 text-slate-400" />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent side="top" align="start" sideOffset={8} className="w-52 rounded-xl border border-[var(--affiliate-border)] bg-white shadow-xl">

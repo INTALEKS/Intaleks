@@ -32,8 +32,8 @@ export default function AdminWithdrawalsPage() {
     setWithdrawals((current) => current.map((item) => (item.id === id ? { ...item, status: "processed", ref } : item)));
   }
 
-  if (isLoading) return <AdminLoadingState label="Loading withdrawals..." />;
-  if (isError) return <AdminErrorState title="Could not load withdrawals" description="Please retry." retry={() => void refetch()} />;
+  if (isLoading) return <AdminLoadingState label="Loading payouts..." />;
+  if (isError) return <AdminErrorState title="Could not load payouts" description="Please retry." retry={() => void refetch()} />;
 
   return (
     <div className="admin-page">
@@ -46,9 +46,9 @@ export default function AdminWithdrawalsPage() {
       <AdminFilterPills value={filter} onChange={(value) => setFilter(value as "all" | AdminWithdrawalStatus)} options={[{ value: "requested", label: "Requested" }, { value: "processed", label: "Processed" }, { value: "all", label: "All" }]} />
 
       {filtered.length === 0 ? (
-        <AdminEmptyState title="No withdrawals found" description="Try a different filter." />
+        <AdminEmptyState title="No payouts found" description="Try a different filter." />
       ) : (
-      <AdminPanel title="Withdrawal requests">
+      <AdminPanel title="Payout requests">
         <Table>
           <TableHeader>
             <TableRow><TableHead>Affiliate</TableHead><TableHead>Amount</TableHead><TableHead>Method</TableHead><TableHead>Payout account</TableHead><TableHead>Requested</TableHead><TableHead>Status</TableHead><TableHead>Transaction ref</TableHead><TableHead>Action</TableHead></TableRow>

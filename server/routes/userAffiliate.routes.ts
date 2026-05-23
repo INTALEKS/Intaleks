@@ -37,63 +37,13 @@ async function generateUniqueReferralCode(base: string): Promise<string> {
 }
 
 /**
- * POST /api/users/affiliate/activate - Instant Self-Activation
+ * POST /api/users/affiliate/activate - Instant Self-Activation (Disabled)
  */
 router.post("/activate", async (req: Request, res: Response) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
-
-    const userId = req.user.id;
-
-    // Fetch full user details
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { affiliateProfile: true },
-    });
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    if (user.affiliateProfile) {
-      return res.status(400).json({
-        success: false,
-        message: "You already have an active affiliate profile",
-        profile: user.affiliateProfile,
-      });
-    }
-
-    // Generate unique referral code
-    const baseString = user.firstName || user.email.split("@")[0];
-    const code = await generateUniqueReferralCode(baseString);
-
-    // Create the profile
-    const profile = await prisma.affiliateProfile.create({
-      data: {
-        userId: user.id,
-        name: `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email.split("@")[0],
-        email: user.email,
-        company: "",
-        code,
-        status: "ACTIVE",
-        joinedAtLabel: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
-      },
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: "Affiliate account activated successfully!",
-      profile,
-    });
-  } catch (error: any) {
-    console.error("Affiliate activation error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "An error occurred during affiliate activation",
-    });
-  }
+  return res.status(403).json({
+    success: false,
+    message: "Instant activation is disabled. Please submit an application request for manual admin review.",
+  });
 });
 
 /**
@@ -567,12 +517,220 @@ router.put("/profile", async (req: Request, res: Response) => {
  * GET /api/users/affiliate/notification-prefs - Returns notification preferences
  */
 router.get("/notification-prefs", async (req: Request, res: Response) => {
-  return res.status(200).json([
-    { key: "new_referral", label: "Email me when a new referral signs up", enabled: true },
-    { key: "payout_processed", label: "Email me when a payout is processed", enabled: true },
-    { key: "newsletter", label: "Receive monthly program updates & tips", enabled: false },
-  ]);
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const profile = await prisma.affiliateProfile.findUnique({
+      where: { userId: req.user.id },
+    });
+
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "No active affiliate profile found" });
+    }
+
+    // Default preferences
+    const defaultPrefs = [
+      { key: "new_referral", label: "Email me when a new referral signs up", enabled: true },
+      { key: "payout_processed", label: "Email me when a payout is processed", enabled: true },
+      { key: "newsletter", label: "Receive monthly program updates & tips", enabled: false },
+    ];
+
+    if (!profile.notificationPrefs) {
+      // Save default preferences
+      await prisma.affiliateProfile.update({
+        where: { id: profile.id },
+        data: { notificationPrefs: defaultPrefs },
+      });
+      return res.status(200).json(defaultPrefs);
+    }
+
+    return res.status(200).json(profile.notificationPrefs);
+  } catch (error: any) {
+    console.error("GET /notification-prefs error:", error);
+    return res.status(500).json({ success: false, message: "An error occurred fetching notification preferences" });
+  }
+});
+
+/**
+ * PUT /api/users/affiliate/notification-prefs - Save notification preferences
+ */
+router.put("/notification-prefs", async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const { preferences } = req.body;
+    if (!preferences || !Array.isArray(preferences)) {
+      return res.status(400).json({ success: false, message: "Preferences array is required" });
+    }
+
+    const profile = await prisma.affiliateProfile.findUnique({
+      where: { userId: req.user.id },
+    });
+
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "No active affiliate profile found" });
+    }
+
+    const updatedProfile = await prisma.affiliateProfile.update({
+      where: { id: profile.id },
+      data: { notificationPrefs: preferences },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Notification preferences updated successfully!",
+      preferences: updatedProfile.notificationPrefs,
+    });
+  } catch (error: any) {
+    console.error("PUT /notification-prefs error:", error);
+    return res.status(500).json({ success: false, message: "An error occurred updating notification preferences" });
+  }
+});
+
+/**
+ * GET /api/users/affiliate/chat - Get chat messages
+ */
+router.get("/chat", async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const profile = await prisma.affiliateProfile.findUnique({
+      where: { userId: req.user.id },
+    });
+
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "No active affiliate profile found" });
+    }
+
+    let messages = await prisma.affiliateChatMessage.findMany({
+      where: { affiliateName: profile.name },
+      orderBy: { createdAt: "asc" },
+    });
+
+    // Seed welcome messages if empty
+    if (messages.length === 0) {
+      const welcomeMessages = [
+        {
+          affiliateName: profile.name,
+          from: "support",
+          content: `Hi ${profile.name.split(" ")[0]}! Welcome to the Intaleks affiliate programme. Feel free to ask us anything — commissions, payouts, how to promote Intaleks, or anything else.`,
+          timeLabel: "Aleks · 12 Jan, 9:02 am",
+        },
+      ];
+
+      await prisma.affiliateChatMessage.createMany({
+        data: welcomeMessages,
+      });
+
+      messages = await prisma.affiliateChatMessage.findMany({
+        where: { affiliateName: profile.name },
+        orderBy: { createdAt: "asc" },
+      });
+    }
+
+    return res.status(200).json(messages);
+  } catch (error: any) {
+    console.error("GET /chat error:", error);
+    return res.status(500).json({ success: false, message: "An error occurred fetching chat messages" });
+  }
+});
+
+/**
+ * POST /api/users/affiliate/chat - Send a new chat message
+ */
+router.post("/chat", async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const { content } = req.body;
+    if (!content || !String(content).trim()) {
+      return res.status(400).json({ success: false, message: "Message content is required" });
+    }
+
+    const profile = await prisma.affiliateProfile.findUnique({
+      where: { userId: req.user.id },
+    });
+
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "No active affiliate profile found" });
+    }
+
+    const now = new Date();
+    const timeLabel = `You · Today, ${now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+
+    // Save user message
+    const userMessage = await prisma.affiliateChatMessage.create({
+      data: {
+        affiliateName: profile.name,
+        from: "you",
+        content: String(content).trim(),
+        timeLabel,
+      },
+    });
+
+    // Auto-reply
+    const replyTimeLabel = `Intaleks Support · Today, ${now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+    await prisma.affiliateChatMessage.create({
+      data: {
+        affiliateName: profile.name,
+        from: "support",
+        content: "Thanks for your message! A member of the Intaleks team will get back to you shortly during AEST business hours.",
+        timeLabel: replyTimeLabel,
+      },
+    });
+
+    return res.status(201).json(userMessage);
+  } catch (error: any) {
+    console.error("POST /chat error:", error);
+    return res.status(500).json({ success: false, message: "An error occurred sending message" });
+  }
+});
+
+/**
+ * POST /api/users/affiliate/chat/read - Mark all support messages as read
+ */
+router.post("/chat/read", async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const profile = await prisma.affiliateProfile.findUnique({
+      where: { userId: req.user.id },
+    });
+
+    if (!profile) {
+      return res.status(404).json({ success: false, message: "No active affiliate profile found" });
+    }
+
+    // Mark all support messages as read
+    await prisma.affiliateChatMessage.updateMany({
+      where: {
+        affiliateName: profile.name,
+        from: "support",
+        read: false,
+      },
+      data: {
+        read: true,
+      },
+    });
+
+    return res.status(200).json({ success: true });
+  } catch (error: any) {
+    console.error("POST /chat/read error:", error);
+    return res.status(500).json({ success: false, message: "An error occurred marking messages as read" });
+  }
 });
 
 export default router;
+
+
 

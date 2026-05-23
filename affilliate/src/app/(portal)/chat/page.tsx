@@ -1,17 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Panel } from "@/components/affiliate/primitives";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useChatMessages } from "@/hooks/use-affiliate-data";
+import { useChatMessages, useMarkChatAsRead, useSendMessage } from "@/hooks/use-affiliate-data";
 import type { ChatMessage } from "@/lib/affiliate/types";
 
 export default function ChatPage() {
   const { data } = useChatMessages();
-  const [messages, setMessages] = useState<ChatMessage[]>(data ?? []);
+  const sendMessageMutation = useSendMessage();
+  const markAsRead = useMarkChatAsRead();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    markAsRead.mutate();
+  }, []);
+
+  useEffect(() => {
+    if (data) {
+      setMessages(data);
+    }
+  }, [data]);
 
   function send() {
     const content = message.trim();
@@ -21,21 +33,11 @@ export default function ChatPage() {
       id: crypto.randomUUID(),
       from: "you",
       content,
-      time: `You · Today, ${now.toLocaleTimeString("en-AU", { hour: "numeric", minute: "2-digit" })}`,
+      time: `You · Today, ${now.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`,
     };
     setMessages((current) => [...current, sent]);
     setMessage("");
-    setTimeout(() => {
-      setMessages((current) => [
-        ...current,
-        {
-          id: crypto.randomUUID(),
-          from: "support",
-          content: "Thanks for your message! A member of the Intaleks team will get back to you shortly during AEST business hours.",
-          time: "Intaleks Support · Today",
-        },
-      ]);
-    }, 900);
+    sendMessageMutation.mutate({ content });
   }
 
   return (

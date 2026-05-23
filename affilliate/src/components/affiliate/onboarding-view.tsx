@@ -14,9 +14,7 @@ import {
   CheckCircle2,
   XCircle,
   HelpCircle,
-  ShieldCheck,
-  AlertCircle,
-  Rocket
+  AlertCircle
 } from "lucide-react";
 
 import { useUser } from "@/components/auth/access-guard";
@@ -33,15 +31,15 @@ function getMainAppUrl() {
 export function OnboardingView() {
   const user = useUser();
   const [loading, setLoading] = useState(false);
-  const [showApplyForm, setShowApplyForm] = useState(false);
+  
+  const appStatus = user?.affiliateApplication?.status; // "pending" | "approved" | "rejected" | undefined
+  const [showApplyForm, setShowApplyForm] = useState(appStatus !== "rejected");
   
   // Form fields
   const [company, setCompany] = useState("");
   const [website, setWebsite] = useState("");
   const [paypal, setPaypal] = useState("");
   const [paypalError, setPaypalError] = useState("");
-
-  const appStatus = user?.affiliateApplication?.status; // "pending" | "approved" | "rejected" | undefined
 
   async function handleLogout() {
     try {
@@ -50,27 +48,6 @@ export function OnboardingView() {
       // silently ignore
     }
     window.location.href = `${getMainAppUrl()}/login`;
-  }
-
-  async function handleInstantActivate() {
-    setLoading(true);
-    try {
-      const res = await api.post("/api/users/affiliate/activate");
-      if (res.data?.success) {
-        toast.success("Affiliate account activated instantly!");
-        // Small delay to allow toast to show
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      } else {
-        toast.error(res.data?.message || "Activation failed");
-      }
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.response?.data?.message || "An error occurred during activation");
-    } finally {
-      setLoading(false);
-    }
   }
 
   async function handleApplySubmit(e: React.FormEvent) {
@@ -248,205 +225,129 @@ export function OnboardingView() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--affiliate-bg)] p-4 text-[var(--affiliate-navy)] selection:bg-[var(--affiliate-sky)] selection:text-white">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--affiliate-bg-accent),transparent_50%)] pointer-events-none" />
 
-      <div className="relative w-full max-w-2xl">
+      <div className="relative w-full max-w-md mx-auto">
         {/* Logo Brand */}
         <div className="mb-6 flex flex-col items-center justify-center text-center">
           <Image src="/intaleks.png" alt="Intaleks Logo" width={160} height={34} className="h-8 w-auto object-contain mb-1" />
           <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--affiliate-muted)]">Affiliate Partner Program</p>
         </div>
 
-        {!showApplyForm ? (
-          <div className="space-y-6">
-            <div className="text-center max-w-md mx-auto mb-2">
-              <h2 className="text-xl font-semibold tracking-tight">Unlock Your Earning Potential</h2>
-              <p className="mt-1.5 text-xs text-[var(--affiliate-muted)] leading-relaxed">
-                Join the Intaleks Partner Program. Earn high-ticket recurring commissions by recommending our AI-driven solutions to your network.
-              </p>
-            </div>
+        {/* Custom Partner application form */}
+        <Card className="overflow-hidden rounded-2xl border-[var(--affiliate-border)] bg-white shadow-xl shadow-slate-100">
+          <div className="h-1.5 bg-gradient-to-r from-[var(--affiliate-blue)] to-[var(--affiliate-sky)]" />
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold">Partner Application Details</CardTitle>
+            <CardDescription className="text-xs text-[var(--affiliate-muted)]">
+              Provide your business information to submit your partner application.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleApplySubmit} className="space-y-4">
+              {/* Company Name */}
+              <div className="space-y-1.5">
+                <Label htmlFor="company" className="text-xs font-semibold text-[var(--affiliate-navy)] flex items-center gap-1.5">
+                  <Building2 className="size-3.5 text-[var(--affiliate-muted)]" />
+                  Company / Organization Name
+                </Label>
+                <Input
+                  id="company"
+                  type="text"
+                  placeholder="e.g. Acme Media Corp (Optional)"
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  className="border-[var(--affiliate-border)] text-xs py-5 rounded-lg focus-visible:ring-[var(--affiliate-blue)]"
+                />
+              </div>
 
-            {/* Split cards options */}
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* Option A: Instant */}
-              <Card className="flex flex-col overflow-hidden rounded-2xl border-[var(--affiliate-border)] bg-white shadow-lg shadow-slate-100/50 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
-                <div className="h-1 bg-[var(--affiliate-blue)]" />
-                <CardHeader className="pb-3">
-                  <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-[var(--affiliate-bg-accent)] text-[var(--affiliate-blue)]">
-                    <Rocket className="size-5 animate-pulse" />
-                  </div>
-                  <CardTitle className="text-base font-semibold">Fast-Track Activation</CardTitle>
-                  <CardDescription className="text-xs text-[var(--affiliate-muted)]">
-                    Start promoting immediately with standard terms.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col justify-between space-y-6">
-                  <p className="text-xs text-[var(--affiliate-muted-dark)] leading-relaxed">
-                    Instantly activate your profile and unlock standard marketing links. Generates a randomized referral code tied directly to your profile. Recommended for most individual publishers.
-                  </p>
+              {/* Website URL */}
+              <div className="space-y-1.5">
+                <Label htmlFor="website" className="text-xs font-semibold text-[var(--affiliate-navy)] flex items-center gap-1.5">
+                  <Globe className="size-3.5 text-[var(--affiliate-muted)]" />
+                  Website or Content Channel URL
+                </Label>
+                <Input
+                  id="website"
+                  type="url"
+                  placeholder="https://yoursite.com (Optional)"
+                  value={website}
+                  onChange={(e) => setWebsite(e.target.value)}
+                  className="border-[var(--affiliate-border)] text-xs py-5 rounded-lg focus-visible:ring-[var(--affiliate-blue)]"
+                />
+              </div>
+
+              {/* PayPal Email */}
+              <div className="space-y-1.5">
+                <Label htmlFor="paypal" className="text-xs font-semibold text-[var(--affiliate-navy)] flex items-center gap-1.5">
+                  <Mail className="size-3.5 text-[var(--affiliate-blue)]" />
+                  PayPal Email <span className="text-rose-500">*</span>
+                </Label>
+                <Input
+                  id="paypal"
+                  type="email"
+                  required
+                  placeholder="payments@yourdomain.com"
+                  value={paypal}
+                  onChange={(e) => {
+                    setPaypal(e.target.value);
+                    if (paypalError) setPaypalError("");
+                  }}
+                  className={`border-[var(--affiliate-border)] text-xs py-5 rounded-lg focus-visible:ring-[var(--affiliate-blue)] ${
+                    paypalError ? "border-rose-400 focus-visible:ring-rose-400" : ""
+                  }`}
+                />
+                {paypalError && (
+                  <p className="text-[10px] text-rose-500 font-medium">{paypalError}</p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2 pt-4 border-t border-[var(--affiliate-border)]">
+                <Button 
+                  type="submit"
+                  disabled={loading}
+                  className="w-full text-xs py-5 bg-[var(--affiliate-navy)] hover:bg-[var(--affiliate-blue-strong)] text-white cursor-pointer"
+                >
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Submitting Application...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      Submit Application Request
+                      <ArrowRight className="size-3.5" />
+                    </span>
+                  )}
+                </Button>
+                {appStatus === "rejected" && (
                   <Button 
-                    className="w-full text-xs py-5 bg-[var(--affiliate-navy)] hover:bg-[var(--affiliate-blue-strong)] text-white cursor-pointer"
+                    type="button"
+                    variant="ghost"
+                    className="w-full text-xs text-[var(--affiliate-muted)] hover:bg-[var(--affiliate-bg-accent)] hover:text-[var(--affiliate-navy)] cursor-pointer"
                     disabled={loading}
-                    onClick={handleInstantActivate}
+                    onClick={() => {
+                      setShowApplyForm(false);
+                      setPaypalError("");
+                    }}
                   >
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        Activating...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        Instant Activation
-                        <ArrowRight className="size-3.5" />
-                      </span>
-                    )}
+                    Cancel & Go Back
                   </Button>
-                </CardContent>
-              </Card>
+                )}
+              </div>
+            </form>
+          </CardContent>
+        </Card>
 
-              {/* Option B: Review Application */}
-              <Card className="flex flex-col overflow-hidden rounded-2xl border-[var(--affiliate-border)] bg-white shadow-lg shadow-slate-100/50 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300">
-                <div className="h-1 bg-[var(--affiliate-sky)]" />
-                <CardHeader className="pb-3">
-                  <div className="mb-2 flex size-10 items-center justify-center rounded-lg bg-[var(--affiliate-bg-accent)] text-[var(--affiliate-blue)]">
-                    <ShieldCheck className="size-5" />
-                  </div>
-                  <CardTitle className="text-base font-semibold">Custom Partner Program</CardTitle>
-                  <CardDescription className="text-xs text-[var(--affiliate-muted)]">
-                    Submit application for tailored terms and codes.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col justify-between space-y-6">
-                  <p className="text-xs text-[var(--affiliate-muted-dark)] leading-relaxed">
-                    For structured marketing teams, large agencies, and professional influencers. Fill out a short application details form. Offers custom commission tiers and customized promo codes upon approval.
-                  </p>
-                  <Button 
-                    variant="outline"
-                    className="w-full text-xs py-5 border-[var(--affiliate-border-strong)] hover:bg-[var(--affiliate-bg-accent)] hover:text-[var(--affiliate-blue-strong)] cursor-pointer"
-                    onClick={() => setShowApplyForm(true)}
-                  >
-                    Apply for Custom Program
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Logout link */}
-            <div className="text-center pt-2">
-              <button 
-                type="button"
-                className="inline-flex items-center gap-1.5 text-xs text-rose-500 hover:text-rose-600 hover:underline transition-all cursor-pointer font-medium"
-                onClick={handleLogout}
-              >
-                <LogOut className="size-3.5" />
-                Sign out of account
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="max-w-md mx-auto">
-            {/* Custom Partner application form */}
-            <Card className="overflow-hidden rounded-2xl border-[var(--affiliate-border)] bg-white shadow-xl shadow-slate-100">
-              <div className="h-1.5 bg-gradient-to-r from-[var(--affiliate-blue)] to-[var(--affiliate-sky)]" />
-              <CardHeader className="pb-4">
-                <CardTitle className="text-lg font-semibold">Partner Application Details</CardTitle>
-                <CardDescription className="text-xs text-[var(--affiliate-muted)]">
-                  Provide your business information to customize your onboarding.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleApplySubmit} className="space-y-4">
-                  {/* Company Name */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="company" className="text-xs font-semibold text-[var(--affiliate-navy)] flex items-center gap-1.5">
-                      <Building2 className="size-3.5 text-[var(--affiliate-muted)]" />
-                      Company / Organization Name
-                    </Label>
-                    <Input
-                      id="company"
-                      type="text"
-                      placeholder="e.g. Acme Media Corp (Optional)"
-                      value={company}
-                      onChange={(e) => setCompany(e.target.value)}
-                      className="border-[var(--affiliate-border)] text-xs py-5 rounded-lg focus-visible:ring-[var(--affiliate-blue)]"
-                    />
-                  </div>
-
-                  {/* Website URL */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="website" className="text-xs font-semibold text-[var(--affiliate-navy)] flex items-center gap-1.5">
-                      <Globe className="size-3.5 text-[var(--affiliate-muted)]" />
-                      Website or Content Channel URL
-                    </Label>
-                    <Input
-                      id="website"
-                      type="url"
-                      placeholder="https://yoursite.com (Optional)"
-                      value={website}
-                      onChange={(e) => setWebsite(e.target.value)}
-                      className="border-[var(--affiliate-border)] text-xs py-5 rounded-lg focus-visible:ring-[var(--affiliate-blue)]"
-                    />
-                  </div>
-
-                  {/* PayPal Email */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="paypal" className="text-xs font-semibold text-[var(--affiliate-navy)] flex items-center gap-1.5">
-                      <Mail className="size-3.5 text-[var(--affiliate-blue)]" />
-                      PayPal Email <span className="text-rose-500">*</span>
-                    </Label>
-                    <Input
-                      id="paypal"
-                      type="email"
-                      required
-                      placeholder="payments@yourdomain.com"
-                      value={paypal}
-                      onChange={(e) => {
-                        setPaypal(e.target.value);
-                        if (paypalError) setPaypalError("");
-                      }}
-                      className={`border-[var(--affiliate-border)] text-xs py-5 rounded-lg focus-visible:ring-[var(--affiliate-blue)] ${
-                        paypalError ? "border-rose-400 focus-visible:ring-rose-400" : ""
-                      }`}
-                    />
-                    {paypalError && (
-                      <p className="text-[10px] text-rose-500 font-medium">{paypalError}</p>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-2 pt-4 border-t border-[var(--affiliate-border)]">
-                    <Button 
-                      type="submit"
-                      disabled={loading}
-                      className="w-full text-xs py-5 bg-[var(--affiliate-navy)] hover:bg-[var(--affiliate-blue-strong)] text-white cursor-pointer"
-                    >
-                      {loading ? (
-                        <span className="flex items-center gap-2">
-                          <span className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                          Submitting Application...
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-2">
-                          Submit Application Request
-                          <ArrowRight className="size-3.5" />
-                        </span>
-                      )}
-                    </Button>
-                    <Button 
-                      type="button"
-                      variant="ghost"
-                      className="w-full text-xs text-[var(--affiliate-muted)] hover:bg-[var(--affiliate-bg-accent)] hover:text-[var(--affiliate-navy)] cursor-pointer"
-                      disabled={loading}
-                      onClick={() => {
-                        setShowApplyForm(false);
-                        setPaypalError("");
-                      }}
-                    >
-                      Cancel & Go Back
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+        {/* Logout link */}
+        <div className="text-center pt-4">
+          <button 
+            type="button"
+            className="inline-flex items-center gap-1.5 text-xs text-rose-500 hover:text-rose-600 hover:underline transition-all cursor-pointer font-medium"
+            onClick={handleLogout}
+          >
+            <LogOut className="size-3.5" />
+            Sign out of account
+          </button>
+        </div>
       </div>
     </div>
   );
