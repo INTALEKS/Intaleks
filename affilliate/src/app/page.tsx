@@ -1259,9 +1259,9 @@ export default function AffiliateLandingPage() {
         }
 
         .marketing-body #founder {
-          background:var(--bg1);
-          border-top:1px solid var(--border);
-          border-bottom:1px solid var(--border);
+          background:#0f2744;
+          border-top:1px solid rgba(255,255,255,0.08);
+          border-bottom:1px solid rgba(255,255,255,0.08);
         }
 
         .marketing-body .founder-wrap {
@@ -1281,8 +1281,54 @@ export default function AffiliateLandingPage() {
           object-fit:cover;
           object-position:top;
           aspect-ratio:4/5;
-          filter:brightness(.92) saturate(.9);
-          border:1px solid var(--border2);
+          filter: contrast(1.05) brightness(1.02) saturate(1.03); /* enhanced, bright & high contrast */
+          border:1px solid rgba(255,255,255,0.15);
+          box-shadow:0 20px 45px rgba(0,0,0,0.4);
+          image-rendering: -webkit-optimize-contrast; /* hardware-accelerated sharp quality */
+        }
+
+        .marketing-body #founder .founder-badge-float {
+          background:rgba(15,39,68,0.75);
+          backdrop-filter:blur(12px);
+          border:1px solid rgba(255,255,255,0.1);
+        }
+
+        .marketing-body #founder .fbf-label {
+          color:rgba(255,255,255,0.5);
+        }
+
+        .marketing-body #founder .fbf-val {
+          color:#60a5fa;
+        }
+
+        .marketing-body #founder .fbf-sub {
+          color:rgba(255,255,255,0.5);
+        }
+
+        .marketing-body #founder .founder-quote {
+          color:#ffffff;
+        }
+
+        .marketing-body #founder .founder-body {
+          color:rgba(255,255,255,0.7);
+        }
+
+        .marketing-body #founder .founder-sig {
+          border-top:1px solid rgba(255,255,255,0.08);
+        }
+
+        .marketing-body #founder .sig-name {
+          color:#ffffff;
+        }
+
+        .marketing-body #founder .sig-role {
+          color:rgba(255,255,255,0.5);
+        }
+
+        .marketing-body #founder .sig-badge {
+          background:rgba(255,255,255,0.06);
+          border:1px solid rgba(255,255,255,0.1);
+          color:rgba(255,255,255,0.75);
         }
 
         .marketing-body .founder-badge-float {
@@ -2383,12 +2429,7 @@ export default function AffiliateLandingPage() {
                 <img src="/founder.png" alt="Aleks Todorovic" />
                 <div>
                   <div className="sig-name">Aleks Todorovic</div>
-                  <div className="sig-role">Founder, Intaleks · Principal, Executive Business Valuers</div>
-                  <div className="sig-badges">
-                    <span className="sig-badge">CA ANZ</span>
-                    <span className="sig-badge">Sydney NSW</span>
-                    <span className="sig-badge">25+ yrs experience</span>
-                  </div>
+                  <div className="sig-role">Founder, Intaleks</div>
                 </div>
               </div>
             </div>
