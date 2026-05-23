@@ -117,10 +117,10 @@ export default function AffiliateLandingPage() {
           --bg2:#f1f5f9;
           --bg3:#e2e8f0;
           --bg4:#cbd5e1;
-          --blue:#2e86ab;
-          --blue-dim:rgba(46,134,171,0.08);
-          --blue-border:rgba(46,134,171,0.18);
-          --blue-hover:#1d4a7a;
+          --blue:#3b82f6;
+          --blue-dim:rgba(59, 130, 246, 0.08);
+          --blue-border:rgba(59, 130, 246, 0.18);
+          --blue-hover:#2563eb;
           --white:#0f2744;
           --fog:#334155;
           --mist:#475569;
@@ -301,7 +301,7 @@ export default function AffiliateLandingPage() {
           display:flex;
           flex-direction:column;
           justify-content:center;
-          padding:120px 64px 80px 48px;
+          padding:120px 20px 80px 48px;
           position:relative;
           z-index:2;
         }
@@ -410,7 +410,7 @@ export default function AffiliateLandingPage() {
           display:flex;
           align-items:center;
           justify-content:center;
-          padding:64px 48px;
+          padding:64px 20px 64px 48px;
           background:radial-gradient(circle at 60% 50%, rgba(59,143,232,0.1), transparent 60%);
         }
 
@@ -465,9 +465,9 @@ export default function AffiliateLandingPage() {
 
         .marketing-body #countries {
           padding:70px 0;
-          background:var(--bg1);
-          border-top:1px solid var(--border);
-          border-bottom:1px solid var(--border);
+          background:#0f2744;
+          border-top:1px solid rgba(255,255,255,0.08);
+          border-bottom:1px solid rgba(255,255,255,0.08);
         }
 
         .marketing-body .countries-inner {
@@ -481,7 +481,7 @@ export default function AffiliateLandingPage() {
           font-family:var(--ff-mono);
           font-size:10px;
           letter-spacing:.14em;
-          color:var(--mist);
+          color:rgba(255,255,255,0.5);
           text-transform:uppercase;
           white-space:nowrap;
           flex-shrink:0;
@@ -500,7 +500,7 @@ export default function AffiliateLandingPage() {
           align-items:center;
           gap:10px;
           font-size:14px;
-          color:var(--fog);
+          color:#ffffff;
           white-space:nowrap;
         }
 
@@ -509,12 +509,12 @@ export default function AffiliateLandingPage() {
           height:20px;
           object-fit:cover;
           border-radius:3px;
-          border:1px solid var(--border2);
+          border:1px solid rgba(255,255,255,0.15);
         }
 
         .marketing-body .countries-note {
           font-size:12px;
-          color:var(--smoke);
+          color:rgba(255,255,255,0.4);
           margin-top:18px;
           font-style:italic;
           padding: 0 48px;
@@ -1842,6 +1842,7 @@ export default function AffiliateLandingPage() {
             </div>
           </div>
         </div>
+
         <div className="hero-right">
           <div className="dash-ui w-full max-w-[480px]">
             <div className="dash-bar">
