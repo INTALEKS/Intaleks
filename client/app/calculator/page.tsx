@@ -610,6 +610,10 @@ export default function CalculatorPage() {
     setAddbacks((prev) => [...prev, { id: String(prev.length + 1), reason: "", customReason: "", values: {} }]);
   };
 
+  const handleRemoveAddback = (id: string) => {
+    setAddbacks((prev) => prev.filter((a) => a.id !== id));
+  };
+
   const handleDownloadPDF = async () => {
     // Check if all steps are complete first
     if (!isStep4Complete) {
@@ -1376,7 +1380,7 @@ export default function CalculatorPage() {
                 </div>
 
                 <div className="mt-6">
-                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, (totalAddbacksByYear[year] || 0).toLocaleString()]))} adjustedEbitByYear={adjustedEbitByYear} disabled={!isAuthenticated || !hasCalculatorAccess} currencySymbol={currencySymbol} currencyCode={currencyCode} />
+                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} onRemoveAddback={handleRemoveAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, (totalAddbacksByYear[year] || 0).toLocaleString()]))} adjustedEbitByYear={adjustedEbitByYear} disabled={!isAuthenticated || !hasCalculatorAccess} currencySymbol={currencySymbol} currencyCode={currencyCode} />
                 </div>
 
                 {/* Adjusted EBIT Calculation Breakdown */}
