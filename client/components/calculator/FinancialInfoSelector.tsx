@@ -148,7 +148,7 @@ export function FinancialInfoSelector({ columns, onColumnsChange, disabled = fal
                   <th key={type} className="px-3 py-3 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <Checkbox id={`col-${type}`} checked={isSelected} onCheckedChange={(checked) => handleToggle(type, !!checked)} disabled={isDisabledToggle} className={cn(isSelected && "border-blue-500 bg-blue-500")} />
-                      <label htmlFor={`col-${type}`} className={cn("text-sm font-medium select-none whitespace-nowrap", isSelected ? "text-gray-900 cursor-pointer" : "text-gray-400", isDisabledToggle ? "cursor-not-allowed" : "cursor-pointer")}>
+                      <label htmlFor={`col-${type}`} className={cn("text-sm font-medium select-none whitespace-nowrap", isSelected ? "text-gray-900 cursor-pointer" : isDisabledToggle ? "text-gray-400 cursor-not-allowed" : "text-gray-600 cursor-pointer")}>
                         {type}
                       </label>
                     </div>
