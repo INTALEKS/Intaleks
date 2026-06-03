@@ -83,15 +83,18 @@ function DateInput({ value, onChange, disabled }: { value: Date | undefined; onC
 
 export function FinancialInfoSelector({ columns, onColumnsChange, disabled = false }: FinancialInfoSelectorProps) {
   const selectedTypes = new Set(columns.map((c) => c.type));
+  const atMax = columns.length >= MAX_COLUMNS;
 
-  const handleToggle = (type: ColumnType, checked: boolean) => {
-    if (checked) {
-      if (columns.length >= MAX_COLUMNS) return;
+  const handleToggle = (type: ColumnType) => {
+    if (disabled) return;
+    const isSelected = selectedTypes.has(type);
+    if (!isSelected && atMax) return;
+    if (isSelected) {
+      onColumnsChange(columns.filter((c) => c.type !== type));
+    } else {
       const newCol: FinancialColumn = { type, daysInPeriod: 365, periodDate: undefined };
       const next = [...columns, newCol].sort((a, b) => COLUMN_TYPES.indexOf(a.type) - COLUMN_TYPES.indexOf(b.type));
       onColumnsChange(next);
-    } else {
-      onColumnsChange(columns.filter((c) => c.type !== type));
     }
   };
 
@@ -143,12 +146,12 @@ export function FinancialInfoSelector({ columns, onColumnsChange, disabled = fal
 
               {COLUMN_TYPES.map((type) => {
                 const isSelected = selectedTypes.has(type);
-                const isDisabledToggle = disabled || (!isSelected && columns.length >= MAX_COLUMNS);
+                const isDisabledToggle = disabled || (!isSelected && atMax);
                 return (
                   <th key={type} className="px-3 py-3 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <Checkbox id={`col-${type}`} checked={isSelected} onCheckedChange={(checked) => handleToggle(type, !!checked)} disabled={isDisabledToggle} className={cn(isSelected && "border-blue-500 bg-blue-500")} />
-                      <label htmlFor={`col-${type}`} className={cn("text-sm font-medium select-none whitespace-nowrap", isSelected ? "text-gray-900 cursor-pointer" : isDisabledToggle ? "text-gray-400 cursor-not-allowed" : "text-gray-600 cursor-pointer")}>
+                      <Checkbox id={`col-${type}`} checked={isSelected} onCheckedChange={() => handleToggle(type)} disabled={isDisabledToggle} className={cn(isSelected && "border-blue-500 bg-blue-500")} />
+                      <label htmlFor={`col-${type}`} className={cn("text-sm font-medium select-none whitespace-nowrap", isDisabledToggle ? "text-gray-400 cursor-not-allowed" : "text-gray-900 cursor-pointer")}>
                         {type}
                       </label>
                     </div>
