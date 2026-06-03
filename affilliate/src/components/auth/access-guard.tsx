@@ -84,8 +84,16 @@ export function AccessGuard({
     }
 
     void verify();
+
+    const handleFocus = () => {
+      void verify();
+    };
+
+    window.addEventListener("focus", handleFocus);
+
     return () => {
       mounted = false;
+      window.removeEventListener("focus", handleFocus);
     };
   }, [allowedRoles, pathname]);
 

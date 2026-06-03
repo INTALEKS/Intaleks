@@ -18,6 +18,7 @@ interface AddbacksTableProps {
   financialYears: string[];
   onAddbackChange: (id: string, field: "reason" | "customReason" | "values", value: string | Record<string, string>) => void;
   onAddAddback: () => void;
+  onRemoveAddback: (id: string) => void;
   totalValuesByYear: Record<string, string>;
   adjustedEbitByYear: Record<string, number>; // EBIT + Addbacks for each year
   disabled?: boolean;
@@ -91,7 +92,7 @@ const ADDBACK_REASONS = [
   { value: "other", label: "Other (specify below)" },
 ];
 
-export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAddAddback, totalValuesByYear, adjustedEbitByYear, disabled = false, currencySymbol = "$", currencyCode = "AUD" }: AddbacksTableProps) {
+export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAddAddback, onRemoveAddback, totalValuesByYear, adjustedEbitByYear, disabled = false, currencySymbol = "$", currencyCode = "AUD" }: AddbacksTableProps) {
   const dollarCurrencies = ["AUD", "USD", "CAD", "NZD", "SGD", "HKD"];
   const codeSuffix = dollarCurrencies.includes(currencyCode) ? ` ${currencyCode}` : "";
   const fmt = (val: string | number) => `${currencySymbol}${val || "0"}${codeSuffix}`;
@@ -137,11 +138,24 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
               <tr key={addback.id} className="border-t">
                 <td className="p-3 align-bottom">
                   <div className="space-y-2">
-                    <Select value={addback.reason} onValueChange={(value) => onAddbackChange(addback.id, "reason", value)} disabled={disabled}>
+                    <Select
+                      value={addback.reason}
+                      onValueChange={(value) => {
+                        if (value === "__remove__") {
+                          onRemoveAddback(addback.id);
+                        } else {
+                          onAddbackChange(addback.id, "reason", value);
+                        }
+                      }}
+                      disabled={disabled}
+                    >
                       <SelectTrigger className="bg-gray-50 border-gray-200 w-full">
                         <SelectValue placeholder="Select addback reason" />
                       </SelectTrigger>
                       <SelectContent className="max-h-[300px]">
+                        <SelectItem value="__remove__">
+                          <span className="text-gray-400">— Remove row —</span>
+                        </SelectItem>
                         {ADDBACK_REASONS.map((reason) => (
                           <SelectItem key={reason.value} value={reason.value}>
                             {reason.label}
@@ -184,11 +198,24 @@ export function AddbacksTable({ addbacks, financialYears, onAddbackChange, onAdd
             <div key={addback.id} className="p-4 space-y-3 bg-white">
               <div>
                 <label className="text-xs font-medium text-gray-600 uppercase mb-1 block">Reason</label>
-                <Select value={addback.reason} onValueChange={(value) => onAddbackChange(addback.id, "reason", value)} disabled={disabled}>
+                <Select
+                  value={addback.reason}
+                  onValueChange={(value) => {
+                    if (value === "__remove__") {
+                      onRemoveAddback(addback.id);
+                    } else {
+                      onAddbackChange(addback.id, "reason", value);
+                    }
+                  }}
+                  disabled={disabled}
+                >
                   <SelectTrigger className="bg-gray-50 border-gray-200 w-full">
                     <SelectValue placeholder="Select addback reason" />
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
+                    <SelectItem value="__remove__">
+                      <span className="text-gray-400">— Remove row —</span>
+                    </SelectItem>
                     {ADDBACK_REASONS.map((reason) => (
                       <SelectItem key={reason.value} value={reason.value}>
                         {reason.label}

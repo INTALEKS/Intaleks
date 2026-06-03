@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AdminPanel, AdminStatusTag } from "@/components/admin/primitives";
 import { AdminEmptyState, AdminErrorState, AdminLoadingState } from "@/components/admin/states";
@@ -14,7 +14,13 @@ import type { AdminAffiliate } from "@/lib/admin/types";
 export default function AdminAffiliatesPage() {
   const { data, isLoading, isError, refetch } = useAdminAffiliates();
   const [search, setSearch] = useState("");
-  const [affiliates, setAffiliates] = useState<AdminAffiliate[]>(data);
+  const [affiliates, setAffiliates] = useState<AdminAffiliate[]>([]);
+
+  useEffect(() => {
+    if (data) {
+      setAffiliates(data);
+    }
+  }, [data]);
 
   const filtered = useMemo(
     () => affiliates.filter((item) => [item.name, item.company, item.code].join(" ").toLowerCase().includes(search.toLowerCase())),
