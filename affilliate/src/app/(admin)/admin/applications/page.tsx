@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 
 import { AdminFilterPills, AdminPanel, AdminStatusTag } from "@/components/admin/primitives";
 import { AdminEmptyState, AdminErrorState, AdminLoadingState } from "@/components/admin/states";
@@ -14,7 +14,13 @@ export default function AdminApplicationsPage() {
   const { data, isLoading, isError, refetch } = useAdminApplications();
   const [filter, setFilter] = useState<"all" | AdminApplicationStatus>("pending");
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [apps, setApps] = useState<AdminApplication[]>(data);
+  const [apps, setApps] = useState<AdminApplication[]>([]);
+
+  useEffect(() => {
+    if (data) {
+      setApps(data);
+    }
+  }, [data]);
 
   const filtered = useMemo(
     () => apps.filter((item) => (filter === "all" ? true : item.status === filter)),

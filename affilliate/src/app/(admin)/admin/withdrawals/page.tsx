@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { AdminFilterPills, AdminPanel, AdminStatCard, AdminStatusTag } from "@/components/admin/primitives";
 import { AdminEmptyState, AdminErrorState, AdminLoadingState } from "@/components/admin/states";
@@ -14,8 +14,14 @@ import type { AdminWithdrawal, AdminWithdrawalStatus } from "@/lib/admin/types";
 export default function AdminWithdrawalsPage() {
   const { data, isLoading, isError, refetch } = useAdminWithdrawals();
   const [filter, setFilter] = useState<"all" | AdminWithdrawalStatus>("requested");
-  const [withdrawals, setWithdrawals] = useState<AdminWithdrawal[]>(data);
+  const [withdrawals, setWithdrawals] = useState<AdminWithdrawal[]>([]);
   const [refs, setRefs] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (data) {
+      setWithdrawals(data);
+    }
+  }, [data]);
 
   const filtered = useMemo(
     () => withdrawals.filter((item) => (filter === "all" ? true : item.status === filter)),
