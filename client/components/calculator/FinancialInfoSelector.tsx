@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 
-export const COLUMN_TYPES = ["2Yr Prev", "Year 1", "Year 2", "Year 3"] as const;
+export const COLUMN_TYPES = ["Year 1", "Year 2", "Year 3", "Year 4"] as const;
 export type ColumnType = (typeof COLUMN_TYPES)[number];
 
 export interface FinancialColumn {

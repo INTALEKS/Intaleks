@@ -751,26 +751,18 @@ function drawInputRow(doc: PDFKit.PDFDocument, fonts: PdfFonts, y: number, label
  * Returns a short two-line header for a financial column.
  *
  * Supported formats:
- * - With date: "2Yr Prev - 31/03/2026"  → line1="2Yr Prev"  line2="31/03/2026"
- * - With date: "Year 1 - 31/03/2026"    → line1="Year 1"    line2="31/03/2026"
- * - Without date: "2Yr Prev"            → line1="2Yr Prev"  line2=""
- * - Without date: "Year 1"              → line1="Year 1"    line2=""
- * - Legacy: "Year 2023"                 → line1="2023"      line2=""
+ * - With date: "Year 1 - 31/03/2026"  → line1="Year 1"  line2="31/03/2026"
+ * - Without date: "Year 1"            → line1="Year 1"  line2=""
  */
 function parseColumnHeader(year: string): { line1: string; line2: string } {
-  // Format with date: "ColumnType - DD/MM/YYYY"
+  // Format with date: "Year N - DD/MM/YYYY"
   const withDate = year.match(/^(.+?)\s*-\s*(\d{2}\/\d{2}\/\d{4})$/);
   if (withDate) return { line1: withDate[1].trim(), line2: withDate[2].trim() };
 
-  // Legacy format: "Year 2023" → extract just the year number
-  const legacy = year.match(/^Year\s+(\d{4})$/);
-  if (legacy) return { line1: legacy[1], line2: "" };
-
-  // Default: use column type as-is (e.g., "2Yr Prev", "Year 1", "Year 2", "Year 3")
+  // Default: use column label as-is (e.g., "Year 1", "Year 2", "Year 3", "Year 4")
   return { line1: year, line2: "" };
 }
 
-/** @deprecated use parseColumnHeader */
 function formatYearLabel(year: string): string {
   const { line1 } = parseColumnHeader(year);
   return line1;
