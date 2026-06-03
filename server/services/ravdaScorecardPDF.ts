@@ -1218,10 +1218,9 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   const years = (data.financialYears || []).slice(0, 3);
   let yearY = toggleY + cardHeight + 40;
 
-  // Check if we have enough space for year columns, if not, create a new page
-  const spaceNeededForYears = years.length * 38 + 40; // 38px per year + 40px gap before table
+  // Check if we have enough space for the table start, if not, create a new page
   const spaceNeededForTableStart = 100; // Minimum space needed for table header
-  const totalSpaceNeeded = yearY + spaceNeededForYears + spaceNeededForTableStart;
+  const totalSpaceNeeded = yearY + spaceNeededForTableStart;
 
   if (totalSpaceNeeded > PAGE.height - PAGE.marginX - 60) {
     // Not enough space, create a new page
@@ -1242,30 +1241,6 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
 
     yearY = 110; // Reset Y position for new page
   }
-
-  years.forEach((year, idx) => {
-    const { line1, line2 } = parseColumnHeader(year);
-    const days = data.daysInPeriod?.[year];
-    const label = `Column ${idx + 1}:`;
-    doc
-      .font(fonts.regular)
-      .fontSize(12)
-      .fillColor("#111827")
-      .text(label, PAGE.marginX, yearY + 8, { lineBreak: false });
-
-    // Column info box
-    doc.roundedRect(PAGE.marginX + 80, yearY, PAGE.width - PAGE.marginX * 2 - 80, 32, 4).fillAndStroke("#FFFFFF", "#E2E2E2");
-
-    const parts = [line1, line2, days ? `${days} days` : ""].filter(Boolean);
-    const displayText = parts.join("  •  ");
-    doc
-      .font(fonts.regular)
-      .fontSize(12)
-      .fillColor("#111827")
-      .text(displayText, PAGE.marginX + 90, yearY + 10, { lineBreak: false });
-
-    yearY += 38;
-  });
 
   // Accounting Profit and Loss Table
   const tableY = yearY + 40;
