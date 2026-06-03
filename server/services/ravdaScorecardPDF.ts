@@ -956,7 +956,7 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
 
   // Determine method title and text based on valuation method
   const methodTitle = data.valuationMethod === "asset" ? "Asset Method" : "Profit Method";
-  const methodText = data.valuationMethod === "asset" ? "This asset method is effective because it values a business based on verifiable assets and liabilities." : "This method is effective because it reflects the earning capacity and operational performance of the business.";
+  const methodText = data.valuationMethod === "asset" ? "You have selected the asset method to value your business. This approach determines what your business is worth by adding up everything it owns—such as equipment, stock, and property—and subtracting everything it owes, such as debts and liabilities." : "You have selected the profit method to value your business. This approach determines what your business is worth by looking at its ability to generate income and how efficiently it operates day to day.";
 
   doc.roundedRect(PAGE.marginX, methodDescY, methodDescW, methodDescH, 8).fillAndStroke("#F0F9FF", "#BFDBFE");
 
@@ -1176,7 +1176,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     .font(fonts.regular)
     .fontSize(9)
     .fillColor(isAssetMethod ? "#000000" : "#6B7280")
-    .text("This asset method is effective because it values a business based on verifiable assets and liabilities.", assetCardX + 15, toggleY + 38, {
+    .text("You have selected the asset method to value your business. This approach determines what your business is worth by adding up everything it owns—such as equipment, stock, and property—and subtracting everything it owes, such as debts and liabilities.", assetCardX + 15, toggleY + 38, {
       width: cardWidth - 30,
       align: "left",
       lineGap: 1.2,
@@ -1216,7 +1216,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     .font(fonts.regular)
     .fontSize(9)
     .fillColor(isProfitMethod ? "#FFFFFF" : "#6B7280")
-    .text("This method is effective because it reflects the earning capacity and operational performance of the business.", profitCardX + 15, toggleY + 38, {
+    .text("You have selected the profit method to value your business. This approach determines what your business is worth by looking at its ability to generate income and how efficiently it operates day to day.", profitCardX + 15, toggleY + 38, {
       width: cardWidth - 30,
       align: "left",
       lineGap: 1.2,
@@ -1779,7 +1779,7 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
     .font(fonts.regular)
     .fontSize(8.5)
     .fillColor("#1E40AF")
-    .text("This asset method values a business based on verifiable assets and liabilities.", PAGE.marginX + 16, methodDescY + 28, {
+    .text("You have selected the asset method to value your business. This approach determines what your business is worth by adding up everything it owns—such as equipment, stock, and property—and subtracting everything it owes, such as debts and liabilities.", PAGE.marginX + 16, methodDescY + 28, {
       width: methodDescW - 32,
       align: "center",
       lineGap: 1.5,

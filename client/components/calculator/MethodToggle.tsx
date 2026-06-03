@@ -13,12 +13,12 @@ const methods: { id: ValuationMethod; label: string; description: string }[] = [
   {
     id: "asset",
     label: "Asset Method",
-    description: "This asset method is effective because it values a business based on verifiable assets and liabilities.",
+    description: "You have selected the asset method to value your business. This approach determines what your business is worth by adding up everything it owns—such as equipment, stock, and property—and subtracting everything it owes, such as debts and liabilities.",
   },
   {
     id: "profit",
     label: "Profit Method",
-    description: "This method is effective because it reflects the earning capacity and operational performance of the business.",
+    description: "You have selected the profit method to value your business. This approach determines what your business is worth by looking at its ability to generate income and how efficiently it operates day to day.",
   },
 ];
 
