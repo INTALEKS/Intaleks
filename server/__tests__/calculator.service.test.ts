@@ -5,14 +5,14 @@ describe("CalculatorService", () => {
   describe("calculateProfitValuation", () => {
     it("should calculate profit valuation correctly", () => {
       const financialData = {
-        "Year 2023": {
+        "Year 1": {
           sales: 500000,
           cogs: 200000,
           operatingExpenses: 150000,
           interestExpense: 10000,
           interestIncome: 5000,
         },
-        "Year 2024": {
+        "Year 2": {
           sales: 600000,
           cogs: 240000,
           operatingExpenses: 180000,
@@ -24,30 +24,30 @@ describe("CalculatorService", () => {
       const addbacks = [
         {
           reason: "Owner's salary",
-          values: { "Year 2023": 50000, "Year 2024": 55000 },
+          values: { "Year 1": 50000, "Year 2": 55000 },
         },
       ];
 
       const multiple = 4.0;
-      const years = ["Year 2023", "Year 2024"];
+      const years = ["Year 1", "Year 2"];
 
       const result = CalculatorService.calculateProfitValuation(financialData, addbacks, multiple, years);
 
-      // Year 2023: Sales (500k) - COGS (200k) = Gross Profit (300k)
+      // Year 1: Sales (500k) - COGS (200k) = Gross Profit (300k)
       // Gross Profit (300k) - Operating Expenses (150k) = Net P&L (150k)
       // EBIT = Net P&L (150k) + Interest Expense (10k) - Interest Income (5k) = 155k
-      expect(result.yearlyMetrics["Year 2023"].ebit).toBe(155000);
+      expect(result.yearlyMetrics["Year 1"].ebit).toBe(155000);
 
-      // Year 2024: Sales (600k) - COGS (240k) = Gross Profit (360k)
+      // Year 2: Sales (600k) - COGS (240k) = Gross Profit (360k)
       // Gross Profit (360k) - Operating Expenses (180k) = Net P&L (180k)
       // EBIT = Net P&L (180k) + Interest Expense (12k) - Interest Income (6k) = 186k
-      expect(result.yearlyMetrics["Year 2024"].ebit).toBe(186000);
+      expect(result.yearlyMetrics["Year 2"].ebit).toBe(186000);
 
-      // Adjusted EBIT 2023 = EBIT (155k) + Addbacks (50k) = 205k
-      expect(result.adjustedEbitByYear["Year 2023"]).toBe(205000);
+      // Adjusted EBIT Year 1 = EBIT (155k) + Addbacks (50k) = 205k
+      expect(result.adjustedEbitByYear["Year 1"]).toBe(205000);
 
-      // Adjusted EBIT 2024 = EBIT (186k) + Addbacks (55k) = 241k
-      expect(result.adjustedEbitByYear["Year 2024"]).toBe(241000);
+      // Adjusted EBIT Year 2 = EBIT (186k) + Addbacks (55k) = 241k
+      expect(result.adjustedEbitByYear["Year 2"]).toBe(241000);
 
       // Average Adjusted EBIT = (205k + 241k) / 2 = 223k
       expect(result.averageAdjustedEbit).toBe(223000);
@@ -58,7 +58,7 @@ describe("CalculatorService", () => {
 
     it("should handle missing addbacks", () => {
       const financialData = {
-        "Year 2023": {
+        "Year 1": {
           sales: 500000,
           cogs: 200000,
           operatingExpenses: 150000,
@@ -67,7 +67,7 @@ describe("CalculatorService", () => {
         },
       };
 
-      const result = CalculatorService.calculateProfitValuation(financialData, [], 4.0, ["Year 2023"]);
+      const result = CalculatorService.calculateProfitValuation(financialData, [], 4.0, ["Year 1"]);
 
       expect(result.totalAddbacks).toBe(0);
       expect(result.averageAdjustedEbit).toBe(155000); // Just EBIT
@@ -76,7 +76,7 @@ describe("CalculatorService", () => {
 
     it("should handle zero values correctly", () => {
       const financialData = {
-        "Year 2023": {
+        "Year 1": {
           sales: 0,
           cogs: 0,
           operatingExpenses: 0,
@@ -85,9 +85,9 @@ describe("CalculatorService", () => {
         },
       };
 
-      const result = CalculatorService.calculateProfitValuation(financialData, [], 4.0, ["Year 2023"]);
+      const result = CalculatorService.calculateProfitValuation(financialData, [], 4.0, ["Year 1"]);
 
-      expect(result.yearlyMetrics["Year 2023"].ebit).toBe(0);
+      expect(result.yearlyMetrics["Year 1"].ebit).toBe(0);
       expect(result.finalValuation).toBe(0);
     });
   });
@@ -166,7 +166,7 @@ describe("CalculatorService", () => {
     it("should validate and calculate profit method", () => {
       const data = {
         financialData: {
-          "Year 2023": {
+          "Year 1": {
             sales: 500000,
             cogs: 200000,
             operatingExpenses: 150000,
@@ -176,7 +176,7 @@ describe("CalculatorService", () => {
         },
         addbacks: [],
         multiple: 4.0,
-        years: ["Year 2023"],
+        years: ["Year 1"],
       };
 
       const result = CalculatorService.validateAndCalculate("profit", data);
@@ -228,7 +228,7 @@ describe("CalculatorService", () => {
     it("should recalculate even if client sends manipulated values", () => {
       // Simulate client sending manipulated final valuation
       const financialData = {
-        "Year 2023": {
+        "Year 1": {
           sales: 100000, // Real value
           cogs: 50000,
           operatingExpenses: 30000,
@@ -237,7 +237,7 @@ describe("CalculatorService", () => {
         },
       };
 
-      const result = CalculatorService.calculateProfitValuation(financialData, [], 4.0, ["Year 2023"]);
+      const result = CalculatorService.calculateProfitValuation(financialData, [], 4.0, ["Year 1"]);
 
       // Server recalculates: (100k - 50k - 30k + 5k - 2k) = 23k EBIT
       // Valuation = 23k × 4.0 = 92k

@@ -751,26 +751,18 @@ function drawInputRow(doc: PDFKit.PDFDocument, fonts: PdfFonts, y: number, label
  * Returns a short two-line header for a financial column.
  *
  * Supported formats:
- * - With date: "2Yr Prev - 31/03/2026"  → line1="2Yr Prev"  line2="31/03/2026"
- * - With date: "Year 1 - 31/03/2026"    → line1="Year 1"    line2="31/03/2026"
- * - Without date: "2Yr Prev"            → line1="2Yr Prev"  line2=""
- * - Without date: "Year 1"              → line1="Year 1"    line2=""
- * - Legacy: "Year 2023"                 → line1="2023"      line2=""
+ * - With date: "Year 1 - 31/03/2026"  → line1="Year 1"  line2="31/03/2026"
+ * - Without date: "Year 1"            → line1="Year 1"  line2=""
  */
 function parseColumnHeader(year: string): { line1: string; line2: string } {
-  // Format with date: "ColumnType - DD/MM/YYYY"
+  // Format with date: "Year N - DD/MM/YYYY"
   const withDate = year.match(/^(.+?)\s*-\s*(\d{2}\/\d{2}\/\d{4})$/);
   if (withDate) return { line1: withDate[1].trim(), line2: withDate[2].trim() };
 
-  // Legacy format: "Year 2023" → extract just the year number
-  const legacy = year.match(/^Year\s+(\d{4})$/);
-  if (legacy) return { line1: legacy[1], line2: "" };
-
-  // Default: use column type as-is (e.g., "2Yr Prev", "Year 1", "Year 2", "Year 3")
+  // Default: use column label as-is (e.g., "Year 1", "Year 2", "Year 3", "Year 4")
   return { line1: year, line2: "" };
 }
 
-/** @deprecated use parseColumnHeader */
 function formatYearLabel(year: string): string {
   const { line1 } = parseColumnHeader(year);
   return line1;
@@ -1226,10 +1218,9 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   const years = (data.financialYears || []).slice(0, 3);
   let yearY = toggleY + cardHeight + 40;
 
-  // Check if we have enough space for year columns, if not, create a new page
-  const spaceNeededForYears = years.length * 38 + 40; // 38px per year + 40px gap before table
+  // Check if we have enough space for the table start, if not, create a new page
   const spaceNeededForTableStart = 100; // Minimum space needed for table header
-  const totalSpaceNeeded = yearY + spaceNeededForYears + spaceNeededForTableStart;
+  const totalSpaceNeeded = yearY + spaceNeededForTableStart;
 
   if (totalSpaceNeeded > PAGE.height - PAGE.marginX - 60) {
     // Not enough space, create a new page
@@ -1250,30 +1241,6 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
 
     yearY = 110; // Reset Y position for new page
   }
-
-  years.forEach((year, idx) => {
-    const { line1, line2 } = parseColumnHeader(year);
-    const days = data.daysInPeriod?.[year];
-    const label = `Column ${idx + 1}:`;
-    doc
-      .font(fonts.regular)
-      .fontSize(12)
-      .fillColor("#111827")
-      .text(label, PAGE.marginX, yearY + 8, { lineBreak: false });
-
-    // Column info box
-    doc.roundedRect(PAGE.marginX + 80, yearY, PAGE.width - PAGE.marginX * 2 - 80, 32, 4).fillAndStroke("#FFFFFF", "#E2E2E2");
-
-    const parts = [line1, line2, days ? `${days} days` : ""].filter(Boolean);
-    const displayText = parts.join("  •  ");
-    doc
-      .font(fonts.regular)
-      .fontSize(12)
-      .fillColor("#111827")
-      .text(displayText, PAGE.marginX + 90, yearY + 10, { lineBreak: false });
-
-    yearY += 38;
-  });
 
   // Accounting Profit and Loss Table
   const tableY = yearY + 40;
