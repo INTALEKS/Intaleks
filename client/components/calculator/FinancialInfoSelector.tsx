@@ -23,7 +23,7 @@ interface FinancialInfoSelectorProps {
   disabled?: boolean;
 }
 
-const MAX_COLUMNS = 3;
+const MAX_COLUMNS = 4;
 
 // Helper function to check if a year is a leap year
 function isLeapYear(year: number): boolean {

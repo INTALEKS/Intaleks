@@ -226,13 +226,14 @@ export default function CalculatorPage() {
   // Financial column selection state — replaces raw year numbers
   const [selectedYears, setSelectedYears] = useState<FinancialColumn[]>(
     initialState?.selectedYears && Array.isArray(initialState.selectedYears) && initialState.selectedYears.length > 0 && typeof (initialState.selectedYears[0] as unknown) !== "number"
-      ? (initialState.selectedYears as FinancialColumn[]).slice(0, 3).map((col) => ({
+      ? (initialState.selectedYears as FinancialColumn[]).slice(0, 4).map((col) => ({
           ...col,
           periodDate: col.periodDate ? new Date(col.periodDate) : undefined,
         }))
       : [
           { type: "Year 1" as const, daysInPeriod: 365, periodDate: undefined },
           { type: "Year 2" as const, daysInPeriod: 365, periodDate: undefined },
+          { type: "Year 3" as const, daysInPeriod: 365, periodDate: undefined },
         ],
   );
 
@@ -1154,7 +1155,7 @@ export default function CalculatorPage() {
               setUseQuestionnaireMultiple(parsed.useQuestionnaireMultiple || false);
               if (parsed.selectedYears && Array.isArray(parsed.selectedYears) && parsed.selectedYears.length > 0 && typeof (parsed.selectedYears[0] as unknown) !== "number") {
                 setSelectedYears(
-                  (parsed.selectedYears as FinancialColumn[]).slice(0, 3).map((col) => ({
+                  (parsed.selectedYears as FinancialColumn[]).slice(0, 4).map((col) => ({
                     ...col,
                     periodDate: col.periodDate ? new Date(col.periodDate) : undefined,
                   })),
