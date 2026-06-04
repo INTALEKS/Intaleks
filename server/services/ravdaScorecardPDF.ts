@@ -37,6 +37,12 @@ function formatMoney(value: number, symbol: string, code: string): string {
   return `${symbol}${formatted}${suffix}`;
 }
 
+/** Returns a formatted currency string without the ISO code suffix — used in table cells */
+function formatMoneyNoCode(value: number, symbol: string): string {
+  const safe = Number.isFinite(value) ? Math.round(value) : 0;
+  return `${symbol}${safe.toLocaleString("en-US")}`;
+}
+
 function getCurrencySymbolForCountry(country?: string): string {
   if (!country) return "$";
   return COUNTRY_CURRENCY_MAP[country.toLowerCase()]?.symbol ?? "$";
@@ -338,35 +344,7 @@ function drawCenteredIntroPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
       ellipsis: true,
     });
 
-  // Location line (slightly reduced spacing from company name)
-  const locationText = `Location: ${sanitizeCountry(data.country)}`;
-  doc
-    .font(fonts.regular)
-    .fontSize(12) // Reduced from 14 to 12
-    .fillColor("#000000")
-    .text(locationText, PAGE.marginX, titleY + 70, {
-      // Reduced from +80 to +70 for slightly less space
-      width: PAGE.width - PAGE.marginX * 2,
-      align: "center",
-      lineBreak: false,
-    });
-
-  // Industry line with base multiple (slightly reduced spacing from location)
-  const baseMultiple = Number.isFinite(data.calculatedMultiple) && typeof data.calculatedMultiple === "number" ? (data.calculatedMultiple % 1 === 0 ? data.calculatedMultiple.toFixed(0) : data.calculatedMultiple.toFixed(1)) : undefined;
-
-  const industryLine = `Industry: ${toDisplayLabel(data.industry) || "N/A"}${baseMultiple ? ` (Base Multiple: ${baseMultiple}x)` : ""}`;
-  doc
-    .font(fonts.semibold) // Changed from fonts.regular to fonts.semibold for slightly bold
-    .fontSize(12) // Reduced from 14 to 12 to match location size
-    .fillColor("#000000")
-    .text(industryLine, PAGE.marginX, titleY + 95, {
-      // Reduced from +110 to +95 for slightly less space
-      width: PAGE.width - PAGE.marginX * 2,
-      align: "center",
-      lineBreak: false,
-    });
-
-  // Report generated date - split into regular and bold parts (increased space from industry)
+  // Report generated date - split into regular and bold parts
   const dateText = formatGeneratedDate(data.generatedDate);
   const regularPart = "Report Generated: ";
 
@@ -381,8 +359,7 @@ function drawCenteredIntroPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     .font(fonts.regular)
     .fontSize(10)
     .fillColor("#000000")
-    .text(regularPart, reportStartX, titleY + 150, {
-      // Increased from +130 to +150 for more space from industry
+    .text(regularPart, reportStartX, titleY + 80, {
       lineBreak: false,
     });
 
@@ -391,8 +368,7 @@ function drawCenteredIntroPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     .font(fonts.semibold)
     .fontSize(10)
     .fillColor("#000000")
-    .text(dateText, reportStartX + reportRegularWidth, titleY + 150, {
-      // Increased from +130 to +150 for more space from industry
+    .text(dateText, reportStartX + reportRegularWidth, titleY + 80, {
       lineBreak: false,
     });
 
@@ -721,6 +697,12 @@ function money(value: number | undefined, currencySymbol: string = "$", currency
 function moneyComma(value: number | undefined, currencySymbol: string = "$", currencyCode: string = "AUD"): string {
   const safe = Number.isFinite(value) ? Number(value) : 0;
   return formatMoney(safe, currencySymbol, currencyCode);
+}
+
+/** Currency format without ISO code suffix — for use in table cells */
+function moneyCell(value: number | undefined, currencySymbol: string = "$"): string {
+  const safe = Number.isFinite(value) ? Number(value) : 0;
+  return formatMoneyNoCode(safe, currencySymbol);
 }
 
 function drawInputRow(doc: PDFKit.PDFDocument, fonts: PdfFonts, y: number, label: string, value: number | undefined): void {
@@ -1117,106 +1099,12 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
 
   let currentPageNumber = 4; // This is page 4 in the sequence
 
-  // Title should always be "Valuation Method"
-  doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Method", PAGE.marginX, 76, { lineBreak: false });
-
-  // Subtitle text
-  doc.font(fonts.regular).fontSize(12).fillColor("#111827").text("Based on your results the following valuation method is being used:", PAGE.marginX, 110, { lineBreak: false });
-
-  // Method toggle cards section
-  const toggleY = 140;
-  const cardWidth = 220;
-  const cardHeight = 90;
-  const cardGap = 30;
-  const totalWidth = cardWidth * 2 + cardGap;
-  const startX = (PAGE.width - totalWidth) / 2;
-
-  const isAssetMethod = data.valuationMethod === "asset";
-  const isProfitMethod = data.valuationMethod === "profit";
-
-  // Asset Method Card (left)
-  const assetCardX = startX;
-  if (isAssetMethod) {
-    // Selected state - white background with black border
-    doc.roundedRect(assetCardX, toggleY, cardWidth, cardHeight, 8).fillAndStroke("#FFFFFF", "#000000");
-    doc.lineWidth(2);
-    doc.roundedRect(assetCardX, toggleY, cardWidth, cardHeight, 8).stroke("#000000");
-  } else {
-    // Unselected state - white background with gray border
-    doc.roundedRect(assetCardX, toggleY, cardWidth, cardHeight, 8).fillAndStroke("#FFFFFF", "#D1D5DB");
-  }
-
-  // Asset Method radio button (circle)
-  const radioX = assetCardX + 20;
-  const radioY = toggleY + 20;
-  const radioRadius = 8;
-  doc.circle(radioX, radioY, radioRadius).stroke(isAssetMethod ? "#000000" : "#D1D5DB");
-  if (!isAssetMethod) {
-    // Empty circle for unselected
-    doc.circle(radioX, radioY, radioRadius).fillAndStroke("#FFFFFF", "#D1D5DB");
-  }
-
-  // Asset Method title
-  doc
-    .font(fonts.bold)
-    .fontSize(12)
-    .fillColor(isAssetMethod ? "#000000" : "#6B7280")
-    .text("Asset Method", assetCardX + 40, toggleY + 14, { lineBreak: false });
-
-  // Asset Method description
-  doc
-    .font(fonts.regular)
-    .fontSize(9)
-    .fillColor(isAssetMethod ? "#000000" : "#6B7280")
-    .text("You have selected the asset method to value your business. This approach determines what your business is worth by adding up everything it owns—such as equipment, stock, and property—and subtracting everything it owes, such as debts and liabilities.", assetCardX + 15, toggleY + 38, {
-      width: cardWidth - 30,
-      align: "left",
-      lineGap: 1.2,
-    });
-
-  // Profit Method Card (right)
-  const profitCardX = startX + cardWidth + cardGap;
-  if (isProfitMethod) {
-    // Selected state - black background
-    doc.roundedRect(profitCardX, toggleY, cardWidth, cardHeight, 8).fill("#000000");
-  } else {
-    // Unselected state - white background with gray border
-    doc.roundedRect(profitCardX, toggleY, cardWidth, cardHeight, 8).fillAndStroke("#FFFFFF", "#D1D5DB");
-  }
-
-  // Profit Method radio button (circle)
-  const profitRadioX = profitCardX + 20;
-  const profitRadioY = toggleY + 20;
-  if (isProfitMethod) {
-    // Filled circle for selected
-    doc.circle(profitRadioX, profitRadioY, radioRadius).fillAndStroke("#FFFFFF", "#FFFFFF");
-    doc.circle(profitRadioX, profitRadioY, radioRadius - 3).fill("#FFFFFF");
-  } else {
-    // Empty circle for unselected
-    doc.circle(profitRadioX, profitRadioY, radioRadius).fillAndStroke("#FFFFFF", "#D1D5DB");
-  }
-
-  // Profit Method title
-  doc
-    .font(fonts.bold)
-    .fontSize(12)
-    .fillColor(isProfitMethod ? "#FFFFFF" : "#6B7280")
-    .text("Profit Method", profitCardX + 40, toggleY + 14, { lineBreak: false });
-
-  // Profit Method description
-  doc
-    .font(fonts.regular)
-    .fontSize(9)
-    .fillColor(isProfitMethod ? "#FFFFFF" : "#6B7280")
-    .text("You have selected the profit method to value your business. This approach determines what your business is worth by looking at its ability to generate income and how efficiently it operates day to day.", profitCardX + 15, toggleY + 38, {
-      width: cardWidth - 30,
-      align: "left",
-      lineGap: 1.2,
-    });
+  // Title
+  doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation", PAGE.marginX, 76, { lineBreak: false });
 
   // Year selection section - show column type and period date
   const years = (data.financialYears || []).slice(0, 3);
-  let yearY = toggleY + cardHeight + 40;
+  let yearY = 110;
 
   // Check if we have enough space for the table start, if not, create a new page
   const spaceNeededForTableStart = 100; // Minimum space needed for table header
@@ -1237,7 +1125,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     currentPageNumber++;
 
     // Add continuation title
-    doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Method (continued)", PAGE.marginX, 76, { lineBreak: false });
+    doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation (continued)", PAGE.marginX, 76, { lineBreak: false });
 
     yearY = 110; // Reset Y position for new page
   }
@@ -1365,7 +1253,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
         .font(fonts.regular)
         .fontSize(10)
         .fillColor("#111827")
-        .text(moneyComma(value, data.currencySymbol, data.currencyCode), colX + 8, rowY + 10, { width: colW - 16, align: "center", lineBreak: false });
+        .text(moneyCell(value, data.currencySymbol), colX + 8, rowY + 10, { width: colW - 16, align: "center", lineBreak: false });
     });
 
     rowY += rowHeight;
@@ -1394,11 +1282,11 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
       .font(fonts.bold)
       .fontSize(10)
       .fillColor("#1F2937")
-      .text(moneyComma(ebitValue, data.currencySymbol, data.currencyCode), colX + 8, rowY + 11, { width: colW - 16, align: "center", lineBreak: false });
+      .text(moneyCell(ebitValue, data.currencySymbol), colX + 8, rowY + 11, { width: colW - 16, align: "center", lineBreak: false });
   });
 
   // Addbacks section - check if we have enough space BEFORE rendering
-  const addbacksY = rowY + 40;
+  const addbacksY = rowY + 60;
 
   // Calculate space needed for addbacks section
   const allAddbacks = data.addbacks || [];
@@ -1433,7 +1321,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     currentPageNumber++;
 
     // Add continuation title
-    doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Method (continued)", PAGE.marginX, 76, { lineBreak: false });
+    doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation (continued)", PAGE.marginX, 76, { lineBreak: false });
 
     actualAddbacksY = 110; // Reset Y position for new page
   }
@@ -1566,7 +1454,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
           .font(fonts.regular)
           .fontSize(10)
           .fillColor("#111827")
-          .text(moneyComma(value, data.currencySymbol, data.currencyCode), colX + 8, addRowY + 10, { width: addYearColW - 16, align: "center", lineBreak: false });
+          .text(moneyCell(value, data.currencySymbol), colX + 8, addRowY + 10, { width: addYearColW - 16, align: "center", lineBreak: false });
       });
 
       addRowY += rowHeight;
@@ -1597,7 +1485,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
         .font(fonts.bold)
         .fontSize(10)
         .fillColor("#1F2937")
-        .text(moneyComma(yearTotal, data.currencySymbol, data.currencyCode), colX + 8, addRowY + 11, { width: addYearColW - 16, align: "center", lineBreak: false });
+        .text(moneyCell(yearTotal, data.currencySymbol), colX + 8, addRowY + 11, { width: addYearColW - 16, align: "center", lineBreak: false });
     });
   } else {
     // If no addbacks, show a message

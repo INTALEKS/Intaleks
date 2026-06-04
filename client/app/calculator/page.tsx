@@ -29,7 +29,7 @@ import Link from "next/link";
 // LocalStorage key for calculator data persistence
 const CALCULATOR_STORAGE_KEY = "intaleks_calculator_data";
 const CALCULATOR_TIMESTAMP_KEY = "intaleks_calculator_timestamp";
-const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+const CACHE_EXPIRY_MS = 1 * 60 * 60 * 1000; // 1 hour in milliseconds
 
 // Financial metrics following standard P&L structure with sample placeholders
 // Only input fields - calculated fields are handled separately
