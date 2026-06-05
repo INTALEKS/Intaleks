@@ -1085,7 +1085,7 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
 
   // Page number
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("3", 0, footerY, {
+  doc.font(fonts.regular).fontSize(8).fillColor("#111827").text("3", 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -1113,7 +1113,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   if (totalSpaceNeeded > PAGE.height - PAGE.marginX - 60) {
     // Not enough space, create a new page
     const footerY = PAGE.height - PAGE.marginX - 20;
-    doc.font(fonts.regular).fontSize(10).fillColor("#111827").text(currentPageNumber.toString(), 0, footerY, {
+    doc.font(fonts.regular).fontSize(8).fillColor("#111827").text(currentPageNumber.toString(), 0, footerY, {
       width: PAGE.width,
       align: "center",
       lineBreak: false,
@@ -1309,7 +1309,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   if (spaceNeededForAddbacks > PAGE.height - PAGE.marginX) {
     // Not enough space, move entire addbacks section to new page
     const footerY = PAGE.height - PAGE.marginX - 20;
-    doc.font(fonts.regular).fontSize(10).fillColor("#111827").text(currentPageNumber.toString(), 0, footerY, {
+    doc.font(fonts.regular).fontSize(8).fillColor("#111827").text(currentPageNumber.toString(), 0, footerY, {
       width: PAGE.width,
       align: "center",
       lineBreak: false,
@@ -1500,7 +1500,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
 
   // Page number
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text(currentPageNumber.toString(), 0, footerY, {
+  doc.font(fonts.regular).fontSize(8).fillColor("#111827").text(currentPageNumber.toString(), 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -1907,7 +1907,7 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
 
   // Page number
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("3", 0, footerY, {
+  doc.font(fonts.regular).fontSize(8).fillColor("#111827").text("3", 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -2039,7 +2039,7 @@ function drawEarlyDisclaimerPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts
 
   // Page number - positioned with more space below the notice box
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#000000").text("2", 0, footerY, {
+  doc.font(fonts.regular).fontSize(8).fillColor("#000000").text("2", 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -2106,7 +2106,7 @@ function drawBusinessStrengthAssessmentPage(doc: PDFKit.PDFDocument, data: RAVDA
   drawMultipleCalculationFormulaSection(doc, fonts, 550);
 
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text("5", 0, footerY, {
+  doc.font(fonts.regular).fontSize(8).fillColor("#111827").text("5", 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
@@ -2138,7 +2138,7 @@ function drawQuestionnaireQAPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts
     });
 
     const footerY = PAGE.height - PAGE.marginX - 20;
-    doc.font(fonts.regular).fontSize(10).fillColor("#111827").text(pageNumber.toString(), 0, footerY, {
+    doc.font(fonts.regular).fontSize(8).fillColor("#111827").text(pageNumber.toString(), 0, footerY, {
       width: PAGE.width,
       align: "center",
       lineBreak: false,
@@ -2242,7 +2242,7 @@ function drawQuestionnaireQAPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts
 
   // Page number
   const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(10).fillColor("#111827").text(pageNumber.toString(), 0, footerY, {
+  doc.font(fonts.regular).fontSize(8).fillColor("#111827").text(pageNumber.toString(), 0, footerY, {
     width: PAGE.width,
     align: "center",
     lineBreak: false,
