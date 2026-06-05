@@ -849,10 +849,12 @@ function drawFinancialDataPage(doc, data, fonts) {
   drawIntaleksLogo(doc);
   let currentPageNumber = 4; // This is page 4 in the sequence
   // Title
-  doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation", PAGE.marginX, 76, { lineBreak: false });
+  doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Inputs", PAGE.marginX, 76, { lineBreak: false });
+  // Subtitle
+  doc.font(fonts.regular).fontSize(11).fillColor("#111827").text("Your numbers are shown below:", PAGE.marginX, 100, { lineBreak: false });
   // Year selection section - show column type and period date
   const years = (data.financialYears || []).slice(0, 3);
-  let yearY = 110;
+  let yearY = 120;
   // Check if we have enough space for year columns, if not, create a new page
   const spaceNeededForYears = years.length * 38 + 40; // 38px per year + 40px gap before table
   const spaceNeededForTableStart = 100; // Minimum space needed for table header
