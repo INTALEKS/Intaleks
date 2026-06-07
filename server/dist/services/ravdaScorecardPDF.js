@@ -896,7 +896,7 @@ function drawFinancialDataPage(doc, data, fonts) {
     yearY += 38;
   });
   // Accounting Profit and Loss Table
-  const tableY = yearY + 20;
+  const tableY = yearY + 30;
   const tableW = PAGE.width - PAGE.marginX * 2;
   const tableX = PAGE.marginX;
   // Table header
