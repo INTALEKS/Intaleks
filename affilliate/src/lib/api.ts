@@ -12,10 +12,15 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       if (typeof window !== "undefined") {
-        const mainAppUrl = process.env.NEXT_PUBLIC_MAIN_APP_URL ?? "http://localhost:3000";
-        const absolutePath = `${window.location.origin}${window.location.pathname}${window.location.search}`;
-        const next = encodeURIComponent(absolutePath);
-        window.location.href = `${mainAppUrl}/login?next=${next}`;
+        const isAuthMe = error.config?.url?.includes("/auth/me");
+        const isLandingPage = window.location.pathname === "/";
+
+        if (!isAuthMe && !isLandingPage) {
+          const mainAppUrl = process.env.NEXT_PUBLIC_MAIN_APP_URL ?? "http://localhost:3000";
+          const absolutePath = `${window.location.origin}${window.location.pathname}${window.location.search}`;
+          const next = encodeURIComponent(absolutePath);
+          window.location.href = `${mainAppUrl}/login?next=${next}`;
+        }
       }
     }
     return Promise.reject(error);
