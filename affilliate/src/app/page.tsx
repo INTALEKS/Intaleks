@@ -34,8 +34,8 @@ const faqs = [
     a: "Yes — LinkedIn, Instagram, X, email newsletters, websites, podcasts, and direct client outreach are all permitted. Please review the affiliate terms for any specific content guidelines.",
   },
   {
-    q: "Is there an exclusivity clause?",
-    a: "No. You're free to promote other products and services alongside Intaleks. We don't require exclusivity from our affiliates.",
+    q: "Who is eligible to join the affiliate programme?",
+    a: "Anyone! The programme is open to business brokers, professional partners (such as accountants, lawyers, and advisors), and non-professional referrers or business owners who want to earn commissions by recommending Intaleks.",
   },
   {
     q: "Which countries can I refer clients from?",
@@ -1945,7 +1945,7 @@ export default function AffiliateLandingPage() {
           <h1>
             Earn <em>25%</em> on every business valuation you refer
           </h1>
-          <p>Partner with the trusted platform used by business owners, advisors, and legal professionals across 6 countries — and earn every time your referrals complete a valuation.</p>
+          <p>Whether you&apos;re a broker, a professional partner, or a non-professional referrer looking to earn extra income — refer business owners to our trusted platform and earn 25% on every completed valuation.</p>
           <div className="hero-ctas">
             <button type="button" onClick={() => setModal("register")} className="btn btn-primary">
               Apply now — it&apos;s free ↗
@@ -2082,11 +2082,11 @@ export default function AffiliateLandingPage() {
           <span className="sec-eyebrow">Who qualifies</span>
           <div className="section-head">
             <h2>
-              Built for professionals who
+              Built for brokers, partners,
               <br />
-              advise business owners
+              and everyday referrers
             </h2>
-            <p>If your clients ever ask &quot;what is my business worth?&quot; — you should be earning every time they find out.</p>
+            <p>Whether you advise businesses professionally or simply want to refer contacts in your network — you can receive commission for every successful referral.</p>
           </div>
           <div className="who-grid">
             <div className="who-card">
@@ -2098,8 +2098,8 @@ export default function AffiliateLandingPage() {
                   <line x1="10" y1="14" x2="14" y2="14" />
                 </svg>
               </div>
-              <h3>Business Brokers</h3>
-              <p>You&apos;re already in deal flow. Every listing you manage is a client who needs to know what their business is worth — now you earn when they find out.</p>
+              <h3>Brokers &amp; Intermediaries</h3>
+              <p>Business brokers, mortgage brokers, and dealmakers. Introduce buyers and sellers to our platform and earn on every transaction.</p>
             </div>
 
             <div className="who-card">
@@ -2111,41 +2111,8 @@ export default function AffiliateLandingPage() {
                   <line x1="16" y1="17" x2="8" y2="17" />
                 </svg>
               </div>
-              <h3>Accountants &amp; CPAs</h3>
-              <p>Your SME clients trust you with their numbers. Refer them to Intaleks for a fast, credible valuation — you earn 25%, they get the clarity they need.</p>
-            </div>
-
-            <div className="who-card">
-              <div className="who-icon">
-                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-              </div>
-              <h3>Commercial Lawyers</h3>
-              <p>Separations, shareholder disputes, estate planning — every one of these needs a credible valuation. Intaleks makes it accessible and fast for your clients.</p>
-            </div>
-
-            <div className="who-card">
-              <div className="who-icon">
-                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                </svg>
-              </div>
-              <h3>Financial Advisors</h3>
-              <p>Business equity is often the largest asset in a client&apos;s portfolio. Refer them to Intaleks and earn while helping them understand their true position.</p>
-            </div>
-
-            <div className="who-card">
-              <div className="who-icon">
-                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                  <polyline points="9 22 9 12 15 12 15 22" />
-                </svg>
-              </div>
-              <h3>Mortgage Brokers</h3>
-              <p>Business owners borrowing against their company need a valuation first. You&apos;re already the trusted link — Intaleks makes the referral effortless.</p>
+              <h3>Professional Partners</h3>
+              <p>Accountants, CPAs, lawyers, financial advisors, and consultants. Provide your clients with valuation clarity while earning a flat 25% commission.</p>
             </div>
 
             <div className="who-card">
@@ -2155,8 +2122,8 @@ export default function AffiliateLandingPage() {
                   <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
                 </svg>
               </div>
-              <h3>Business Consultants</h3>
-              <p>If you advise SME owners on strategy, exits, or growth — a valuation is often the natural starting point of that conversation.</p>
+              <h3>Non-Professional Partners</h3>
+              <p>Ordinary referrers, business owners, content creators, or anyone with a network. Share your link and receive payouts simply for connecting people with our trusted tool.</p>
             </div>
           </div>
         </div>
@@ -2423,8 +2390,8 @@ export default function AffiliateLandingPage() {
             </div>
             <div className="founder-content">
               <span className="sec-eyebrow">A word from the founder</span>
-              <div className="founder-quote">&quot;I&apos;ve seen how hard it is for business owners to access clear, reliable valuation guidance. Intaleks changes that — and our affiliate programme lets the professionals who know these owners best share in what we&apos;re building.&quot;</div>
-              <p className="founder-body">I created Intaleks to make professional-grade valuation insights accessible to every business owner — without the barriers of cost, complexity, or delay. The affiliate programme is an extension of that mission: built for the accountants, brokers, lawyers, and advisors who are already trusted by the business owners who need this most.</p>
+              <div className="founder-quote">&quot;I&apos;ve seen how hard it is for business owners to access clear, reliable valuation guidance. Intaleks changes that — and our affiliate programme lets the partners, brokers, and referrers who know these owners best share in what we&apos;re building.&quot;</div>
+              <p className="founder-body">I created Intaleks to make professional-grade valuation insights accessible to every business owner — without the barriers of cost, complexity, or delay. The affiliate programme is an extension of that mission: built for partners, brokers, and everyday referrers who want to share our platform and earn commissions.</p>
               <div className="founder-sig">
                 <img src="/founder.png" alt="Aleks Todorovic" />
                 <div>
@@ -2714,7 +2681,7 @@ export default function AffiliateLandingPage() {
           <div className="modal-scrollable">
             <div className="modal-section">
               <h4>1. Enrollment &amp; Eligibility</h4>
-              <p>By registering for the Intaleks Affiliate Programme, you represent and warrant that you are a qualified professional (such as a business broker, CPA, commercial lawyer, financial advisor, consultant, or mortgage broker) advising business owners, or that you have an established business audience. All applications are subject to manual administrative review and approval. We reserve the right to decline or terminate participation at our sole discretion.</p>
+              <p>By registering for the Intaleks Affiliate Programme, you represent and warrant that you are a broker, a professional partner (such as a CPA, lawyer, advisor, or consultant), or a non-professional referrer looking to promote Intaleks to business owners. All applications are subject to manual administrative review and approval. We reserve the right to decline or terminate participation at our sole discretion.</p>
             </div>
             <div className="modal-section">
               <h4>2. Referral Tracking &amp; Attribution</h4>
