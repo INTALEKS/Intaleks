@@ -67,8 +67,8 @@ export default function AffiliateLandingPage() {
   const [faqOpen, setFaqOpen] = useState<number | null>(0);
 
   // Calculator states
-  const [referrals, setReferrals] = useState(5);
-  const [fee, setFee] = useState(299);
+  const [referrals, setReferrals] = useState(10);
+  const [fee, setFee] = useState(495);
 
   // Dynamic calculations
   const commissionPerValuation = useMemo(() => fee * 0.25, [fee]);
@@ -275,6 +275,14 @@ export default function AffiliateLandingPage() {
         .marketing-body .nav-actions .btn {
           padding:9px 20px;
           font-size:13px;
+        }
+
+        .marketing-body .nav-btn-short {
+          display:none;
+        }
+
+        .marketing-body .nav-btn-full {
+          display:inline;
         }
 
         .marketing-body #hero {
@@ -1184,9 +1192,12 @@ export default function AffiliateLandingPage() {
 
         .marketing-body .assets-grid {
           display:grid;
-          grid-template-columns:repeat(4,1fr);
+          grid-template-columns:1fr;
           gap:16px;
           margin-top:48px;
+          max-width:480px;
+          margin-left:auto;
+          margin-right:auto;
         }
 
         .marketing-body .asset-card {
@@ -1699,14 +1710,55 @@ export default function AffiliateLandingPage() {
         }
 
         @media(max-width:600px){
+          .marketing-body .nav-inner {
+            padding:0 16px;
+          }
+
+          .marketing-body .nav-actions .btn {
+            padding:8px 14px;
+            font-size:12px;
+          }
+
+          .marketing-body .nav-btn-full {
+            display:none;
+          }
+
+          .marketing-body .nav-btn-short {
+            display:inline;
+          }
+
           .marketing-body .container,
           .marketing-body .hero-left {
             padding-left:24px;
             padding-right:24px;
           }
+
+          .marketing-body .hero-ctas {
+            flex-direction:column;
+            width:100%;
+          }
+
+          .marketing-body .hero-ctas .btn {
+            width:100%;
+            justify-content:center;
+          }
+
           .marketing-body #cta {
             padding:80px 24px;
           }
+
+          .marketing-body .cta-btns {
+            flex-direction:column;
+            width:100%;
+            max-width:320px;
+            margin:0 auto;
+          }
+
+          .marketing-body .cta-btns .btn {
+            width:100%;
+            justify-content:center;
+          }
+
           .marketing-body .who-grid,
           .marketing-body .assets-grid {
             grid-template-columns:1fr;
@@ -1727,6 +1779,10 @@ export default function AffiliateLandingPage() {
           }
           .marketing-body .hstat {
             min-width:120px;
+          }
+
+          .marketing-body .countries-inner {
+            flex-direction: column;
           }
         }
 
@@ -1930,7 +1986,8 @@ export default function AffiliateLandingPage() {
               }}
               className="btn btn-primary"
             >
-              Become an affiliate ↗
+              <span className="nav-btn-full">Become an affiliate ↗</span>
+              <span className="nav-btn-short">Join ↗</span>
             </a>
           </div>
         </div>
@@ -2084,7 +2141,7 @@ export default function AffiliateLandingPage() {
             <h2>
               Built for brokers, partners,
               <br />
-              and everyday referrers
+              and non-professionals
             </h2>
             <p>Whether you advise businesses professionally or simply want to refer contacts in your network — you can receive commission for every successful referral.</p>
           </div>
@@ -2100,19 +2157,6 @@ export default function AffiliateLandingPage() {
               </div>
               <h3>Brokers &amp; Intermediaries</h3>
               <p>Business brokers, mortgage brokers, and dealmakers. Introduce buyers and sellers to our platform and earn on every transaction.</p>
-            </div>
-
-            <div className="who-card">
-              <div className="who-icon">
-                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
-              </div>
-              <h3>Professional Partners</h3>
-              <p>Accountants, CPAs, lawyers, financial advisors, and consultants. Provide your clients with valuation clarity while earning a flat 25% commission.</p>
             </div>
 
             <div className="who-card">
@@ -2312,58 +2356,16 @@ export default function AffiliateLandingPage() {
           </div>
           <div className="assets-grid">
             <div className="asset-card">
-              <div className="asset-thumb at-email">
-                <svg width="36" height="36" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                  <polyline points="22,6 12,13 2,6" />
+              <div className="asset-thumb at-brand">
+                <svg width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
                 </svg>
               </div>
               <div className="asset-meta">
-                <div className="asset-type">Email</div>
-                <div className="asset-name">Email templates</div>
-                <div className="asset-desc">3 templates · ready to send to your clients</div>
-              </div>
-            </div>
-            <div className="asset-card">
-              <div className="asset-thumb at-banner">
-                <svg width="36" height="36" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <path d="M3 9h18M9 21V9" />
-                </svg>
-              </div>
-              <div className="asset-meta">
-                <div className="asset-type">Display</div>
-                <div className="asset-name">Web banners</div>
-                <div className="asset-desc">6 sizes · PNG + SVG formats</div>
-              </div>
-            </div>
-            <div className="asset-card">
-              <div className="asset-thumb at-social">
-                <svg width="36" height="36" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                  <rect x="2" y="2" width="20" height="20" rx="5" />
-                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-                </svg>
-              </div>
-              <div className="asset-meta">
-                <div className="asset-type">Social</div>
-                <div className="asset-name">Social media posts</div>
-                <div className="asset-desc">LinkedIn · Instagram · X · formatted</div>
-              </div>
-            </div>
-            <div className="asset-card">
-              <div className="asset-thumb at-copy">
-                <svg width="36" height="36" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
-              </div>
-              <div className="asset-meta">
-                <div className="asset-type">Copy</div>
-                <div className="asset-name">Swipe copy</div>
-                <div className="asset-desc">Short, medium &amp; long-form scripts</div>
+                <div className="asset-type">Complete Kit</div>
+                <div className="asset-name">Intaleks brand kit</div>
+                <div className="asset-desc">Core brand identity, marketing and promotional creatives</div>
               </div>
             </div>
           </div>
@@ -2391,7 +2393,7 @@ export default function AffiliateLandingPage() {
             <div className="founder-content">
               <span className="sec-eyebrow">A word from the founder</span>
               <div className="founder-quote">&quot;I&apos;ve seen how hard it is for business owners to access clear, reliable valuation guidance. Intaleks changes that — and our affiliate programme lets the partners, brokers, and referrers who know these owners best share in what we&apos;re building.&quot;</div>
-              <p className="founder-body">I created Intaleks to make professional-grade valuation insights accessible to every business owner — without the barriers of cost, complexity, or delay. The affiliate programme is an extension of that mission: built for partners, brokers, and everyday referrers who want to share our platform and earn commissions.</p>
+              <p className="founder-body">I created Intaleks to make professional-grade valuation insights accessible to every business owner — without the barriers of cost, complexity, or delay. The affiliate programme is an extension of that mission: built for partners, brokers, and non-professionals who want to share our platform and earn commissions.</p>
               <div className="founder-sig">
                 <img src="/founder.png" alt="Aleks Todorovic" />
                 <div>
@@ -2681,7 +2683,7 @@ export default function AffiliateLandingPage() {
           <div className="modal-scrollable">
             <div className="modal-section">
               <h4>1. Enrollment &amp; Eligibility</h4>
-              <p>By registering for the Intaleks Affiliate Programme, you represent and warrant that you are a broker, a professional partner (such as a CPA, lawyer, advisor, or consultant), or a non-professional referrer looking to promote Intaleks to business owners. All applications are subject to manual administrative review and approval. We reserve the right to decline or terminate participation at our sole discretion.</p>
+              <p>By registering for the Intaleks Affiliate Programme, you represent and warrant that you are a broker, sponsor, or a non-professional referrer looking to promote Intaleks to business owners. All applications are subject to manual administrative review and approval. We reserve the right to decline or terminate participation at our sole discretion.</p>
             </div>
             <div className="modal-section">
               <h4>2. Referral Tracking &amp; Attribution</h4>
