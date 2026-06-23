@@ -17,11 +17,7 @@ export function AboutFounder() {
         <div className="grid grid-cols-1 md:grid-cols-3 md:gap-12">
           {/* Left Column - Title and Image */}
           <div className="w-full md:w-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
-              What you should
-              <br />
-              know about us
-            </h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">Why I Built Intaleks</h2>
 
             {/* Founder Image */}
             <div className="relative">
@@ -37,20 +33,18 @@ export function AboutFounder() {
 
           {/* Right Column - Content */}
           <div className="flex flex-col justify-center space-y-6 col-span-2">
-            <p className="text-gray-700 leading-relaxed">I&apos;m Aleks Todorovic, an accountant and business valuation specialist with more than 25 years of experience across corporate finance, commercial advisory, and professional valuation work. Through my firm, Executive Business Valuers, I&apos;ve supported business owners, legal professionals, and advisors with valuations for complex commercial, strategic, and legal matters.</p>
+            <p className="text-gray-700 leading-relaxed">I&apos;m Aleks Todorovic — an accountant and business valuation specialist with more than 25 years across corporate finance, commercial advisory, and professional valuation work. Through my firm, Executive Business Valuers, I&apos;ve helped business owners, lawyers, and advisors with valuations for complex commercial, strategic, and legal matters.</p>
 
-            <p className="text-gray-700 leading-relaxed">Throughout my career, I&apos;ve seen how difficult it is for small business owners to access clear, reliable valuation guidance. Traditional valuations can be costly, time‑consuming, and filled with technical language that makes the process inaccessible to many.</p>
+            <p className="text-gray-700 leading-relaxed">Over the years I&apos;ve seen how hard it is for small business owners to get clear, reliable guidance on what their business is worth. Traditional valuations are often costly, slow, and full of technical language that shuts people out.</p>
 
-            <p className="text-gray-700 leading-relaxed">I created Intaleks to change that.</p>
+            <p className="text-gray-700 leading-relaxed">I built Intaleks to change that — a high-quality tool that makes professional-grade appraisal insights accessible to any business owner, with no financial background needed. Answer a few straightforward questions and you get a clear, commercially grounded appraisal you can rely on.</p>
 
-            <p className="text-gray-700 leading-relaxed">Intaleks is a high‑quality valuation tool designed to make professional‑grade valuation insights accessible to business owners everywhere. The platform distils proven valuation methodology into a guided, easy‑to‑use experience that requires no financial background. By answering straightforward questions, users receive a clear, commercially grounded valuation they can rely on.</p>
-
-            <p className="text-gray-700 leading-relaxed">My aim is to give every business owner the ability to understand the value of their business — without the barriers of cost, complexity, or delay. Whether preparing for a sale, considering a purchase, planning ahead, or seeking clarity, Intaleks provides a trusted starting point for informed decision‑making.</p>
+            <p className="text-gray-700 leading-relaxed">My goal is simple: give every business owner the ability to understand what their business is worth — without the cost, complexity, or delay. Whether you&apos;re preparing to sell, considering a purchase, planning ahead, or just want clarity, Intaleks is a trusted starting point.</p>
 
             <div className="pt-4">
               <Link href="/calculator">
                 <Button className="bg-black hover:bg-gray-800 px-6 py-5 text-base">
-                  Access Calculator
+                  See What My Business Is Worth
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </Link>

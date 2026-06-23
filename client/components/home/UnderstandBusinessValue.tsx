@@ -12,14 +12,9 @@ export function UnderstandBusinessValue() {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
               Understand Your Business Value in <span className="text-blue-500">Minutes</span>
             </h2>
-            <p className="text-black mb-3 leading-relaxed">Running a small or medium business comes with big decisions. How much is your business really worth? Whether you&apos;re thinking about selling, bringing in a partner, preparing for the future, or dealing with disputes or litigation, knowing your business&apos;s value is essential.</p>
-            <p className="text-black leading-relaxed">Intaleks makes it simple. Our intuitive platform allows you to enter a few basic details and instantly receive a clear, reliable indication of your business&apos;s worth without complex formulas or guesswork.</p>
+            <p className="text-black mb-3 leading-relaxed">Running a small or medium business means making big decisions. How much is your business really worth? Whether you&apos;re thinking about selling, bringing in a partner, planning ahead, or dealing with a dispute, knowing your value is essential.</p>
+            <p className="text-black leading-relaxed">Intaleks makes it simple. Enter a few basic details and instantly get a clear, reliable indication of what your business is worth — no complex formulas, no guesswork.</p>
           </div>
-
-          {/* Right Image */}
-          {/* <div className="relative h-36 md:h-full rounded-lg overflow-hidden">
-            <Image src="/UnderstandBusinessValue.png" alt="Business owners discussing valuation" fill className="object-cover" />
-          </div> */}
         </div>
       </div>
     </section>

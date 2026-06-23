@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Navbar, HeroSection, TrustedCompanies, HowItWorks, WhyValuation, StatsSection, FoundersSay, WhySmallBusinessesLoveUs, UnderstandBusinessValue, PricingSection, FAQSection, AboutFounder, CountriesWeService, BusinessValuationFeatures, Footer, ExecutiveBusinessValuers } from "@/components/home";
+import { Navbar, HeroSection, TrustedCompanies, HowItWorks, WhyValuation, StatsSection, WhySmallBusinessesLoveUs, UnderstandBusinessValue, PricingSection, FAQSection, AboutFounder, CountriesWeService, BusinessValuationFeatures, Footer, ExecutiveBusinessValuers } from "@/components/home";
 import { OrganizationJsonLd, WebApplicationJsonLd, FAQJsonLd } from "@/components/seo/JsonLd";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useCreateCheckout } from "@/app/hooks/usePayments";
@@ -50,52 +50,52 @@ const howItWorksSteps = [
   {
     number: 1,
     title: "Company Details",
-    description: "Enter your company name, select your country and industry to get started.",
+    description: "Enter your company name and choose your country and industry to get started.",
     icon: "/details.png",
   },
   {
     number: 2,
     title: "Business Questionnaire",
-    description: "Answer 10 key questions about your business quality and operations.",
+    description: "Answer 10 straightforward questions about your business and how it runs.",
     icon: "/questionaire.png",
   },
   {
     number: 3,
     title: "Method Selection",
-    description: "Choose from multiple valuation methods (Asset method, Profit method, DCF method)",
+    description: "Pick an appraisal method — Asset, Profit, or DCF. Not sure which? We'll guide you.",
     icon: "/block.png",
   },
   {
     number: 4,
     title: "Financial Data",
-    description: "Securely input your key financial metrics, depending on your valuation method",
+    description: "Securely add your key financial figures. We tell you exactly what's needed.",
     icon: "/financial-data.png",
   },
   {
     number: 5,
     title: "Instant Report",
-    description: "Generate and download your comprehensive valuation document immediately.",
+    description: "Generate and download your full appraisal straight away.",
     icon: "/download-valuation.png",
   },
 ];
 
 const stats = [
   {
-    value: "$100M",
+    value: "$12M+",
     label: "Investment obtained",
-    description: "Capital successfully raised to support business growth and strategic execution",
+    description: "Capital raised by businesses using our appraisals to support growth and strategy",
     bgColor: "gray" as const,
   },
   {
     value: "87%",
     label: "Investor Confidence Confirmed",
-    description: "Companies professionally assessed using structured, data-driven valuation models aligned with market realities.",
+    description: "Of users say their report gave them the confidence to act",
     bgColor: "lightBlue" as const,
   },
   {
-    value: "7000",
+    value: "450+",
     label: "Firms accurately valued",
-    description: "Strong investor trust established through transparent valuations, credible assumptions, and consistently positive investor feedback",
+    description: "Businesses appraised using structured, data-driven methods",
     bgColor: "cyan" as const,
   },
 ];
@@ -158,16 +158,7 @@ function SubscribeHandler({ onSkippedCheckout }: { onSkippedCheckout: (show: boo
     // - User already skipped checkout in the current session
     const isAffiliate = user && (user.affiliateProfile || user.role === "ADMIN" || user.role === "SUPER_ADMIN");
 
-    if (
-      isAuthentiating ||
-      hasActiveSubscription ||
-      successParam ||
-      canceledParam ||
-      subscribeParam ||
-      createCheckout.isPending ||
-      isSkipped ||
-      isAffiliate
-    ) {
+    if (isAuthentiating || hasActiveSubscription || successParam || canceledParam || subscribeParam || createCheckout.isPending || isSkipped || isAffiliate) {
       // If user is not an affiliate, but skipped or canceled, ensure we show the banner
       if (!isAffiliate && (isSkipped || canceledParam)) {
         onSkippedCheckout(true);
@@ -199,14 +190,12 @@ function SubscribeHandler({ onSkippedCheckout }: { onSkippedCheckout: (show: boo
 }
 
 export default function Home() {
-  const [showCheckoutBanner, setShowCheckoutBanner] = useState(false);
-
-  useEffect(() => {
+  const [showCheckoutBanner, setShowCheckoutBanner] = useState(() => {
     if (typeof window !== "undefined") {
-      const skipped = sessionStorage.getItem("skippedCheckout") === "true";
-      setShowCheckoutBanner(skipped);
+      return sessionStorage.getItem("skippedCheckout") === "true";
     }
-  }, []);
+    return false;
+  });
 
   return (
     <div className="min-h-screen bg-white">
@@ -252,11 +241,11 @@ export default function Home() {
         <HeroSection
           title={
             <>
-              Your <span className="text-blue-500 italic">Business Valuation</span> in just a few clicks
+              Find Out What <span className="text-blue-500 italic">Your Business</span> Is Worth <br /> in Minutes
             </>
           }
-          subtitle="Find out what your business is worth"
-          ctaText="Access Calculator"
+          subtitle="No spreadsheets. No jargon. No accountant needed. Answer a few simple questions and get a clear, reliable appraisal you can actually understand."
+          ctaText="See What My Business Is Worth"
           ctaHref="/calculator"
           secondaryCtaText="View Valuation Sample"
           secondaryCtaHref="/valuation-sample.pdf"

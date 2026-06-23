@@ -16,7 +16,9 @@ interface StatsSectionProps {
 
 // Hook for counting animation
 function useCountUp(end: number, duration: number = 1500, shouldStart: boolean = false) {
-  const [count, setCount] = useState(0);
+  // Start at 70% of final value to avoid showing zeros
+  const initialCount = Math.floor(end * 0.7);
+  const [count, setCount] = useState(initialCount);
 
   useEffect(() => {
     if (!shouldStart) {
@@ -113,7 +115,7 @@ export function StatsSection({ title, stats }: StatsSectionProps) {
         });
       },
       {
-        threshold: 0.3, // Trigger when 30% of section is visible
+        threshold: 0.1, // Trigger when 10% of section is visible (earlier animation)
         rootMargin: "0px",
       },
     );

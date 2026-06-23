@@ -10,19 +10,14 @@ export function ExecutiveBusinessValuers() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-12 items-start">
           {/* Left Side - Title */}
           <div className="flex flex-col gap-6 lg:text-left items-start">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Need a Formal, Certified Business Valuation, contact Executive Business Valuers</h2>
-            <Image
-              src="/Executive-Business-Valuers.png"
-              alt="Executive Business Valuers"
-              width={960}
-              height={240}
-              className="w-full max-w-[80%] h-auto"
-            />
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Need a Formal, Certified Valuation? Talk to Executive Business Valuers</h2>
+            <p className="text-gray-700 text-base leading-relaxed">For court, finance, or legal matters, you may need a certified valuation. Our sister firm has you covered.</p>
+            <Image src="/Executive-Business-Valuers.png" alt="Executive Business Valuers" width={960} height={240} className="w-full max-w-[80%] h-auto" />
           </div>
 
           {/* Right Side - Features List */}
           <div className="space-y-3">
-            <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-8">Why Choose Executive Business Valuers</h2>
+            <h2 className="text-xl md:text-2xl font-medium text-gray-900 mb-8">Why choose Executive Business Valuers</h2>
             {/* Feature 1 - APES 225 */}
             <div className="flex overflow-hidden rounded-lg">
               <div className="shrink-0 w-12 bg-(--primary-border-typing) flex items-center justify-center">
@@ -65,7 +60,7 @@ export function ExecutiveBusinessValuers() {
               </div>
               <div className="flex-1 bg-(--sky-light-blue) px-2 py-2.5">
                 <p className="text-black text-sm">
-                  Prepared to <span className="font-semibold">withstand cross-examination</span> — we document assumptions, add-backs, and risk drivers clearly
+                  Prepared to <span className="font-semibold">withstand cross-examination</span> — assumptions, add-backs, and risk drivers documented clearly
                 </p>
               </div>
             </div>
@@ -79,7 +74,7 @@ export function ExecutiveBusinessValuers() {
               </div>
               <div className="flex-1 bg-(--sky-light-blue) px-2 py-2.5">
                 <p className="text-black text-sm">
-                  <span className="font-semibold">Plain-English explanations</span>, both to lawyers and clients; you always understand the &quot;why&quot; behind the numbers
+                  <span className="font-semibold">Plain-English explanations</span> for lawyers and clients alike; you always understand the &quot;why&quot; behind the numbers
                 </p>
               </div>
             </div>
@@ -95,7 +90,7 @@ export function ExecutiveBusinessValuers() {
               </div>
               <div className="flex-1 bg-(--sky-light-blue) px-2 py-2.5">
                 <p className="text-black text-sm">
-                  <span className="font-semibold">Nationwide reach</span> — we service all states and territories with consistent quality and turnaround
+                  <span className="font-semibold">Nationwide reach</span> — all states and territories, consistent quality and turnaround
                 </p>
               </div>
             </div>

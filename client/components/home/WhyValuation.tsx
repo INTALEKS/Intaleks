@@ -58,32 +58,32 @@ const valuePoints: ValuePoint[] = [
   {
     icon: <DecisionsIcon />,
     title: "Make clearer, proactive decisions",
-    description: "Understanding your business value acts as a health check. It helps you see what's working and highlights risks like relying too much on one customer before they become costly problems. You can fix issues early instead of being surprised later.",
+    description: "Your business value works like a health check. It shows what's working and flags risks — like leaning too heavily on one customer — before they become expensive problems. Fix issues early instead of being caught out later.",
   },
   {
     icon: <NegotiationsIcon />,
     title: "Stand stronger in negotiations",
-    description: "If you ever sell your business, buy out a partner, talk to the bank, or bring in an investor, you need facts not guesses. A proper valuation gives you confidence and credibility.",
+    description: "Selling, buying out a partner, talking to the bank, or bringing in an investor — you need facts, not guesses. A proper appraisal gives you confidence and credibility.",
   },
   {
     icon: <SettlementsIcon />,
-    title: "Essential for divorce and property settlements",
-    description: "In a separation, your business is often one of the biggest assets. A professional valuation prevents arguments, protects you from unrealistic claims, and gives courts clear evidence, ensuring the business and your staff aren't put at risk.",
+    title: "Be ready for separation or property settlements",
+    description: "In a separation, your business is often one of the biggest assets. Knowing its value early helps you prepare, set realistic expectations, and understand where you stand before things get formal. (For court, you'll need a certified valuation — see Executive Business Valuers below.)",
   },
   {
     icon: <OpportunitiesIcon />,
     title: "Be ready for opportunities",
-    description: "Sometimes opportunities appear out of nowhere, someone wants to buy your business, merge, or invest. When you already know your value, you can act quickly and confidently without scrambling for data.",
+    description: "Sometimes a chance appears out of nowhere — a buyer, a merger, an investor. When you already know your value, you can move quickly and confidently instead of scrambling for data.",
   },
   {
     icon: <ClarityIcon />,
-    title: "Ask questions and get clarity",
-    description: "Your business value is the ultimate scoreboard. It shows whether you're actually building something more valuable over time, not just working harder.",
+    title: "Keep score on what you're building",
+    description: "Your value is the ultimate scoreboard. It shows whether you're building something genuinely more valuable over time — not just working harder.",
   },
   {
     icon: <FutureIcon />,
     title: "Plan your future",
-    description: "Whether you want to pass the business to family, sell to staff, or retire in a few years, you need to know your starting point. A valuation gives you the clarity to plan your exit strategy properly.",
+    description: "Passing the business to family, selling to staff, or retiring in a few years? You need to know your starting point. An appraisal gives you the clarity to plan your exit properly.",
   },
 ];
 
@@ -98,7 +98,7 @@ export function WhyValuation() {
             <br />
             Your <span className="text-blue-500">Business</span> Is Worth
           </h2>
-          <p className="text-gray-600 max-w-4xl mx-auto">Most business owners don&apos;t think about valuation until they&apos;re forced to. But knowing the value of your business early and keeping it updated protects you, strengthens your decisions, and gives you options.</p>
+          <p className="text-gray-600 max-w-4xl mx-auto">Most owners don&apos;t think about what their business is worth until they&apos;re forced to. But knowing your value early — and keeping it current — protects you, sharpens your decisions, and keeps your options open.</p>
         </div>
 
         {/* Value Points Grid */}

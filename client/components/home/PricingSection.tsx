@@ -157,8 +157,9 @@ export function PricingSection() {
   return (
     <section id="pricing" className="py-20 px-4 bg-linear-to-b from-blue-50 to-cyan-50">
       <div className="max-w-5xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Pricing</h2>
-        <p className="text-gray-600 text-center mb-4 max-w-2xl mx-auto">Choose the plan that fits your business valuation needs</p>
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">One Simple Price — $495</h2>
+        <p className="text-gray-600 text-center mb-4 max-w-2xl mx-auto">Your full business appraisal report for a flat $495. No subscriptions, no surprises.</p>
+        <p className="text-gray-600 text-center mb-4 max-w-2xl mx-auto">Don&apos;t overpay for a business appraisal. Some firms charge thousands for the same answer — Intaleks gives you a clear, professional-grade appraisal you can rely on, for $495.</p>
 
         {/* Currency indicator */}
         {pricing && pricing.currency.code !== "AUD" && (

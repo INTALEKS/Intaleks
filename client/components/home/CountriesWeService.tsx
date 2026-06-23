@@ -12,8 +12,9 @@ export function CountriesWeService() {
 
   return (
     <section className="py-12 text-gray-900 px-4">
-      <div className="max-w-6xl mx-auto px-4">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">Countries We Service</h2>
+      <div className="max-w-6xl mx-auto px-4 mb-8">
+        <h2 className="text-2xl md:text-3xl font-bold text-center">Local data, local accuracy</h2>
+        <p className="mt-2 text-sm text-gray-400 italic max-w-2xl mx-auto text-center">Industry multiples and benchmarks tailored to your market — so your appraisal reflects where your business actually trades, not a generic global average.</p>
       </div>
 
       <div className="mx-auto text-center">
@@ -27,8 +28,6 @@ export function CountriesWeService() {
             </div>
           ))}
         </div>
-
-        <p className="mt-6 text-sm text-gray-400 italic">Valuation multiples and industry data tailored to each local market</p>
       </div>
     </section>
   );

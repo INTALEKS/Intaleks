@@ -11,23 +11,23 @@ interface FAQItem {
 const faqs: FAQItem[] = [
   {
     question: "What does Intaleks do?",
-    answer: "Intaleks provides professional business valuation services to help founders, investors, and companies understand the true worth of their businesses for fundraising, strategic decisions, and planning.",
+    answer: "Intaleks helps business owners find out what their business is worth — quickly, clearly, and affordably. It's built for people without a finance background who need a reliable appraisal for selling, buying, raising money, or planning ahead.",
   },
   {
-    question: "How do you determine a company's value?",
-    answer: "We use a combination of financial analysis, market benchmarks, growth potential, and industry-specific assumptions to produce accurate, defensible valuations aligned with investor expectations.",
+    question: "How do you work out my business's value?",
+    answer: "We use proven appraisal methods — Asset, Profit, and DCF — combined with industry benchmarks and local market data. You answer a few simple questions and enter your key figures; Intaleks does the calculations for you.",
   },
   {
-    question: "What information do you need from us?",
-    answer: "We typically require basic financial records, business details, and growth projections. Our team guides you through the process to keep it simple and efficient.",
+    question: "What information do I need to provide?",
+    answer: "Just a few basics: your company details and a handful of financial figures. We tell you exactly what's needed at each step, in plain English.",
   },
   {
     question: "Do you work with early-stage startups?",
-    answer: "Yes, this valuation tool can help companies at all stages, from early-stage startups to established businesses. The valuation methods are adapted to suit the specific needs and data availability of each company.",
+    answer: "Yes. Intaleks suits businesses at every stage, from early startups to established companies. The methods adapt to the data you have available.",
   },
   {
-    question: "Is our business information kept confidential?",
-    answer: "Absolutely. We take data security and confidentiality very seriously. All information shared with us is protected and used solely for the purpose of your valuation.",
+    question: "Is my business information kept confidential?",
+    answer: "Absolutely. We take data security and confidentiality seriously. Everything you share is protected and used only to produce your appraisal.",
   },
 ];
 

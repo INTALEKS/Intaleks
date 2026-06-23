@@ -15,7 +15,7 @@ export function HowItWorks({ steps }: HowItWorksProps) {
   return (
     <section className="py-16 px-4">
       <div className="max-w-6xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">How it works</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">How It Works — Five Simple Steps</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {steps.map((step) => (
             <div key={step.number} className="bg-gray-100 rounded-2xl p-5 flex flex-col justify-between min-h-[200px]">

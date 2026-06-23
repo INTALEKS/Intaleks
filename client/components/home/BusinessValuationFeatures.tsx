@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +12,7 @@ const cards = [
       </svg>
     ),
     title: "Selling",
-    description: "Know your number before you negotiate. Walk into any sale with a defensible, data-backed valuation so you never leave money on the table.",
+    description: "Know your number before you negotiate. Walk into any sale with a defensible, data-backed appraisal, so you never leave money on the table.",
   },
   {
     icon: (
@@ -23,7 +21,7 @@ const cards = [
       </svg>
     ),
     title: "Buying",
-    description: "Avoid overpaying for a business. Get an independent view of what a target is actually worth before you commit to a deal.",
+    description: " Avoid overpaying. Get an independent view of what a business is really worth before you commit.",
   },
   {
     icon: (
@@ -34,7 +32,7 @@ const cards = [
       </svg>
     ),
     title: "Raising Capital",
-    description: "Investors expect credible numbers. A clear valuation builds trust, supports your pitch, and gives investors the confidence to commit.",
+    description: "Investors expect credible numbers. A clear appraisal builds trust, strengthens your pitch, and gives investors the confidence to commit.",
   },
   {
     icon: (
@@ -44,7 +42,7 @@ const cards = [
       </svg>
     ),
     title: "Planning Your Next Move",
-    description: "Whether you're planning an exit, bringing in a partner, or passing the business on — knowing your value is the starting point for every major decision.",
+    description: "Planning an exit, bringing in a partner, or passing the business on? Knowing your value is the starting point for every big decision.",
   },
 ];
 
@@ -55,61 +53,61 @@ export function BusinessValuationFeatures() {
       <section className="py-16 px-4 text-center">
         <div className="max-w-3xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-            Know Your <span className="text-blue-500 italic">Business valuation</span> — Instantly
+            Know What Your <span className="text-blue-500 italic">Business Is Worth</span> — Instantly
           </h2>
-          <p className="text-gray-600 mb-6">With just five key numbers, instantly understand what your business is worth.</p>
-          {/* <div className="flex flex-wrap justify-center gap-6 text-sm font-medium">
-            <span className="flex items-center gap-1.5 text-gray-700">
-              <span className="text-blue-500 font-bold">✓</span> No spreadsheets
-            </span>
-            <span className="flex items-center gap-1.5 text-gray-700">
-              <span className="text-blue-500 font-bold">✓</span> No complex formulas
-            </span>
-            <span className="flex items-center gap-1.5 text-gray-700">
-              <span className="text-blue-500 font-bold">✓</span> No financial jargon
-            </span>
-          </div> */}
+          <p className="text-gray-600 mb-6">With just five key numbers, you&apos;ll understand what your business is worth. No finance degree required.</p>
         </div>
 
         {/* Simple Business Valuation card */}
-        <div className="max-w-4xl mx-auto mt-10 bg-white border border-gray-200 rounded-2xl shadow-sm p-8 flex flex-col md:flex-row gap-8 text-left">
+        <div className="max-w-4xl mx-auto mt-10 bg-white border border-gray-200 rounded-2xl shadow-sm p-8 gap-8 text-left">
           {/* Left */}
+          <div className="flex gap-x-4">
+            <div className="w-14 h-14 min-w-14 flex justify-center items-center bg-(--light-blue)/50 rounded-full">
+              {/* prettier-ignore */}
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 512 512"><path d="M0 0h512v512H0z" fill="none" /><path fill="currentColor" d="M124 136H36a20.023 20.023 0 0 0-20 20v320a20.023 20.023 0 0 0 20 20h88a20.023 20.023 0 0 0 20-20V156a20.023 20.023 0 0 0-20-20m-12 328H48V168h64Zm188-224h-88a20.023 20.023 0 0 0-20 20v216a20.023 20.023 0 0 0 20 20h88a20.023 20.023 0 0 0 20-20V260a20.023 20.023 0 0 0-20-20m-12 224h-64V272h64ZM476 16h-88a20.023 20.023 0 0 0-20 20v440a20.023 20.023 0 0 0 20 20h88a20.023 20.023 0 0 0 20-20V36a20.023 20.023 0 0 0-20-20m-12 448h-64V48h64Z" /></svg>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Simple business appraisal that works</h3>
+              <p className="text-sm text-gray-600 mb-6">Intaleks is built for business owners, not analysts. Get fast, reliable insights with no spreadsheets, no complicated formulas, and no confusing financial jargon.</p>
+            </div>
+          </div>
+
           <div className="flex-1">
-            <h3 className="text-xl font-bold text-gray-900 mb-3">
-              Simple Business Valuation
-              <br />
-              That Works
-            </h3>
-            <p className="text-sm text-gray-600 mb-6">
-              Intaleks is built for business owners, not analysts.
-              <br />
-              Get fast, reliable insights without the hassle—no spreadsheets, no complicated formulas, and no confusing financial jargon.
-            </p>
-            <ul className="space-y-3">
+            <ul className="grid grid-cols-3 gap-3">
               {[
-                { bold: "You enter the numbers —", rest: " Intaleks does the work" },
-                { bold: "Clear valuation insights", rest: " you can understand immediately" },
-                { bold: "Make confident", rest: " business decisions" },
+                { bold: "You enter the numbers —", rest: " Intaleks does the rest" },
+                { bold: "Clear results", rest: " you can understand straight away" },
+                { bold: "Make confident decisions", rest: " about your business" },
               ].map((item, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                  <span className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                    <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                      <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+                <li key={i} className="flex flex-col items-center gap-5 text-sm border border-gray-200/70 rounded-sm p-10">
+                  <span className="mt-0.5 shrink-0 w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
+                    {/* prettier-ignore */}
+                    <svg width="16" height="14" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   </span>
-                  <span>
-                    <strong>{item.bold}</strong>
+                  <span className="text-center">
+                    <strong>{item.bold}</strong> <br />
                     {item.rest}
                   </span>
                 </li>
               ))}
             </ul>
-          </div>
 
-          {/* Right — illustration */}
-          {/* <div className="flex-1 flex items-center justify-center min-h-[240px]">
-            <Image src="/business_report.svg" alt="Business valuation report" width={400} height={300} className="w-full max-w-sm" />
-          </div> */}
+            <div className="flex items-center justify-center gap-x-3 mt-4">
+              {/* <Link href="/calculator" className="underline flex items-center gap-x-0.5">
+                See What My Business Is Worth
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </Link> */}
+
+              <Link href="/calculator">
+                <Button className="bg-black hover:bg-gray-800 px-6 py-5 text-base">
+                  See What My Business Is Worth
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </Link>
+              <span>· Just $495</span>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -119,7 +117,7 @@ export function BusinessValuationFeatures() {
           {/* Header */}
           <div className="text-center mb-6">
             <h2 className="text-2xl md:text-3xl font-bold mb-3">Never Undersell or Overpay Again</h2>
-            <p className="text-gray-600 max-w-xl mx-auto">When your valuation is clear, every decision becomes easier — whether you&apos;re buying, selling, or planning ahead.</p>
+            <p className="text-gray-600 max-w-xl mx-auto">When you know your number, every decision gets easier — whether you&apos;re buying, selling, or planning ahead.</p>
           </div>
 
           {/* Illustration placeholder */}
@@ -142,7 +140,7 @@ export function BusinessValuationFeatures() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mt-6">
             <Link href="/calculator">
               <Button className="bg-black hover:bg-gray-800 px-6 py-5 text-base">
-                Access Calculator
+                See What My Business Is Worth
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
