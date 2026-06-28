@@ -80,7 +80,7 @@ export default function AppSidebar() {
             <DropdownMenuTrigger className="flex items-center gap-x-2 border-none outline-none">
               <div className="flex justify-between items-center w-full hover:bg-(--hover-bg) duration-300 transition-colors p-1 rounded-sm">
                 <div className="flex items-center gap-x-2">
-                  <Image src={OwnerImage} alt="Owner Image" className="rounded-md" width={30} height={30} />
+                  <Image src={user?.avatar || OwnerImage} alt="User Avatar" className="rounded-md object-cover" width={30} height={30} />
                   <div className="flex flex-col gap-0">
                     <h3 className="font-medium text-sm text-left">{user?.name || "Admin User"}</h3>
                     <span className="text-[10px]">{user?.email}</span>
