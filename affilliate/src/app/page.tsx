@@ -1192,10 +1192,8 @@ export default function AffiliateLandingPage() {
 
         .marketing-body .assets-grid {
           display:grid;
-          grid-template-columns:1fr;
+          grid-template-columns: repeat(2,1fr);
           gap:16px;
-          margin-top:48px;
-          max-width:480px;
           margin-left:auto;
           margin-right:auto;
         }
@@ -2347,14 +2345,16 @@ export default function AffiliateLandingPage() {
       <section id="assets">
         <div className="container">
           <span className="sec-eyebrow">Marketing assets</span>
-          <div className="section-head">
-            <h2>
-              Everything you need to promote
-              <br />— already made for you
-            </h2>
-            <p>You don&apos;t start from scratch. The moment you&apos;re approved, a complete promotional kit is waiting in your dashboard.</p>
-          </div>
+
           <div className="assets-grid">
+            <div className="section-head">
+              <h2>
+                Everything you need to promote
+                <br />— already made for you
+              </h2>
+              <p>You don&apos;t start from scratch. The moment you&apos;re approved, a complete promotional kit is waiting in your dashboard.</p>
+            </div>
+
             <div className="asset-card">
               <div className="asset-thumb at-brand">
                 <svg width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -2369,6 +2369,7 @@ export default function AffiliateLandingPage() {
               </div>
             </div>
           </div>
+
           <div className="assets-bottom">
             <p>All assets unlock the moment you&apos;re approved — available directly inside your affiliate dashboard.</p>
             <button type="button" onClick={() => setModal("login")} className="btn btn-ghost">
