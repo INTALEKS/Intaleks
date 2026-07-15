@@ -210,6 +210,23 @@ export class PaymentService {
     const finalSuccessUrl = successUrl || `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
     const finalCancelUrl = cancelUrl || `${baseUrl}/payment/cancel`;
 
+    // Check if the user is referred by a professional referral partner
+    let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined = undefined;
+    let allowPromotionCodes = true;
+
+    if (user.referredById) {
+      const referralProfile = await prisma.professionalReferralProfile.findUnique({
+        where: { userId: user.referredById },
+        select: { stripePromoCodeId: true, status: true },
+      });
+
+      if (referralProfile && referralProfile.status === "ACTIVE" && referralProfile.stripePromoCodeId) {
+        discounts = [{ promotion_code: referralProfile.stripePromoCodeId }];
+        allowPromotionCodes = false; // Stripe does not allow both allow_promotion_codes and discounts
+        console.log(`[REFERRAL] Pre-applying referral discount: ${referralProfile.stripePromoCodeId} for user ${userId}`);
+      }
+    }
+
     try {
       // Create Stripe checkout session (Requirements 2.1, 2.2, 2.5)
       const session = await getStripe().checkout.sessions.create({
@@ -228,7 +245,8 @@ export class PaymentService {
         },
         success_url: finalSuccessUrl,
         cancel_url: finalCancelUrl,
-        allow_promotion_codes: true, // Enable promo code support
+        allow_promotion_codes: allowPromotionCodes, // Enable promo code support if not pre-applied
+        discounts: discounts, // Pre-applied referral discount code
         // For subscriptions, also add metadata to the subscription
         ...(mode === "subscription" && {
           subscription_data: {

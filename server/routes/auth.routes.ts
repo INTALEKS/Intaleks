@@ -13,9 +13,9 @@ const router = Router();
  */
 router.post("/register", validateRequest(registerSchema), async (req: Request, res: Response) => {
   try {
-    const { email, password, firstName, lastName, name } = req.body;
+    const { email, password, firstName, lastName, name, referralCode } = req.body;
 
-    const result = await AuthService.registerUser({ email, password, firstName, lastName, name });
+    const result = await AuthService.registerUser({ email, password, firstName, lastName, name, referralCode });
 
     if (!result.success) {
       // Check if it's a duplicate email error (Requirement 1.2)
@@ -237,6 +237,21 @@ router.get("/me", authenticateToken, async (req: Request, res: Response) => {
             status: true,
             code: true,
             company: true,
+          },
+        },
+        referredById: true,
+        professionalReferralProfile: {
+          select: {
+            id: true,
+            code: true,
+            status: true,
+          },
+        },
+        professionalReferralApplication: {
+          select: {
+            id: true,
+            status: true,
+            feedback: true,
           },
         },
       },

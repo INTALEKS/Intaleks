@@ -25,6 +25,7 @@ function SignupForm() {
   const searchParams = useSearchParams();
   const returnUrlParam = searchParams.get("returnUrl");
   const nextParam = searchParams.get("next");
+  const refParam = searchParams.get("ref");
 
   // Reconcile returnUrl and next redirect parameter
   let returnUrl = returnUrlParam || "/";
@@ -121,6 +122,7 @@ function SignupForm() {
       password: formData.password,
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
+      referralCode: refParam || undefined,
     });
   };
 

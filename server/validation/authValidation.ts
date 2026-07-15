@@ -18,6 +18,7 @@ export const registerSchema = Joi.object({
     "string.base": "Last name must be a string",
     "any.required": "Last name is required",
   }),
+  referralCode: Joi.string().trim().allow("").optional(),
 });
 
 /*** Validation schema for user login ***/

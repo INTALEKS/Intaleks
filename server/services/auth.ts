@@ -33,6 +33,7 @@ export interface RegisterRequest {
   firstName?: string;
   lastName?: string;
   name?: string; // Keep for backward compatibility
+  referralCode?: string;
 }
 
 export interface RegisterResponse {
@@ -139,6 +140,24 @@ export class AuthService {
         userLastName = nameParts.slice(1).join(" ") || null;
       }
 
+      const { referralCode } = data;
+      let resolvedReferredById: string | null = null;
+
+      if (referralCode) {
+        const referralProfile = await prisma.professionalReferralProfile.findFirst({
+          where: {
+            code: referralCode.trim().toUpperCase(),
+            status: "ACTIVE",
+          },
+        });
+        if (referralProfile) {
+          resolvedReferredById = referralProfile.userId;
+          console.log(`[REFERRAL] Client ${normalizedEmail} successfully referred by professional User ${resolvedReferredById}`);
+        } else {
+          console.warn(`[REFERRAL] Referral code "${referralCode}" was provided but is not active or valid.`);
+        }
+      }
+
       // Create user with USER role and ACTIVE status (Requirement 1.1)
       const user = await prisma.user.create({
         data: {
@@ -152,6 +171,7 @@ export class AuthService {
           emailVerified: false,
           verificationToken,
           verificationTokenExpiry,
+          referredById: resolvedReferredById,
         },
       });
 
@@ -161,8 +181,12 @@ export class AuthService {
         // Don't fail registration if email fails
       });
 
+      const tokenPayload: TokenPayload = { userId: user.id, email: user.email, role: user.role };
+      const token = this.generateToken(tokenPayload);
+
       return {
         success: true,
+        token,
         user: {
           id: user.id,
           email: user.email,

@@ -211,10 +211,42 @@ export class WebhookService {
       // Extract Stripe customer ID from checkout session (critical for subsequent webhooks)
       const stripeCustomerId = session.customer as string | null;
 
+      // Retrieve full session details with expanded discounts and promotion codes
+      const stripe = getStripe();
+      const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
+        expand: ["discounts", "discounts.promotion_code"],
+      });
+
+      let referralCodeUsed: string | null = null;
+      let referredById: string | null = null;
+
+      if (expandedSession.discounts && expandedSession.discounts.length > 0) {
+        for (const discount of expandedSession.discounts) {
+          const promo = (discount as any).promotion_code;
+          if (promo && promo.code) {
+            referralCodeUsed = promo.code;
+            break;
+          }
+        }
+      }
+
+      if (referralCodeUsed) {
+        const referralProfile = await prisma.professionalReferralProfile.findFirst({
+          where: {
+            code: referralCodeUsed.trim().toUpperCase(),
+            status: "ACTIVE",
+          },
+        });
+        if (referralProfile) {
+          referredById = referralProfile.userId;
+          console.log(`[WEBHOOK] User ${userId} used referral code ${referralCodeUsed}. Linking referredById = ${referredById}`);
+        }
+      }
+
       // Get subscription details if available
       let currentPeriodEnd: Date | null = null;
       if (stripeSubscriptionId) {
-        const subscription = await getStripe().subscriptions.retrieve(stripeSubscriptionId);
+        const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
         // Access current_period_end from the subscription object
         const periodEnd = (subscription as any).current_period_end;
         if (periodEnd) {
@@ -233,6 +265,7 @@ export class WebhookService {
           subscriptionId: planId,
           currentPeriodEnd: currentPeriodEnd,
           cancelAtPeriodEnd: false,
+          ...(referredById ? { referredById } : {}),
         },
       });
 

@@ -503,15 +503,18 @@ describe("Property 11: Invalid data returns 400 with details", () => {
         fc.property(
           validEmailArb,
           validPasswordArb,
-          fc.option(fc.string({ minLength: 1, maxLength: 255 }), {
-            nil: undefined,
-          }),
+          fc.string({ minLength: 1, maxLength: 255 }),
+          fc.string({ minLength: 1, maxLength: 255 }),
           fc.option(validStatusArb, { nil: undefined }),
           fc.option(validPlanTypeArb, { nil: undefined }),
           fc.option(validRoleArb, { nil: undefined }),
-          (email, password, name, status, planType, role) => {
-            const userData: Record<string, unknown> = { email, password };
-            if (name !== undefined) userData.name = name;
+          (email, password, firstName, lastName, status, planType, role) => {
+            const userData: Record<string, unknown> = { 
+              email, 
+              password,
+              firstName,
+              lastName
+            };
             if (status !== undefined) userData.status = status;
             if (planType !== undefined) userData.planType = planType;
             if (role !== undefined) userData.role = role;

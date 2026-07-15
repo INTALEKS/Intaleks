@@ -57,6 +57,11 @@ model User {
   questionnaireResponses QuestionnaireResponse[]
   redeemedCoupons   CouponCode[]
   affiliateProfile  AffiliateProfile?
+  referredById                     String?                           @map("referred_by_id")
+  referredBy                       User?                             @relation("ProfessionalReferrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referredClients                  User[]                            @relation("ProfessionalReferrals")
+  professionalReferralApplication  ProfessionalReferralApplication?
+  professionalReferralProfile      ProfessionalReferralProfile?
 
   @@map("users")
 }
@@ -545,5 +550,46 @@ model AffiliateChatMessage {
 
   @@index([affiliateName])
   @@map("affiliate_chat_messages")
+}
+
+enum ReferralApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ReferralStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+model ProfessionalReferralApplication {
+  id               String                    @id @default(cuid())
+  userId           String                    @unique @map("user_id")
+  status           ReferralApplicationStatus @default(PENDING)
+  professionalType String                    @map("professional_type")
+  companyName      String                    @map("company_name")
+  website          String?
+  feedback         String?
+  createdAt        DateTime                  @default(now()) @map("created_at")
+  updatedAt        DateTime                  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("professional_referral_applications")
+}
+
+model ProfessionalReferralProfile {
+  id                String         @id @default(cuid())
+  userId            String         @unique @map("user_id")
+  code              String         @unique
+  stripePromoCodeId String?        @map("stripe_promo_code_id")
+  status            ReferralStatus @default(ACTIVE)
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("professional_referral_profiles")
 }
 

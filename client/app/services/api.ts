@@ -9,6 +9,7 @@ export interface RegisterData {
   firstName?: string;
   lastName?: string;
   name?: string; // Keep for backward compatibility
+  referralCode?: string;
 }
 
 export type UserRole = "USER" | "ADMIN" | "SUPER_ADMIN";
@@ -41,6 +42,17 @@ export interface User {
     status: string;
     code?: string | null;
     company?: string | null;
+  } | null;
+  referredById?: string | null;
+  professionalReferralProfile?: {
+    id: string;
+    code: string;
+    status: string;
+  } | null;
+  professionalReferralApplication?: {
+    id: string;
+    status: string;
+    feedback?: string | null;
   } | null;
 }
 
@@ -95,7 +107,7 @@ export class ApiClient {
   /**
    * User registration
    */
-  static async register(email: string, password: string, firstName?: string, lastName?: string): Promise<AuthResponse> {
+  static async register(email: string, password: string, firstName?: string, lastName?: string, referralCode?: string): Promise<AuthResponse> {
     try {
       const response = await fetch(`${this.BASE_URL}/auth/register`, {
         method: "POST",
@@ -103,7 +115,7 @@ export class ApiClient {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ email, password, firstName, lastName }),
+        body: JSON.stringify({ email, password, firstName, lastName, referralCode }),
       });
 
       const data = await response.json();
@@ -478,6 +490,127 @@ export class ApiClient {
       }
 
       return data;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Submit application to join the professional referral program
+   */
+  static async applyForProfessionalReferral(data: { professionalType: string; companyName: string; website?: string }) {
+    try {
+      const response = await fetch(`${this.BASE_URL}/users/referral/apply`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+
+      const resData = await response.json();
+      if (!response.ok || !resData.success) {
+        throw new Error(resData?.message || "Failed to submit referral application");
+      }
+      return resData;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Get professional referral profile and application status
+   */
+  static async getProfessionalReferralProfile() {
+    try {
+      const response = await fetch(`${this.BASE_URL}/users/referral/profile`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      const resData = await response.json();
+      if (!response.ok || !resData.success) {
+        throw new Error(resData?.message || "Failed to retrieve referral profile");
+      }
+      return resData;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Get referred clients list with their data
+   */
+  static async getReferredClients() {
+    try {
+      const response = await fetch(`${this.BASE_URL}/users/referral/clients`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      const resData = await response.json();
+      if (!response.ok || !resData.success) {
+        throw new Error(resData?.message || "Failed to retrieve referred clients");
+      }
+      return resData;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Get referral applications list (Admin only)
+   */
+  static async getReferralApplicationsAdmin(status?: string) {
+    try {
+      const url = status 
+        ? `${this.BASE_URL}/admin/referrals/applications?status=${status}`
+        : `${this.BASE_URL}/admin/referrals/applications`;
+        
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      const resData = await response.json();
+      if (!response.ok || !resData.success) {
+        throw new Error(resData?.message || "Failed to retrieve referral applications");
+      }
+      return resData;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
+   * Approve or decline a referral application (Admin only)
+   */
+  static async updateReferralApplicationAdmin(id: string, status: string, feedback?: string) {
+    try {
+      const response = await fetch(`${this.BASE_URL}/admin/referrals/applications/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ status, feedback }),
+      });
+
+      const resData = await response.json();
+      if (!response.ok || !resData.success) {
+        throw new Error(resData?.message || "Failed to update referral application");
+      }
+      return resData;
     } catch (err) {
       throw err;
     }

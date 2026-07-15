@@ -25,6 +25,8 @@ import calculatorRoutes from "./routes/calculator.routes";
 import affiliateAdminRoutes from "./routes/affiliateAdmin.routes";
 import userAffiliateRoutes from "./routes/userAffiliate.routes";
 import { couponRouter, adminCouponRouter } from "./routes/coupon.routes";
+import referralRoutes from "./routes/referral.routes";
+import referralAdminRoutes from "./routes/referralAdmin.routes";
 import startupSeed from "./scripts/startup-seed";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler";
 
@@ -132,6 +134,8 @@ app.use("/api/coupons", couponRouter); // User coupon redemption
 app.use("/api/admin/coupons", adminCouponRouter); // Super Admin coupon management
 app.use("/api/admin/affiliate", affiliateAdminRoutes);
 app.use("/api/users/affiliate", userAffiliateRoutes);
+app.use("/api/admin/referrals", referralAdminRoutes);
+app.use("/api/users/referral", referralRoutes);
 
 // Test database connection - Disabled in production for diagnostics security
 app.get("/db-test", async (req, res) => {
