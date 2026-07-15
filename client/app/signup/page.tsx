@@ -45,6 +45,7 @@ function SignupForm() {
     confirmPassword: "",
     firstName: "",
     lastName: "",
+    referralCode: refParam || "",
   });
   const [errors, setErrors] = useState<FormErrors>({
     email: "",
@@ -122,7 +123,7 @@ function SignupForm() {
       password: formData.password,
       firstName: formData.firstName.trim(),
       lastName: formData.lastName.trim(),
-      referralCode: refParam || undefined,
+      referralCode: formData.referralCode.trim() || undefined,
     });
   };
 
@@ -222,6 +223,22 @@ function SignupForm() {
             error={!!errors.confirmPassword}
           />
           {errors.confirmPassword && <span className="text-red-500 text-xs">{errors.confirmPassword}</span>}
+        </div>
+
+        {/* Referral Code field */}
+        <div className="flex flex-col gap-y-1">
+          <InputField
+            type="text"
+            label="Referral Code (Optional)"
+            placeholder="Enter referral code"
+            value={formData.referralCode}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                referralCode: e.target.value,
+              }))
+            }
+          />
         </div>
 
         {/* Submit button */}
