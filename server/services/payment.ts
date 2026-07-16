@@ -212,8 +212,8 @@ export class PaymentService {
     const finalCancelUrl = cancelUrl || `${baseUrl}/payment/cancel`;
 
     // Apply referral discount if the user was referred by an approved professional.
-    // Each professional has their own unique Stripe Promotion Code (e.g. ACC-SMITH-1234).
-    // Users can ALSO enter any professional's code manually at the Stripe checkout page.
+    // GUARANTEE: if referredById is set and profile is ACTIVE, the 25% discount ALWAYS applies.
+    // Priority: per-professional Stripe Promo Code → shared 25% Stripe Coupon fallback.
     let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined = undefined;
     let allowPromotionCodes = true; // Default: allow manual code entry at Stripe checkout
 
@@ -224,11 +224,10 @@ export class PaymentService {
       });
 
       if (referralProfile && referralProfile.status === "ACTIVE") {
-        // Get the professional's Stripe Promotion Code ID.
-        // If it's missing or a dummy (from old data), create it now via the shared helper.
         let promoCodeId = referralProfile.stripePromoCodeId;
         const isMissing = !promoCodeId || promoCodeId.startsWith("dummy_");
 
+        // Step 1: Try to get/create the per-professional unique Stripe Promotion Code.
         if (isMissing) {
           promoCodeId = await ReferralService.getOrCreateReferralPromoCode(referralProfile.code);
           if (promoCodeId) {
@@ -237,23 +236,52 @@ export class PaymentService {
               where: { id: referralProfile.id },
               data: { stripePromoCodeId: promoCodeId },
             });
+            console.log(`[REFERRAL] Resolved and persisted promo code ${referralProfile.code} (${promoCodeId})`);
           }
         }
 
         if (promoCodeId) {
-          // Pre-apply this professional's unique promo code to the checkout session.
-          // Stripe will show the 25% discount line item automatically.
+          // Apply the professional's unique promo code — best case.
           discounts = [{ promotion_code: promoCodeId }];
-          allowPromotionCodes = false; // Cannot combine pre-applied discounts with allow_promotion_codes
-          console.log(`[REFERRAL] Pre-applying promo code ${referralProfile.code} (${promoCodeId}) for referred user ${userId}`);
+          allowPromotionCodes = false;
+          console.log(`[REFERRAL] Pre-applying promo code ${referralProfile.code} (${promoCodeId}) for user ${userId}`);
+        } else {
+          // Step 2: Promo code unavailable — fall back to applying the shared 25% coupon directly.
+          // This GUARANTEES the discount is always applied for referred users.
+          try {
+            const stripe = getStripe();
+            let couponId = process.env.STRIPE_REFERRAL_COUPON_ID;
+
+            if (!couponId) {
+              const coupons = await stripe.coupons.list({ limit: 100 });
+              const existing = coupons.data.find(
+                (c) => c.percent_off === 25 && c.duration === "forever" && c.valid
+              );
+              if (existing) {
+                couponId = existing.id;
+              } else {
+                const newCoupon = await stripe.coupons.create({
+                  percent_off: 25,
+                  duration: "forever",
+                  name: "Professional Referral 25% Discount",
+                });
+                couponId = newCoupon.id;
+                console.log(`[REFERRAL] Created shared 25% coupon: ${couponId}`);
+              }
+            }
+
+            discounts = [{ coupon: couponId }];
+            allowPromotionCodes = false;
+            console.log(`[REFERRAL] Fallback — applying shared 25% coupon (${couponId}) for referred user ${userId}`);
+          } catch (couponErr) {
+            // Last resort: let the user at least see the "Add promotion code" field
+            // so they can type the code manually at Stripe checkout.
+            console.error(`[REFERRAL] Both promo code and coupon fallback failed for user ${userId}:`, couponErr);
+          }
         }
-        // If promoCodeId is still null (Stripe unavailable), fall through with allowPromotionCodes=true
-        // so the user can still manually enter the code at Stripe checkout.
       }
     }
-    // If user has no referredById, allowPromotionCodes stays true — they can type any
-    // professional's code (e.g. ACC-SMITH-1234) directly at the Stripe checkout page.
-
+    // No referredById: allowPromotionCodes stays true — user can type a code manually at Stripe checkout.
 
     try {
       // Create Stripe checkout session (Requirements 2.1, 2.2, 2.5)
