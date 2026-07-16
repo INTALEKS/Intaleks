@@ -177,7 +177,9 @@ export class SubscriptionsApi {
   }
 
   // Create checkout session
-  static async createCheckout(planId: string, successUrl?: string, cancelUrl?: string): Promise<{ sessionId: string; url: string }> {
+  static async createCheckout(planId: string, successUrl?: string, cancelUrl?: string): Promise<{ sessionId: string; url: string; discountApplied: boolean; discountType: string | null; discountDetail: string | null }> {
+    console.log(`[CHECKOUT:FE] Requesting checkout session — planId: ${planId}`);
+
     const response = await fetch(`${BASE_URL}/payments/checkout`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -186,9 +188,22 @@ export class SubscriptionsApi {
     });
 
     const data = await response.json();
+
+    console.log(`[CHECKOUT:FE] API response status: ${response.status}`);
+    console.log(`[CHECKOUT:FE] API response body:`, JSON.stringify(data, null, 2));
+
     if (!response.ok || !data.success) {
+      console.error(`[CHECKOUT:FE] ❌ Checkout failed:`, data?.error);
       throw new Error(data?.error?.message || "Failed to create checkout session");
     }
-    return data.data;
+
+    const result = data.data;
+    console.log(`[CHECKOUT:FE] ✅ Checkout session created: ${result.sessionId}`);
+    console.log(`[CHECKOUT:FE] Discount applied: ${result.discountApplied}`);
+    console.log(`[CHECKOUT:FE] Discount type: ${result.discountType ?? 'none'}`);
+    console.log(`[CHECKOUT:FE] Discount detail: ${result.discountDetail ?? 'none'}`);
+    console.log(`[CHECKOUT:FE] Redirecting to: ${result.url}`);
+
+    return result;
   }
 }

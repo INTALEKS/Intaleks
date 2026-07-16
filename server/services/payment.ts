@@ -61,6 +61,9 @@ export interface CreateCheckoutParams {
 export interface CheckoutSessionResult {
   sessionId: string;
   url: string;
+  discountApplied: boolean;
+  discountType: "promo_code" | "coupon" | "none";
+  discountDetail: string | null; // e.g. "ACC-SMITH-1234 (promo_abc123)" or "shared coupon cou_xyz"
 }
 
 /**
@@ -215,7 +218,12 @@ export class PaymentService {
     // GUARANTEE: if referredById is set and profile is ACTIVE, the 25% discount ALWAYS applies.
     // Priority: per-professional Stripe Promo Code → shared 25% Stripe Coupon fallback.
     let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined = undefined;
-    let allowPromotionCodes = true; // Default: allow manual code entry at Stripe checkout
+    let allowPromotionCodes = true;
+    let discountApplied = false;
+    let discountType: "promo_code" | "coupon" | "none" = "none";
+    let discountDetail: string | null = null;
+
+    console.log(`[CHECKOUT:REFERRAL] User ${userId} — referredById: ${user.referredById ?? "none"}`);
 
     if (user.referredById) {
       const referralProfile = await prisma.professionalReferralProfile.findUnique({
@@ -223,42 +231,55 @@ export class PaymentService {
         select: { id: true, stripePromoCodeId: true, status: true, code: true },
       });
 
+      console.log(`[CHECKOUT:REFERRAL] Profile found: ${referralProfile ? "YES" : "NO"}`);
+      if (referralProfile) {
+        console.log(`[CHECKOUT:REFERRAL] Profile code: ${referralProfile.code}`);
+        console.log(`[CHECKOUT:REFERRAL] Profile status: ${referralProfile.status}`);
+        console.log(`[CHECKOUT:REFERRAL] Stored stripePromoCodeId: ${referralProfile.stripePromoCodeId ?? "null"}`);
+      }
+
       if (referralProfile && referralProfile.status === "ACTIVE") {
         let promoCodeId = referralProfile.stripePromoCodeId;
         const isMissing = !promoCodeId || promoCodeId.startsWith("dummy_");
 
         // Step 1: Try to get/create the per-professional unique Stripe Promotion Code.
         if (isMissing) {
+          console.log(`[CHECKOUT:REFERRAL] PromoCodeId missing/dummy — attempting to create in Stripe...`);
           promoCodeId = await ReferralService.getOrCreateReferralPromoCode(referralProfile.code);
+          console.log(`[CHECKOUT:REFERRAL] getOrCreateReferralPromoCode result: ${promoCodeId ?? "FAILED (null)"}`);
           if (promoCodeId) {
-            // Persist so we don't retry every checkout
             await prisma.professionalReferralProfile.update({
               where: { id: referralProfile.id },
               data: { stripePromoCodeId: promoCodeId },
             });
-            console.log(`[REFERRAL] Resolved and persisted promo code ${referralProfile.code} (${promoCodeId})`);
+            console.log(`[CHECKOUT:REFERRAL] Persisted new promoCodeId: ${promoCodeId}`);
           }
         }
 
         if (promoCodeId) {
-          // Apply the professional's unique promo code — best case.
           discounts = [{ promotion_code: promoCodeId }];
           allowPromotionCodes = false;
-          console.log(`[REFERRAL] Pre-applying promo code ${referralProfile.code} (${promoCodeId}) for user ${userId}`);
+          discountApplied = true;
+          discountType = "promo_code";
+          discountDetail = `${referralProfile.code} (${promoCodeId})`;
+          console.log(`[CHECKOUT:REFERRAL] ✅ Applying promo code: ${discountDetail}`);
         } else {
-          // Step 2: Promo code unavailable — fall back to applying the shared 25% coupon directly.
-          // This GUARANTEES the discount is always applied for referred users.
+          // Step 2: Promo code unavailable — fall back to shared 25% coupon.
+          console.log(`[CHECKOUT:REFERRAL] Promo code unavailable — trying shared coupon fallback...`);
           try {
             const stripe = getStripe();
             let couponId = process.env.STRIPE_REFERRAL_COUPON_ID;
+            console.log(`[CHECKOUT:REFERRAL] STRIPE_REFERRAL_COUPON_ID env: ${couponId ?? "NOT SET"}`);
 
             if (!couponId) {
               const coupons = await stripe.coupons.list({ limit: 100 });
+              console.log(`[CHECKOUT:REFERRAL] Fetched ${coupons.data.length} coupons from Stripe`);
               const existing = coupons.data.find(
                 (c) => c.percent_off === 25 && c.duration === "forever" && c.valid
               );
               if (existing) {
                 couponId = existing.id;
+                console.log(`[CHECKOUT:REFERRAL] Found existing 25% coupon: ${couponId}`);
               } else {
                 const newCoupon = await stripe.coupons.create({
                   percent_off: 25,
@@ -266,22 +287,24 @@ export class PaymentService {
                   name: "Professional Referral 25% Discount",
                 });
                 couponId = newCoupon.id;
-                console.log(`[REFERRAL] Created shared 25% coupon: ${couponId}`);
+                console.log(`[CHECKOUT:REFERRAL] Created new 25% coupon: ${couponId}`);
               }
             }
 
             discounts = [{ coupon: couponId }];
             allowPromotionCodes = false;
-            console.log(`[REFERRAL] Fallback — applying shared 25% coupon (${couponId}) for referred user ${userId}`);
+            discountApplied = true;
+            discountType = "coupon";
+            discountDetail = `shared coupon ${couponId}`;
+            console.log(`[CHECKOUT:REFERRAL] ✅ Fallback coupon applied: ${discountDetail}`);
           } catch (couponErr) {
-            // Last resort: let the user at least see the "Add promotion code" field
-            // so they can type the code manually at Stripe checkout.
-            console.error(`[REFERRAL] Both promo code and coupon fallback failed for user ${userId}:`, couponErr);
+            console.error(`[CHECKOUT:REFERRAL] ❌ BOTH promo code AND coupon fallback failed:`, couponErr);
           }
         }
       }
     }
-    // No referredById: allowPromotionCodes stays true — user can type a code manually at Stripe checkout.
+
+    console.log(`[CHECKOUT:REFERRAL] Final discount state — applied: ${discountApplied}, type: ${discountType}, detail: ${discountDetail}`);
 
     // Helper to build checkout session params
     const buildSessionParams = (applyDiscounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined, allowPromos: boolean): Stripe.Checkout.SessionCreateParams => ({
@@ -298,7 +321,7 @@ export class PaymentService {
     });
 
     try {
-      // Attempt 1: Create checkout session with referral discount applied.
+      console.log(`[CHECKOUT] Creating Stripe session — mode: ${mode}, discounts: ${JSON.stringify(discounts ?? [])}`);
       const session = await getStripe().checkout.sessions.create(
         buildSessionParams(discounts, allowPromotionCodes)
       );
@@ -307,9 +330,10 @@ export class PaymentService {
         throw new StripeError("Checkout session created but no URL was returned", STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED, 500);
       }
 
-      return { sessionId: session.id, url: session.url };
+      console.log(`[CHECKOUT] ✅ Session created: ${session.id}`);
+      return { sessionId: session.id, url: session.url, discountApplied, discountType, discountDetail };
     } catch (error) {
-      // If the error is caused by an invalid discount/coupon (e.g. test-mode coupon used in live mode),
+      // If the error is caused by an invalid discount/coupon (e.g. test-mode coupon in live mode),
       // retry without the discount so checkout is never completely blocked.
       if (isStripeApiError(error) && discounts && discounts.length > 0) {
         const stripeErr = error as Stripe.errors.StripeError;
@@ -322,17 +346,16 @@ export class PaymentService {
             stripeErr.param === "coupon");
 
         if (isDiscountError) {
-          console.warn(`[REFERRAL] Discount caused checkout failure for user ${userId}. Retrying without discount. Error: ${stripeErr.message}`);
+          console.warn(`[CHECKOUT] ⚠️  Discount rejected by Stripe: "${stripeErr.message}" — retrying without discount...`);
           try {
-            // Attempt 2: Retry without discount — user can manually add the code at checkout.
             const fallbackSession = await getStripe().checkout.sessions.create(
               buildSessionParams(undefined, true)
             );
             if (!fallbackSession.url) {
               throw new StripeError("Checkout session created but no URL was returned", STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED, 500);
             }
-            console.warn(`[REFERRAL] Checkout succeeded without discount for user ${userId}. Manual code entry is available.`);
-            return { sessionId: fallbackSession.id, url: fallbackSession.url };
+            console.warn(`[CHECKOUT] ✅ Fallback session created (no discount): ${fallbackSession.id}. User can enter code manually.`);
+            return { sessionId: fallbackSession.id, url: fallbackSession.url, discountApplied: false, discountType: "none", discountDetail: `FAILED — Stripe rejected: ${stripeErr.message}` };
           } catch (retryError) {
             if (retryError instanceof StripeError) throw retryError;
             if (isStripeApiError(retryError)) throw createStripeErrorFromApiError(retryError, STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED);
@@ -341,12 +364,12 @@ export class PaymentService {
         }
       }
 
-      // Handle all other Stripe API errors
       if (error instanceof StripeError) throw error;
       if (isStripeApiError(error)) throw createStripeErrorFromApiError(error, STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED);
       throw error;
     }
   }
+
 
 
   /**

@@ -58,6 +58,10 @@ export class PaymentController {
 
       const { planId, successUrl, cancelUrl } = value;
 
+      console.log(`[CHECKOUT] ============================================`);
+      console.log(`[CHECKOUT] Request from user: ${req.user.id}`);
+      console.log(`[CHECKOUT] Plan ID: ${planId}`);
+
       // Create checkout session
       const result = await PaymentService.createCheckoutSession({
         userId: req.user.id,
@@ -66,11 +70,21 @@ export class PaymentController {
         cancelUrl,
       });
 
+      console.log(`[CHECKOUT] Session created successfully`);
+      console.log(`[CHECKOUT] Session ID: ${result.sessionId}`);
+      console.log(`[CHECKOUT] Discount applied: ${result.discountApplied ?? false}`);
+      console.log(`[CHECKOUT] Discount type: ${result.discountType ?? 'none'}`);
+      console.log(`[CHECKOUT] Discount detail: ${result.discountDetail ?? 'none'}`);
+      console.log(`[CHECKOUT] ============================================`);
+
       res.status(200).json({
         success: true,
         data: {
           sessionId: result.sessionId,
           url: result.url,
+          discountApplied: result.discountApplied ?? false,
+          discountType: result.discountType ?? null,
+          discountDetail: result.discountDetail ?? null,
         },
       });
     } catch (error) {
