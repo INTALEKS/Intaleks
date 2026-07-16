@@ -411,12 +411,13 @@ function validateAndCheckError(schema, data) {
                 .map(([local, domain, tld]) => `${local}@${domain}.${tld}`);
             // Password must be at least 8 chars and not all whitespace
             const validPasswordArb = fc.tuple(fc.stringMatching(/^[a-zA-Z0-9]{8,20}$/)).map(([pwd]) => pwd);
-            fc.assert(fc.property(validEmailArb, validPasswordArb, fc.option(fc.string({ minLength: 1, maxLength: 255 }), {
-                nil: undefined,
-            }), fc.option(validStatusArb, { nil: undefined }), fc.option(validPlanTypeArb, { nil: undefined }), fc.option(validRoleArb, { nil: undefined }), (email, password, name, status, planType, role) => {
-                const userData = { email, password };
-                if (name !== undefined)
-                    userData.name = name;
+            fc.assert(fc.property(validEmailArb, validPasswordArb, fc.string({ minLength: 1, maxLength: 255 }), fc.string({ minLength: 1, maxLength: 255 }), fc.option(validStatusArb, { nil: undefined }), fc.option(validPlanTypeArb, { nil: undefined }), fc.option(validRoleArb, { nil: undefined }), (email, password, firstName, lastName, status, planType, role) => {
+                const userData = {
+                    email,
+                    password,
+                    firstName,
+                    lastName
+                };
                 if (status !== undefined)
                     userData.status = status;
                 if (planType !== undefined)

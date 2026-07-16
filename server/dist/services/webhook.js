@@ -181,10 +181,38 @@ class WebhookService {
             const stripeSubscriptionId = session.subscription;
             // Extract Stripe customer ID from checkout session (critical for subsequent webhooks)
             const stripeCustomerId = session.customer;
+            // Retrieve full session details with expanded discounts and promotion codes
+            const stripe = (0, stripe_1.getStripe)();
+            const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
+                expand: ["discounts", "discounts.promotion_code"],
+            });
+            let referralCodeUsed = null;
+            let referredById = null;
+            if (expandedSession.discounts && expandedSession.discounts.length > 0) {
+                for (const discount of expandedSession.discounts) {
+                    const promo = discount.promotion_code;
+                    if (promo && promo.code) {
+                        referralCodeUsed = promo.code;
+                        break;
+                    }
+                }
+            }
+            if (referralCodeUsed) {
+                const referralProfile = await db_1.prisma.professionalReferralProfile.findFirst({
+                    where: {
+                        code: referralCodeUsed.trim().toUpperCase(),
+                        status: "ACTIVE",
+                    },
+                });
+                if (referralProfile) {
+                    referredById = referralProfile.userId;
+                    console.log(`[WEBHOOK] User ${userId} used referral code ${referralCodeUsed}. Linking referredById = ${referredById}`);
+                }
+            }
             // Get subscription details if available
             let currentPeriodEnd = null;
             if (stripeSubscriptionId) {
-                const subscription = await (0, stripe_1.getStripe)().subscriptions.retrieve(stripeSubscriptionId);
+                const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
                 // Access current_period_end from the subscription object
                 const periodEnd = subscription.current_period_end;
                 if (periodEnd) {
@@ -202,6 +230,7 @@ class WebhookService {
                     subscriptionId: planId,
                     currentPeriodEnd: currentPeriodEnd,
                     cancelAtPeriodEnd: false,
+                    ...(referredById ? { referredById } : {}),
                 },
             });
             // Create payment record (Requirement 3.2)

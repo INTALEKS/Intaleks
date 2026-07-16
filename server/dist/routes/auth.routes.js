@@ -13,8 +13,8 @@ const router = (0, express_1.Router)();
  */
 router.post("/register", (0, authValidation_1.validateRequest)(authValidation_1.registerSchema), async (req, res) => {
     try {
-        const { email, password, firstName, lastName, name } = req.body;
-        const result = await auth_1.AuthService.registerUser({ email, password, firstName, lastName, name });
+        const { email, password, firstName, lastName, name, referralCode } = req.body;
+        const result = await auth_1.AuthService.registerUser({ email, password, firstName, lastName, name, referralCode });
         if (!result.success) {
             // Check if it's a duplicate email error (Requirement 1.2)
             if (result.message === "A user with this email already exists") {
@@ -217,6 +217,21 @@ router.get("/me", authMiddleware_1.authenticateToken, async (req, res) => {
                         status: true,
                         code: true,
                         company: true,
+                    },
+                },
+                referredById: true,
+                professionalReferralProfile: {
+                    select: {
+                        id: true,
+                        code: true,
+                        status: true,
+                    },
+                },
+                professionalReferralApplication: {
+                    select: {
+                        id: true,
+                        status: true,
+                        feedback: true,
                     },
                 },
             },

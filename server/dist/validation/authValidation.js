@@ -23,6 +23,7 @@ exports.registerSchema = joi_1.default.object({
         "string.base": "Last name must be a string",
         "any.required": "Last name is required",
     }),
+    referralCode: joi_1.default.string().trim().allow("").optional(),
 });
 /*** Validation schema for user login ***/
 exports.loginSchema = joi_1.default.object({

@@ -59,6 +59,23 @@ class AuthService {
                 userFirstName = nameParts[0] || null;
                 userLastName = nameParts.slice(1).join(" ") || null;
             }
+            const { referralCode } = data;
+            let resolvedReferredById = null;
+            if (referralCode) {
+                const referralProfile = await db_1.prisma.professionalReferralProfile.findFirst({
+                    where: {
+                        code: referralCode.trim().toUpperCase(),
+                        status: "ACTIVE",
+                    },
+                });
+                if (referralProfile) {
+                    resolvedReferredById = referralProfile.userId;
+                    console.log(`[REFERRAL] Client ${normalizedEmail} successfully referred by professional User ${resolvedReferredById}`);
+                }
+                else {
+                    console.warn(`[REFERRAL] Referral code "${referralCode}" was provided but is not active or valid.`);
+                }
+            }
             // Create user with USER role and ACTIVE status (Requirement 1.1)
             const user = await db_1.prisma.user.create({
                 data: {
@@ -72,6 +89,7 @@ class AuthService {
                     emailVerified: false,
                     verificationToken,
                     verificationTokenExpiry,
+                    referredById: resolvedReferredById,
                 },
             });
             // Send verification email (non-blocking)
@@ -79,8 +97,11 @@ class AuthService {
                 console.error("Failed to send verification email:", error);
                 // Don't fail registration if email fails
             });
+            const tokenPayload = { userId: user.id, email: user.email, role: user.role };
+            const token = this.generateToken(tokenPayload);
             return {
                 success: true,
+                token,
                 user: {
                     id: user.id,
                     email: user.email,

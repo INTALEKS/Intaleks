@@ -63,11 +63,15 @@ const calculator_routes_1 = __importDefault(require("./routes/calculator.routes"
 const affiliateAdmin_routes_1 = __importDefault(require("./routes/affiliateAdmin.routes"));
 const userAffiliate_routes_1 = __importDefault(require("./routes/userAffiliate.routes"));
 const coupon_routes_1 = require("./routes/coupon.routes");
+const referral_routes_1 = __importDefault(require("./routes/referral.routes"));
+const referralAdmin_routes_1 = __importDefault(require("./routes/referralAdmin.routes"));
 const startup_seed_1 = __importDefault(require("./scripts/startup-seed"));
 const errorHandler_1 = require("./middleware/errorHandler");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = Number(process.env.PORT) || 4545;
+// Trust proxy for Railway deployment (enables proper IP detection behind reverse proxy)
+app.set("trust proxy", true);
 // Health check - BEFORE CORS and Helmet middleware so health check probes work cleanly
 app.get("/health", (req, res) => {
     res.status(200).json({
@@ -154,6 +158,8 @@ app.use("/api/coupons", coupon_routes_1.couponRouter); // User coupon redemption
 app.use("/api/admin/coupons", coupon_routes_1.adminCouponRouter); // Super Admin coupon management
 app.use("/api/admin/affiliate", affiliateAdmin_routes_1.default);
 app.use("/api/users/affiliate", userAffiliate_routes_1.default);
+app.use("/api/admin/referrals", referralAdmin_routes_1.default);
+app.use("/api/users/referral", referral_routes_1.default);
 // Test database connection - Disabled in production for diagnostics security
 app.get("/db-test", async (req, res) => {
     if (process.env.NODE_ENV === "production") {

@@ -220,10 +220,17 @@ export class PaymentService {
         select: { stripePromoCodeId: true, status: true },
       });
 
-      if (referralProfile && referralProfile.status === "ACTIVE" && referralProfile.stripePromoCodeId) {
+      if (
+        referralProfile && 
+        referralProfile.status === "ACTIVE" && 
+        referralProfile.stripePromoCodeId &&
+        !referralProfile.stripePromoCodeId.startsWith("dummy_")
+      ) {
         discounts = [{ promotion_code: referralProfile.stripePromoCodeId }];
         allowPromotionCodes = false; // Stripe does not allow both allow_promotion_codes and discounts
         console.log(`[REFERRAL] Pre-applying referral discount: ${referralProfile.stripePromoCodeId} for user ${userId}`);
+      } else if (referralProfile && referralProfile.stripePromoCodeId?.startsWith("dummy_")) {
+        console.log(`[REFERRAL] Skipping dummy promotion code for user ${userId} to prevent checkout failure.`);
       }
     }
 

@@ -138,6 +138,26 @@ class PaymentService {
         const baseUrl = environment_1.config.frontendUrl;
         const finalSuccessUrl = successUrl || `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
         const finalCancelUrl = cancelUrl || `${baseUrl}/payment/cancel`;
+        // Check if the user is referred by a professional referral partner
+        let discounts = undefined;
+        let allowPromotionCodes = true;
+        if (user.referredById) {
+            const referralProfile = await db_1.prisma.professionalReferralProfile.findUnique({
+                where: { userId: user.referredById },
+                select: { stripePromoCodeId: true, status: true },
+            });
+            if (referralProfile &&
+                referralProfile.status === "ACTIVE" &&
+                referralProfile.stripePromoCodeId &&
+                !referralProfile.stripePromoCodeId.startsWith("dummy_")) {
+                discounts = [{ promotion_code: referralProfile.stripePromoCodeId }];
+                allowPromotionCodes = false; // Stripe does not allow both allow_promotion_codes and discounts
+                console.log(`[REFERRAL] Pre-applying referral discount: ${referralProfile.stripePromoCodeId} for user ${userId}`);
+            }
+            else if (referralProfile && referralProfile.stripePromoCodeId?.startsWith("dummy_")) {
+                console.log(`[REFERRAL] Skipping dummy promotion code for user ${userId} to prevent checkout failure.`);
+            }
+        }
         try {
             // Create Stripe checkout session (Requirements 2.1, 2.2, 2.5)
             const session = await (0, stripe_1.getStripe)().checkout.sessions.create({
@@ -156,7 +176,8 @@ class PaymentService {
                 },
                 success_url: finalSuccessUrl,
                 cancel_url: finalCancelUrl,
-                allow_promotion_codes: true, // Enable promo code support
+                allow_promotion_codes: allowPromotionCodes, // Enable promo code support if not pre-applied
+                discounts: discounts, // Pre-applied referral discount code
                 // For subscriptions, also add metadata to the subscription
                 ...(mode === "subscription" && {
                     subscription_data: {
