@@ -153,42 +153,9 @@ class ReferralService {
             });
             if (!existingProfile) {
                 const code = await this.generateUniqueCode(user.firstName || "", user.lastName || "", application.professionalType);
-                let stripePromoCodeId = null;
-                // Try to create promotion code in Stripe
-                try {
-                    // Look up or dynamically create a 25% coupon in Stripe
-                    let couponId = process.env.STRIPE_REFERRAL_COUPON_ID;
-                    if (!couponId) {
-                        console.log("No STRIPE_REFERRAL_COUPON_ID env variable found. Querying or creating a 25% discount coupon dynamically...");
-                        const stripe = (0, stripe_1.getStripe)();
-                        const coupons = await stripe.coupons.list({ limit: 100 });
-                        const existing25 = coupons.data.find((c) => c.percent_off === 25 && c.duration === "forever" && c.valid);
-                        if (existing25) {
-                            couponId = existing25.id;
-                        }
-                        else {
-                            const newCoupon = await stripe.coupons.create({
-                                percent_off: 25,
-                                duration: "forever",
-                                name: "Professional Referral 25% Discount",
-                            });
-                            couponId = newCoupon.id;
-                        }
-                    }
-                    if (couponId) {
-                        const stripe = (0, stripe_1.getStripe)();
-                        const promoCode = await stripe.promotionCodes.create({
-                            coupon: couponId,
-                            code,
-                        });
-                        stripePromoCodeId = promoCode.id;
-                        console.log(`Successfully created Stripe promotion code: ${code} (ID: ${stripePromoCodeId})`);
-                    }
-                }
-                catch (stripeError) {
-                    console.warn("Failed to create Stripe promotion code. Proceeding with dummy values for development/testing:", stripeError);
-                    stripePromoCodeId = `dummy_${Math.random().toString(36).substring(2, 10)}`;
-                }
+                // Create the Stripe Promotion Code for this professional.
+                // Returns the Stripe promo code object ID, or null if Stripe is unavailable.
+                const stripePromoCodeId = await ReferralService.getOrCreateReferralPromoCode(code);
                 // Save ProfessionalReferralProfile to database
                 await db_1.prisma.professionalReferralProfile.create({
                     data: {
@@ -201,6 +168,52 @@ class ReferralService {
             }
         }
         return updatedApplication;
+    }
+    /**
+     * Get or create a Stripe Promotion Code for a given referral code string.
+     * - Reuses the shared 25% referral coupon (creates it once if missing).
+     * - Checks Stripe for an existing promo code with that string before creating.
+     * - Returns the Stripe Promotion Code ID, or null on failure.
+     */
+    static async getOrCreateReferralPromoCode(code) {
+        try {
+            const stripe = (0, stripe_1.getStripe)();
+            // Step 1: Get or create the shared 25% referral coupon.
+            let couponId = process.env.STRIPE_REFERRAL_COUPON_ID;
+            if (!couponId) {
+                const coupons = await stripe.coupons.list({ limit: 100 });
+                const existing = coupons.data.find((c) => c.percent_off === 25 && c.duration === "forever" && c.valid);
+                if (existing) {
+                    couponId = existing.id;
+                }
+                else {
+                    const newCoupon = await stripe.coupons.create({
+                        percent_off: 25,
+                        duration: "forever",
+                        name: "Professional Referral 25% Discount",
+                    });
+                    couponId = newCoupon.id;
+                    console.log(`[REFERRAL] Created shared 25% referral coupon in Stripe: ${couponId}`);
+                }
+            }
+            // Step 2: Check if a Stripe Promotion Code already exists for this code string.
+            const existing = await stripe.promotionCodes.list({ code, limit: 1 });
+            if (existing.data.length > 0) {
+                console.log(`[REFERRAL] Reusing existing Stripe promo code: ${code} (${existing.data[0].id})`);
+                return existing.data[0].id;
+            }
+            // Step 3: Create a new unique Stripe Promotion Code for this professional.
+            const promoCode = await stripe.promotionCodes.create({
+                coupon: couponId,
+                code,
+            });
+            console.log(`[REFERRAL] Created Stripe promo code: ${code} (${promoCode.id})`);
+            return promoCode.id;
+        }
+        catch (err) {
+            console.error(`[REFERRAL] Failed to create Stripe promo code for "${code}". Will retry at checkout:`, err);
+            return null;
+        }
     }
     /**
      * Get referred clients for a professional, including their valuation documents and inputs
