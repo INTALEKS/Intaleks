@@ -210,29 +210,56 @@ export class PaymentService {
     const finalSuccessUrl = successUrl || `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`;
     const finalCancelUrl = cancelUrl || `${baseUrl}/payment/cancel`;
 
-    // Check if the user is referred by a professional referral partner
+    // Check if the user is referred by a professional referral partner.
+    // We apply the 25% discount using a Stripe Coupon directly on the checkout session.
+    // This requires NO per-professional Stripe setup — just one shared coupon for the whole program.
     let discounts: Stripe.Checkout.SessionCreateParams.Discount[] | undefined = undefined;
     let allowPromotionCodes = true;
 
     if (user.referredById) {
       const referralProfile = await prisma.professionalReferralProfile.findUnique({
         where: { userId: user.referredById },
-        select: { stripePromoCodeId: true, status: true },
+        select: { status: true, code: true },
       });
 
-      if (
-        referralProfile && 
-        referralProfile.status === "ACTIVE" && 
-        referralProfile.stripePromoCodeId &&
-        !referralProfile.stripePromoCodeId.startsWith("dummy_")
-      ) {
-        discounts = [{ promotion_code: referralProfile.stripePromoCodeId }];
-        allowPromotionCodes = false; // Stripe does not allow both allow_promotion_codes and discounts
-        console.log(`[REFERRAL] Pre-applying referral discount: ${referralProfile.stripePromoCodeId} for user ${userId}`);
-      } else if (referralProfile && referralProfile.stripePromoCodeId?.startsWith("dummy_")) {
-        console.log(`[REFERRAL] Skipping dummy promotion code for user ${userId} to prevent checkout failure.`);
+      if (referralProfile && referralProfile.status === "ACTIVE") {
+        try {
+          const stripe = getStripe();
+
+          // Step 1: Get the shared referral coupon ID.
+          // Prefer the env var. Otherwise, find an existing 25% forever coupon or create one.
+          let couponId = process.env.STRIPE_REFERRAL_COUPON_ID;
+
+          if (!couponId) {
+            const coupons = await stripe.coupons.list({ limit: 100 });
+            const existing = coupons.data.find(
+              (c) => c.percent_off === 25 && c.duration === "forever" && c.valid
+            );
+            if (existing) {
+              couponId = existing.id;
+            } else {
+              const newCoupon = await stripe.coupons.create({
+                percent_off: 25,
+                duration: "forever",
+                name: "Professional Referral 25% Discount",
+              });
+              couponId = newCoupon.id;
+              console.log(`[REFERRAL] Created shared 25% referral coupon in Stripe: ${couponId}`);
+            }
+          }
+
+          // Step 2: Apply the coupon directly to the checkout session.
+          // Using 'coupon' (not 'promotion_code') means no promo code setup is needed per professional.
+          discounts = [{ coupon: couponId }];
+          allowPromotionCodes = false;
+          console.log(`[REFERRAL] Applying 25% referral coupon (${couponId}) for referred user ${userId} (referred by ${referralProfile.code})`);
+        } catch (couponErr) {
+          // If coupon application fails, log and continue — don't block the user from checking out
+          console.error(`[REFERRAL] Failed to apply referral coupon for user ${userId}:`, couponErr);
+        }
       }
     }
+
 
     try {
       // Create Stripe checkout session (Requirements 2.1, 2.2, 2.5)
