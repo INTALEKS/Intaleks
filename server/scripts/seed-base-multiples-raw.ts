@@ -296,6 +296,17 @@ const baseMultiples: BaseMultiple[] = [
 ];
 
 async function main() {
+  // Check if multiples already exist
+  const existingCount = await prisma.valuationMultiple.count();
+
+  if (existingCount > 0) {
+    console.log(`✅ Valuation multiples already seeded (${existingCount} records) - skipping raw seed`);
+
+    // Still check subscription plan
+    await seedSubscriptionPlan();
+    return;
+  }
+
   console.log("🌱 Seeding base valuation multiples using raw SQL...");
 
   // Clear existing multiples
@@ -325,7 +336,11 @@ async function main() {
   }
 
   // Seed subscription plan
-  console.log("\n🌱 Seeding subscription plan...");
+  await seedSubscriptionPlan();
+}
+
+async function seedSubscriptionPlan() {
+  console.log("\n🌱 Checking subscription plan...");
 
   // Upsert One-Off plan
   const planData = {
