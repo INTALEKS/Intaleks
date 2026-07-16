@@ -205,62 +205,63 @@ class PaymentService {
             }
         }
         // No referredById: allowPromotionCodes stays true — user can type a code manually at Stripe checkout.
+        // Helper to build checkout session params
+        const buildSessionParams = (applyDiscounts, allowPromos) => ({
+            customer: customerId,
+            mode,
+            line_items: [{ price: plan.stripePriceId, quantity: 1 }],
+            metadata: { userId, planId },
+            success_url: finalSuccessUrl,
+            cancel_url: finalCancelUrl,
+            allow_promotion_codes: allowPromos,
+            discounts: applyDiscounts,
+            ...(mode === "subscription" && { subscription_data: { metadata: { userId, planId } } }),
+            ...(mode === "payment" && { payment_intent_data: { metadata: { userId, planId } } }),
+        });
         try {
-            // Create Stripe checkout session (Requirements 2.1, 2.2, 2.5)
-            const session = await (0, stripe_1.getStripe)().checkout.sessions.create({
-                customer: customerId,
-                mode,
-                line_items: [
-                    {
-                        price: plan.stripePriceId,
-                        quantity: 1,
-                    },
-                ],
-                // Include userId and planId in metadata for webhook processing (Requirement 2.2)
-                metadata: {
-                    userId,
-                    planId,
-                },
-                success_url: finalSuccessUrl,
-                cancel_url: finalCancelUrl,
-                allow_promotion_codes: allowPromotionCodes, // Enable promo code support if not pre-applied
-                discounts: discounts, // Pre-applied referral discount code
-                // For subscriptions, also add metadata to the subscription
-                ...(mode === "subscription" && {
-                    subscription_data: {
-                        metadata: {
-                            userId,
-                            planId,
-                        },
-                    },
-                }),
-                // For one-time payments, add metadata to the payment intent
-                ...(mode === "payment" && {
-                    payment_intent_data: {
-                        metadata: {
-                            userId,
-                            planId,
-                        },
-                    },
-                }),
-            });
-            // Ensure we have a valid URL (Requirement 2.5)
+            // Attempt 1: Create checkout session with referral discount applied.
+            const session = await (0, stripe_1.getStripe)().checkout.sessions.create(buildSessionParams(discounts, allowPromotionCodes));
             if (!session.url) {
                 throw new errors_1.StripeError("Checkout session created but no URL was returned", errors_1.STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED, 500);
             }
-            return {
-                sessionId: session.id,
-                url: session.url,
-            };
+            return { sessionId: session.id, url: session.url };
         }
         catch (error) {
-            // Handle Stripe API errors (Requirement 2.6)
-            if (error instanceof errors_1.StripeError) {
+            // If the error is caused by an invalid discount/coupon (e.g. test-mode coupon used in live mode),
+            // retry without the discount so checkout is never completely blocked.
+            if ((0, errors_1.isStripeApiError)(error) && discounts && discounts.length > 0) {
+                const stripeErr = error;
+                const isDiscountError = stripeErr.type === "StripeInvalidRequestError" &&
+                    (stripeErr.message?.toLowerCase().includes("coupon") ||
+                        stripeErr.message?.toLowerCase().includes("promotion") ||
+                        stripeErr.message?.toLowerCase().includes("discount") ||
+                        stripeErr.param === "discounts" ||
+                        stripeErr.param === "coupon");
+                if (isDiscountError) {
+                    console.warn(`[REFERRAL] Discount caused checkout failure for user ${userId}. Retrying without discount. Error: ${stripeErr.message}`);
+                    try {
+                        // Attempt 2: Retry without discount — user can manually add the code at checkout.
+                        const fallbackSession = await (0, stripe_1.getStripe)().checkout.sessions.create(buildSessionParams(undefined, true));
+                        if (!fallbackSession.url) {
+                            throw new errors_1.StripeError("Checkout session created but no URL was returned", errors_1.STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED, 500);
+                        }
+                        console.warn(`[REFERRAL] Checkout succeeded without discount for user ${userId}. Manual code entry is available.`);
+                        return { sessionId: fallbackSession.id, url: fallbackSession.url };
+                    }
+                    catch (retryError) {
+                        if (retryError instanceof errors_1.StripeError)
+                            throw retryError;
+                        if ((0, errors_1.isStripeApiError)(retryError))
+                            throw (0, errors_1.createStripeErrorFromApiError)(retryError, errors_1.STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED);
+                        throw retryError;
+                    }
+                }
+            }
+            // Handle all other Stripe API errors
+            if (error instanceof errors_1.StripeError)
                 throw error;
-            }
-            if ((0, errors_1.isStripeApiError)(error)) {
+            if ((0, errors_1.isStripeApiError)(error))
                 throw (0, errors_1.createStripeErrorFromApiError)(error, errors_1.STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED);
-            }
             throw error;
         }
     }

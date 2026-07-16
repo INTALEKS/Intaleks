@@ -285,6 +285,14 @@ const baseMultiples = [
     { country: "indonesia", industry: "other", scoreRange: "<20", multiple: 0.75 },
 ];
 async function main() {
+    // Check if multiples already exist
+    const existingCount = await prisma.valuationMultiple.count();
+    if (existingCount > 0) {
+        console.log(`✅ Valuation multiples already seeded (${existingCount} records) - skipping raw seed`);
+        // Still check subscription plan
+        await seedSubscriptionPlan();
+        return;
+    }
     console.log("🌱 Seeding base valuation multiples using raw SQL...");
     // Clear existing multiples
     await prisma.$executeRaw `DELETE FROM "valuation_multiples"`;
@@ -308,7 +316,10 @@ async function main() {
         console.log(`  ${country}: ${industries.length} industries × ${scoreRanges.length} ranges = ${countryMultiples.length} records`);
     }
     // Seed subscription plan
-    console.log("\n🌱 Seeding subscription plan...");
+    await seedSubscriptionPlan();
+}
+async function seedSubscriptionPlan() {
+    console.log("\n🌱 Checking subscription plan...");
     // Upsert One-Off plan
     const planData = {
         price: 49500, // AUD $495.00 in cents

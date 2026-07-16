@@ -46,11 +46,13 @@ async function ensureStripePlan(plan: { id: string; name: string; price: number;
 
 async function startupSeed() {
   try {
-    // Check and seed valuation multiples
+    // Check and seed valuation multiples (skip if already seeded)
     const multiplesCount = await prisma.valuationMultiple.count();
     if (multiplesCount === 0) {
       console.log("🌱 Seeding valuation multiples...");
       await import("./seed-base-multiples-raw");
+    } else {
+      console.log(`✅ Valuation multiples already seeded (${multiplesCount} records) - skipping`);
     }
 
     // Check and seed subscription plan
@@ -75,12 +77,15 @@ async function startupSeed() {
         where: { name: "One-Off" },
         data: { features: planFeatures },
       });
+      console.log("✅ Subscription plan already exists - updated features");
     }
 
     // Sync Stripe product/price if missing
     if (!plan.stripePriceId) {
       console.log("🔗 Linking plan to Stripe...");
       await ensureStripePlan(plan);
+    } else {
+      console.log(`✅ Stripe already configured (Price ID: ${plan.stripePriceId}) - skipping`);
     }
 
     // Check and seed super admin user
@@ -108,6 +113,8 @@ async function startupSeed() {
     } else if (existingUser.role !== UserRole.SUPER_ADMIN) {
       await prisma.user.update({ where: { email }, data: { role: UserRole.SUPER_ADMIN } });
       console.log(`🔐 Upgraded existing user to super admin: ${email}`);
+    } else {
+      console.log(`✅ Super admin user already exists: ${email} - skipping`);
     }
   } catch (error) {
     console.error("⚠️  Startup seed error:", error);
