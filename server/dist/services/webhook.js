@@ -9,6 +9,7 @@ const stripe_1 = require("../config/stripe");
 const errors_1 = require("../errors");
 const webhook_logger_1 = require("./webhook-logger");
 const invoice_1 = require("./invoice");
+const email_1 = require("./email");
 const stripe_2 = __importDefault(require("stripe"));
 const SubscriptionStatusValues = {
     NONE: "NONE",
@@ -256,6 +257,28 @@ class WebhookService {
             catch (invoiceError) {
                 console.error("Failed to generate/send invoice:", invoiceError);
                 // Don't fail the webhook for invoice errors
+            }
+            // Notify the referring professional if the user was referred
+            try {
+                const updatedUser = await db_1.prisma.user.findUnique({
+                    where: { id: userId },
+                    select: { referredById: true, email: true, firstName: true, lastName: true },
+                });
+                if (updatedUser && updatedUser.referredById) {
+                    const professional = await db_1.prisma.user.findUnique({
+                        where: { id: updatedUser.referredById },
+                        select: { email: true, firstName: true, lastName: true },
+                    });
+                    if (professional) {
+                        const professionalName = `${professional.firstName || ""} ${professional.lastName || ""}`.trim() || "Professional Partner";
+                        const clientName = `${updatedUser.firstName || ""} ${updatedUser.lastName || ""}`.trim() || "Client";
+                        await email_1.emailService.sendReferralNotificationToProfessional(professional.email, professionalName, updatedUser.email, clientName);
+                        console.log(`[WEBHOOK] Sent referral notification email to professional ${professional.email} for client ${updatedUser.email}`);
+                    }
+                }
+            }
+            catch (referralEmailError) {
+                console.error("[WEBHOOK] Failed to send referral notification email:", referralEmailError);
             }
             return {
                 success: true,

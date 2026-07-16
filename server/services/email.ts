@@ -542,6 +542,70 @@ Trading as Intaleks
     });
   }
 
+  async sendReferralNotificationToProfessional(
+    professionalEmail: string,
+    professionalName: string,
+    clientEmail: string,
+    clientName: string
+  ): Promise<boolean> {
+    const content = `
+      <h2 style="margin: 0 0 20px 0; color: #1f2937; font-size: 24px;">New Client Registered!</h2>
+      <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.5;">
+        Hi ${professionalName},
+      </p>
+      <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.5;">
+        We are pleased to inform you that a client has registered and subscribed to a plan using your professional referral link/code.
+      </p>
+      
+      <div style="margin: 30px 0; padding: 20px; background-color: #f0f9ff; border-left: 4px solid #3b82f6; border-radius: 4px;">
+        <h4 style="margin: 0 0 10px 0; color: #1e3a8a; font-size: 16px;">Client Details</h4>
+        <p style="margin: 0; color: #1f2937; font-size: 14px; line-height: 1.6;">
+          <strong>Name:</strong> ${clientName}<br>
+          <strong>Email:</strong> ${clientEmail}
+        </p>
+      </div>
+
+      <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px; line-height: 1.5;">
+        As their referring advisor, you now have access to view their inputs and download their valuation reports directly from your dashboard.
+      </p>
+      
+      <div style="margin: 30px 0; text-align: center;">
+        <a href="${this.frontendUrl}/settings?tab=referrals" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+          Go to Referral Dashboard
+        </a>
+      </div>
+
+      <p style="margin: 20px 0 0 0; color: #6b7280; font-size: 14px; line-height: 1.5;">
+        Thank you for partnering with Intaleks!
+      </p>
+    `;
+
+    const text = `
+New Client Registered!
+
+Hi ${professionalName},
+
+We are pleased to inform you that a client has registered and subscribed to a plan using your professional referral link/code.
+
+Client Details:
+- Name: ${clientName}
+- Email: ${clientEmail}
+
+As their referring advisor, you now have access to view their inputs and download their valuation reports directly from your dashboard.
+
+Access your Referral Dashboard here: ${this.frontendUrl}/settings?tab=referrals
+
+Thank you for partnering with Intaleks!
+    `.trim();
+
+    return this.sendEmail({
+      to: professionalEmail,
+      subject: "New Client Onboarded via Your Referral Code - Intaleks",
+      html: this.getEmailTemplate(content),
+      text,
+    });
+  }
+
   isConfigured(): boolean {
     return this.useResend ? this.resend !== null : this.transporter !== null;
   }
