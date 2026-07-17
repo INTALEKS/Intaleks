@@ -255,6 +255,7 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
         valuation: finalValuation, // Use server-calculated value
         fileUrl: fileUrl, // Will be undefined if R2 upload failed
         fileSize: fileSize,
+        valuationReason: data.valuationReason,
       });
     } catch (dbError) {
       console.error("Failed to save valuation document to database:", dbError);

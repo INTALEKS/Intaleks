@@ -17,6 +17,8 @@ interface CompanyQuestionnaireProps {
   onEmployeesChange: (value: string) => void;
   stage: string;
   onStageChange: (value: string) => void;
+  valuationReason: string;
+  onValuationReasonChange: (value: string) => void;
   logo: File | null;
   onLogoChange: (file: File | null) => void;
 }
@@ -29,7 +31,16 @@ const stages = [
   { value: "10-plus-years", label: "10 years in business or more" },
 ];
 
-export function CompanyQuestionnaire({ companyName, onCompanyNameChange, startedYear, onStartedYearChange, employees, onEmployeesChange, stage, onStageChange, onLogoChange }: CompanyQuestionnaireProps) {
+const valuationReasons = [
+  { value: "selling", label: "Selling the business" },
+  { value: "buyout", label: "Partnership buyout / Shareholder dispute" },
+  { value: "funding", label: "Raising capital / Funding / Investment" },
+  { value: "planning", label: "Internal strategic planning" },
+  { value: "tax", label: "Tax / Legal / Compliance purposes" },
+  { value: "other", label: "Other" },
+];
+
+export function CompanyQuestionnaire({ companyName, onCompanyNameChange, startedYear, onStartedYearChange, employees, onEmployeesChange, stage, onStageChange, valuationReason, onValuationReasonChange, onLogoChange }: CompanyQuestionnaireProps) {
   // Initialize logoPreview with saved data from localStorage
   const [logoPreview, setLogoPreview] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
@@ -128,6 +139,22 @@ export function CompanyQuestionnaire({ companyName, onCompanyNameChange, started
               {stages.map((s) => (
                 <SelectItem key={s.value} value={s.value}>
                   {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Why do you need a business valuation?</label>
+          <Select value={valuationReason} onValueChange={onValuationReasonChange}>
+            <SelectTrigger className="w-full bg-gray-100 border-gray-200 text-sm">
+              <SelectValue placeholder="Select a reason" />
+            </SelectTrigger>
+            <SelectContent>
+              {valuationReasons.map((r) => (
+                <SelectItem key={r.value} value={r.value}>
+                  {r.label}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -223,6 +223,7 @@ const generatePDF = async (req, res, next) => {
                 valuation: finalValuation, // Use server-calculated value
                 fileUrl: fileUrl, // Will be undefined if R2 upload failed
                 fileSize: fileSize,
+                valuationReason: data.valuationReason,
             });
         }
         catch (dbError) {

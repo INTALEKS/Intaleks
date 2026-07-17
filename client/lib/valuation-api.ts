@@ -14,6 +14,7 @@ export interface ValuationReportData {
   companyName?: string;
   country: string;
   industry: string;
+  valuationReason?: string;
 
   // Financial Data
   financialYears: string[];

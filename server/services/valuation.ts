@@ -13,6 +13,7 @@ export interface CreateValuationDocumentData {
   valuation: number;
   fileUrl?: string;
   fileSize?: number;
+  valuationReason?: string;
 }
 
 /**
@@ -27,6 +28,7 @@ export interface ValuationDocumentResponse {
   valuation: number;
   fileUrl: string | null;
   fileSize: number | null;
+  valuationReason: string | null;
   createdAt: Date;
 }
 
@@ -48,6 +50,7 @@ export class ValuationService {
         valuation: data.valuation,
         fileUrl: data.fileUrl,
         fileSize: data.fileSize,
+        valuationReason: data.valuationReason,
       },
     });
 

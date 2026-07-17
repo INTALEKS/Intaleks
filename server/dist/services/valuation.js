@@ -21,6 +21,7 @@ class ValuationService {
                 valuation: data.valuation,
                 fileUrl: data.fileUrl,
                 fileSize: data.fileSize,
+                valuationReason: data.valuationReason,
             },
         });
         return document;

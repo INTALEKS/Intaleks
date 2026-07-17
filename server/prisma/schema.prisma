@@ -434,16 +434,17 @@ enum InvoiceStatus {
 
 // Valuation document tracking model
 model ValuationDocument {
-  id           String   @id @default(cuid())
-  userId       String   @map("user_id")
-  companyName  String   @map("company_name")
-  country      String
-  industry     String
-  method       String   // asset, profit, dcf
-  valuation    Float    // Final valuation amount
-  fileUrl      String?  @map("file_url")
-  fileSize     Int?     @map("file_size") // Size in bytes
-  createdAt    DateTime @default(now()) @map("created_at")
+  id              String   @id @default(cuid())
+  userId          String   @map("user_id")
+  companyName     String   @map("company_name")
+  country         String
+  industry        String
+  method          String   // asset, profit, dcf
+  valuation       Float    // Final valuation amount
+  fileUrl         String?  @map("file_url")
+  fileSize        Int?     @map("file_size") // Size in bytes
+  valuationReason String?  @map("valuation_reason")
+  createdAt       DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

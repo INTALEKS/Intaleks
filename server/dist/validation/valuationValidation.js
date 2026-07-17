@@ -30,4 +30,5 @@ exports.valuationDocumentSchema = joi_1.default.object({
     }),
     fileUrl: joi_1.default.string().uri().optional(),
     fileSize: joi_1.default.number().integer().positive().optional(),
+    valuationReason: joi_1.default.string().allow("").optional(),
 });

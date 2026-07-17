@@ -25,6 +25,7 @@ export const valuationDocumentSchema = Joi.object({
   }),
   fileUrl: Joi.string().uri().optional(),
   fileSize: Joi.number().integer().positive().optional(),
+  valuationReason: Joi.string().allow("").optional(),
 });
 
 export interface ValuationDocumentInput {
@@ -35,4 +36,5 @@ export interface ValuationDocumentInput {
   valuation: number;
   fileUrl?: string;
   fileSize?: number;
+  valuationReason?: string;
 }

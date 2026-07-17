@@ -52,6 +52,7 @@ interface CalculatorState {
   stage: string;
   country: string;
   industry: string;
+  valuationReason: string;
   customMultiple: string;
   questionnaireScores: QuestionnaireScores;
   calculatedMultiple?: number;
@@ -184,6 +185,7 @@ export default function CalculatorPage() {
   const [startedYear, setStartedYear] = useState(initialState?.startedYear || "");
   const [employees, setEmployees] = useState(initialState?.employees || "");
   const [stage, setStage] = useState(initialState?.stage || "");
+  const [valuationReason, setValuationReason] = useState(initialState?.valuationReason || "");
   const [companyLogo, setCompanyLogo] = useState<File | null>(null);
   const [country, setCountry] = useState(initialState?.country || "");
   const [industry, setIndustry] = useState(initialState?.industry || "");
@@ -733,6 +735,7 @@ export default function CalculatorPage() {
         startedYear: startedYear || undefined,
         employees: employees || undefined,
         stage: stage as "startup" | "1-2-years" | "3-5-years" | "5-10-years" | "10-plus-years" | undefined,
+        valuationReason: valuationReason || undefined,
         logoBase64,
         logoMimeType,
         generatedDate: new Date().toLocaleDateString("en-US", {
@@ -806,9 +809,10 @@ export default function CalculatorPage() {
     const hasStage = stage.trim().length > 0;
     const hasCountry = country.trim().length > 0;
     const hasIndustry = industry.trim().length > 0;
+    const hasValuationReason = valuationReason.trim().length > 0;
 
-    return hasStartedYear && hasEmployees && hasStage && hasCountry && hasIndustry;
-  }, [startedYear, employees, stage, country, industry]);
+    return hasStartedYear && hasEmployees && hasStage && hasCountry && hasIndustry && hasValuationReason;
+  }, [startedYear, employees, stage, country, industry, valuationReason]);
 
   // Step 2 is only complete after Step 1 is complete and questionnaire multiple is calculated
   const isStep2Complete = useMemo(() => {
@@ -881,6 +885,7 @@ export default function CalculatorPage() {
       if (!stage) missing.push("Company stage");
       if (!country) missing.push("Country");
       if (!industry) missing.push("Industry");
+      if (!valuationReason.trim()) missing.push("Valuation reason");
     }
 
     if (isStep1Complete && !isStep2Complete) {
@@ -987,6 +992,7 @@ export default function CalculatorPage() {
         stage,
         country,
         industry,
+        valuationReason,
         customMultiple,
         questionnaireScores,
         calculatedMultiple,
@@ -1132,6 +1138,7 @@ export default function CalculatorPage() {
               setStartedYear(parsed.startedYear || "");
               setEmployees(parsed.employees || "");
               setStage(parsed.stage || "startup");
+              setValuationReason(parsed.valuationReason || "");
               setCountry(parsed.country || "australia");
               setIndustry(parsed.industry || "retail");
               setCustomMultiple(parsed.customMultiple || "3");
@@ -1259,7 +1266,7 @@ export default function CalculatorPage() {
       <main className="max-w-5xl mx-auto px-4 pb-16 space-y-4">
         {/* STEP 1: Company Questionnaire */}
         <AccordionSection title="Company Questionaire" stepNumber={1} isOpen={openSections[1]} onToggle={() => toggleSection(1)}>
-          <CompanyQuestionnaire companyName={companyName} onCompanyNameChange={setCompanyName} startedYear={startedYear} onStartedYearChange={setStartedYear} employees={employees} onEmployeesChange={setEmployees} stage={stage} onStageChange={setStage} logo={companyLogo} onLogoChange={setCompanyLogo} />
+          <CompanyQuestionnaire companyName={companyName} onCompanyNameChange={setCompanyName} startedYear={startedYear} onStartedYearChange={setStartedYear} employees={employees} onEmployeesChange={setEmployees} stage={stage} onStageChange={setStage} valuationReason={valuationReason} onValuationReasonChange={setValuationReason} logo={companyLogo} onLogoChange={setCompanyLogo} />
           <div className="mt-6">
             <CountryIndustrySelector country={country} industry={industry} customMultiple={customMultiple} onCountryChange={setCountry} onIndustryChange={setIndustry} onCustomMultipleChange={setCustomMultiple} />
             <div className="bg-blue-50 p-4 rounded-lg mt-4">
@@ -1309,58 +1316,9 @@ export default function CalculatorPage() {
         {/* STEP 4: Financial Data + Selected Method Calculation */}
         <AccordionSection title="Financial Data (Please enter your financial data below)" stepNumber={4} isOpen={openSections[4]} onToggle={() => toggleSection(4)}>
           <div className="relative">
-            {/* Overlay for users without active subscription or coupon access */}
-            {(!isAuthenticated || !hasCalculatorAccess) && (
-              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
-                <div className="text-center p-8">
-                  <div className="w-20 h-20 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                  {isAuthenticated && hasCouponAccess && couponUsed ? (
-                    <>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Coupon Already Used</h3>
-                      <p className="text-gray-600 mb-6 max-w-md">Your one-time coupon access has been used. Subscribe to continue using the calculator.</p>
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push("/#pricing")}>
-                        View Pricing Plans
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">{!isAuthenticated ? "Login Required" : "Access Required"}</h3>
-                      <p className="text-gray-600 mb-6 max-w-md">{!isAuthenticated ? "Please log in and subscribe to enter your financial data and calculate your business valuation" : "An active subscription or coupon code is required to enter financial data and generate valuations"}</p>
-                      <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                        {!isAuthenticated ? (
-                          <>
-                            <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push("/login?returnUrl=/calculator")}>
-                              Log In
-                            </Button>
-                            <Button variant="outline" onClick={() => router.push("/signup?returnUrl=/calculator")}>
-                              Sign Up
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <SubscribeButton />
-                            {subscriptionStatus && subscriptionStatus !== "NONE" && (
-                              <Button variant="outline" onClick={() => router.push("/settings")}>
-                                Manage Subscription
-                              </Button>
-                            )}
-                          </>
-                        )}
-                      </div>
-                      {isAuthenticated && !hasCalculatorAccess && <CouponRedeemForm />}
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
             {selectedMethod === "profit" && (
               <>
-                <FinancialInfoSelector columns={selectedYears} onColumnsChange={setSelectedYears} disabled={!isAuthenticated || !hasCalculatorAccess} />
+                <FinancialInfoSelector columns={selectedYears} onColumnsChange={setSelectedYears} disabled={false} />
 
                 <div className="mt-6">
                   <FinancialDataTable
@@ -1373,14 +1331,14 @@ export default function CalculatorPage() {
                       label: "EBIT CALCULATED",
                       values: ebitValues,
                     }}
-                    disabled={!isAuthenticated || !hasCalculatorAccess}
+                    disabled={false}
                     currencySymbol={currencySymbol}
                     currencyCode={currencyCode}
                   />
                 </div>
 
                 <div className="mt-6">
-                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} onRemoveAddback={handleRemoveAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, (totalAddbacksByYear[year] || 0).toLocaleString()]))} adjustedEbitByYear={adjustedEbitByYear} disabled={!isAuthenticated || !hasCalculatorAccess} currencySymbol={currencySymbol} currencyCode={currencyCode} />
+                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} onRemoveAddback={handleRemoveAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, (totalAddbacksByYear[year] || 0).toLocaleString()]))} adjustedEbitByYear={adjustedEbitByYear} disabled={false} currencySymbol={currencySymbol} currencyCode={currencyCode} />
                 </div>
 
                 {/* Adjusted EBIT Calculation Breakdown */}
@@ -1430,11 +1388,11 @@ export default function CalculatorPage() {
                     <div className="p-4 space-y-3 bg-white">
                       <div className="grid grid-cols-2 gap-4 items-center">
                         <span className="text-sm text-gray-700">Total Debt</span>
-                        <input type="number" value={totalDebt} onChange={(e) => setTotalDebt(e.target.value)} placeholder="0" disabled={!isAuthenticated || !hasCalculatorAccess} className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-50" />
+                        <input type="number" value={totalDebt} onChange={(e) => setTotalDebt(e.target.value)} placeholder="0" disabled={false} className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-50" />
                       </div>
                       <div className="grid grid-cols-2 gap-4 items-center">
                         <span className="text-sm text-gray-700">Cash &amp; Equivalents</span>
-                        <input type="number" value={cashEquivalents} onChange={(e) => setCashEquivalents(e.target.value)} placeholder="0" disabled={!isAuthenticated || !hasCalculatorAccess} className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-50" />
+                        <input type="number" value={cashEquivalents} onChange={(e) => setCashEquivalents(e.target.value)} placeholder="0" disabled={false} className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-50" />
                       </div>
                       <div className="grid grid-cols-2 gap-4 items-center bg-gray-900 rounded-md px-4 py-3 mt-2">
                         <span className="text-sm font-bold text-white">Equity Value</span>
@@ -1449,16 +1407,12 @@ export default function CalculatorPage() {
                     </div>
                   </div>
                 )}
-
-                {/* <div className="mt-6">
-                  <ProfitMethod averageEbit={averageEbit} totalAddbacks={totalAddbacks} capitalizationRate={capitalizationRate} onCapitalizationRateChange={setCapitalizationRate} />
-                </div> */}
               </>
             )}
 
             {selectedMethod === "asset" && (
               <div className="mt-6">
-                <AssetMethod assets={assets} liabilities={liabilities} onAssetChange={(key, value) => setAssets((prev) => ({ ...prev, [key]: value }))} onLiabilityChange={(key, value) => setLiabilities((prev) => ({ ...prev, [key]: value }))} disabled={!isAuthenticated || !hasCalculatorAccess} country={country} currencySymbol={currencySymbol} />
+                <AssetMethod assets={assets} liabilities={liabilities} onAssetChange={(key, value) => setAssets((prev) => ({ ...prev, [key]: value }))} onLiabilityChange={(key, value) => setLiabilities((prev) => ({ ...prev, [key]: value }))} disabled={false} country={country} currencySymbol={currencySymbol} />
               </div>
             )}
           </div>

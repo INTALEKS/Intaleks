@@ -61,6 +61,7 @@ export interface ValuationPDFData {
   startedYear?: string;
   employees?: string;
   stage?: "startup" | "1-2-years" | "3-5-years" | "5-10-years" | "10-plus-years";
+  valuationReason?: string;
   logoBase64?: string;
   logoMimeType?: string;
   generatedDate?: string;
