@@ -245,7 +245,10 @@ export class ReferralService {
 
       // Step 3: Create a new unique Stripe Promotion Code for this professional.
       const promoCode = await stripe.promotionCodes.create({
-        coupon: couponId,
+        promotion: {
+          type: "coupon",
+          coupon: couponId,
+        },
         code,
       } as any);
 

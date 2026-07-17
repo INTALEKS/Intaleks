@@ -327,8 +327,7 @@ export class PaymentService {
       metadata: { userId, planId },
       success_url: finalSuccessUrl,
       cancel_url: finalCancelUrl,
-      allow_promotion_codes: allowPromos,
-      discounts: applyDiscounts,
+      ...(applyDiscounts && applyDiscounts.length > 0 ? { discounts: applyDiscounts } : { allow_promotion_codes: allowPromos }),
       ...(mode === "subscription" && { subscription_data: { metadata: { userId, planId } } }),
       ...(mode === "payment" && { payment_intent_data: { metadata: { userId, planId } } }),
     });
