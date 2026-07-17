@@ -254,7 +254,7 @@ export default function CalculatorPage() {
   // ============================================
   // STEP 3: Valuation Model State
   // ============================================
-  const [selectedMethod, setSelectedMethod] = useState<ValuationMethod | "">(initialState?.selectedMethod || "");
+  const [selectedMethod, setSelectedMethod] = useState<ValuationMethod>(initialState?.selectedMethod || "profit");
 
   // Asset Method
   const [assets, setAssets] = useState<Record<string, string>>(initialState?.assets || {});
