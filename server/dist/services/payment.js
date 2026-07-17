@@ -151,15 +151,26 @@ class PaymentService {
         if (user.referredById) {
             const referralProfile = await db_1.prisma.professionalReferralProfile.findUnique({
                 where: { userId: user.referredById },
-                select: { id: true, stripePromoCodeId: true, status: true, code: true },
+                select: {
+                    id: true,
+                    stripePromoCodeId: true,
+                    status: true,
+                    code: true,
+                    user: {
+                        select: { subscriptionStatus: true }
+                    }
+                },
             });
             console.log(`[CHECKOUT:REFERRAL] Profile found: ${referralProfile ? "YES" : "NO"}`);
             if (referralProfile) {
                 console.log(`[CHECKOUT:REFERRAL] Profile code: ${referralProfile.code}`);
                 console.log(`[CHECKOUT:REFERRAL] Profile status: ${referralProfile.status}`);
+                console.log(`[CHECKOUT:REFERRAL] Referrer subscription status: ${referralProfile.user?.subscriptionStatus ?? "none"}`);
                 console.log(`[CHECKOUT:REFERRAL] Stored stripePromoCodeId: ${referralProfile.stripePromoCodeId ?? "null"}`);
             }
-            if (referralProfile && referralProfile.status === "ACTIVE") {
+            if (referralProfile &&
+                referralProfile.status === "ACTIVE" &&
+                referralProfile.user?.subscriptionStatus === "ACTIVE") {
                 let promoCodeId = referralProfile.stripePromoCodeId;
                 const isMissing = !promoCodeId || promoCodeId.startsWith("dummy_");
                 // Step 1: Try to get/create the per-professional unique Stripe Promotion Code.

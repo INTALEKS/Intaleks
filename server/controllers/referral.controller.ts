@@ -74,6 +74,10 @@ export class ReferralController {
         return res.status(400).json({ success: false, message: "Status is required" });
       }
 
+      if (status !== "APPROVED" && status !== "REJECTED") {
+        return res.status(400).json({ success: false, message: "Invalid status. Must be APPROVED or REJECTED" });
+      }
+
       const data = await ReferralService.updateApplicationStatus(id, status, feedback);
       return res.status(200).json({ success: true, data });
     } catch (error) {
