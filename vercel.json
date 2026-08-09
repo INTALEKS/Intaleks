@@ -1,14 +1,10 @@
 {
   "services": {
     "client": {
-      "root": "client",
-      "routePrefix": "/",
-      "framework": "nextjs"
+      "root": "client"
     },
     "affilliate": {
-      "root": "affilliate",
-      "routePrefix": "/affilliate",
-      "framework": "nextjs"
+      "root": "affilliate"
     }
   }
 }
