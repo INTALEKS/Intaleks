@@ -17,3 +17,5 @@ export { EarningCapacitySection } from "./EarningCapacitySection";
 export { AddbacksExamplesSection } from "./AddbacksExamplesSection";
 export { ValuationSummaryCard } from "./ValuationSummaryCard";
 export { FinancialInfoSelector, columnsToYearLabels, columnToShortLabel, COLUMN_TYPES, type ColumnType, type FinancialColumn } from "./FinancialInfoSelector";
+export { OwnersSalaryTable, type OwnerSalaryYearData } from "./OwnersSalaryTable";
+

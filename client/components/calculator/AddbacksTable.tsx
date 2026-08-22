@@ -28,67 +28,15 @@ interface AddbacksTableProps {
 
 // Predefined addback reasons organized by category
 const ADDBACK_REASONS = [
-  // Owner-Related Adjustments
-  { value: "owner-salary-adjustment", label: "Owner salary above/below market" },
-  { value: "owner-superannuation", label: "Owner superannuation adjustment" },
-  { value: "owner-bonuses", label: "Owner bonuses or drawings" },
-  { value: "owner-insurance", label: "Owner personal insurance" },
-  { value: "owner-subscriptions", label: "Owner personal subscriptions/memberships" },
-
-  // Family & Related Party
-  { value: "family-non-working", label: "Family members on payroll (non-working)" },
-  { value: "family-wages-adjustment", label: "Family wages above/below market" },
-  { value: "related-party-rent", label: "Above-market related-party rent" },
-  { value: "related-party-management", label: "Related-party management fees" },
-  { value: "related-party-charges", label: "Intercompany charges (non-market)" },
-  { value: "related-party-loan", label: "Related-party loan interest" },
-
-  // Personal Expenses
-  { value: "personal-expenses", label: "Personal expenses through business" },
-  { value: "personal-use-assets", label: "Personal use of company assets" },
-  { value: "luxury-vehicles", label: "Luxury vehicle expenses" },
-  { value: "excessive-travel", label: "Excessive travel or entertainment" },
-  { value: "non-essential-events", label: "Non-essential conferences or events" },
-
-  // One-Off Expenses
-  { value: "one-off-legal", label: "One-off legal fees" },
-  { value: "one-off-consulting", label: "One-off consulting fees" },
-  { value: "abnormal-repairs", label: "Abnormal repairs and maintenance" },
-  { value: "one-time-marketing", label: "One-time marketing campaigns" },
+  { value: "donations", label: "Donations" },
+  { value: "entertainment", label: "Entertainment expenses" },
+  { value: "sponsorship", label: "Sponsorship expenses" },
+  { value: "legal-fees", label: "Legal fees (one-time or non-recurring)" },
+  { value: "owner-personal-expenses", label: "Owner's personal expenses" },
+  { value: "one-time-consulting", label: "One-time consulting fees" },
   { value: "relocation-costs", label: "Relocation costs" },
   { value: "restructuring-costs", label: "Restructuring costs" },
-  { value: "covid-related", label: "COVID-related items" },
-  { value: "one-off-bad-debts", label: "One-off bad debts" },
-  { value: "redundancy-payments", label: "Redundancy payments" },
-
-  // Financial Adjustments
-  { value: "interest-expense", label: "Interest expense (financing)" },
-  { value: "interest-income", label: "Interest income (non-operational)" },
-  { value: "asset-sale-gain-loss", label: "Gain/loss on sale of assets" },
-  { value: "unrealised-fx", label: "Unrealised FX gains/losses" },
-  { value: "investment-income", label: "Investment income (non-core)" },
-
-  // Discretionary Expenses
-  { value: "donations-sponsorships", label: "Donations or sponsorships" },
-  { value: "fines-penalties", label: "Fines or penalties" },
-  { value: "charitable-contributions", label: "Charitable contributions" },
-
-  // Accounting Adjustments
-  { value: "depreciation", label: "Depreciation" },
-  { value: "amortisation", label: "Amortisation" },
-  { value: "abnormal-provisions", label: "Abnormal provisions" },
-  { value: "inventory-writedowns", label: "Inventory write-downs (abnormal)" },
-  { value: "impairments", label: "Impairments" },
-  { value: "accounting-policy-changes", label: "Changes in accounting policy" },
-
-  // Normalisation Adjustments
-  { value: "rent-normalisation", label: "Related-party rent normalisation" },
-  { value: "vacant-role-adjustment", label: "Vacant role salary adjustment" },
-  { value: "underpaid-staff", label: "Underpaid key staff adjustment" },
-  { value: "temporary-labour", label: "Temporary labour (non-recurring)" },
-  { value: "owner-multiple-roles", label: "Owner performing multiple roles" },
-
-  // Other
+  { value: "fines-penalties", label: "Fines and penalties (where appropriate)" },
   { value: "other", label: "Other (specify below)" },
 ];
 

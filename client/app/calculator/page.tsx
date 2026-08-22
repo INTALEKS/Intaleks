@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Download, Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar, Footer } from "@/components/home";
-import { AccordionSection, MethodToggle, ValuationMethod, CountryIndustrySelector, FinancialDataTable, AddbacksTable, StepProgress, CompanyQuestionnaire, ValuationDocumentList, EarningCapacitySection, AddbacksExamplesSection, ValuationSummaryCard, FinancialInfoSelector, columnsToYearLabels, type FinancialColumn } from "@/components/calculator";
+import { AccordionSection, MethodToggle, ValuationMethod, CountryIndustrySelector, FinancialDataTable, AddbacksTable, OwnersSalaryTable, type OwnerSalaryYearData, StepProgress, CompanyQuestionnaire, ValuationDocumentList, EarningCapacitySection, AddbacksExamplesSection, ValuationSummaryCard, FinancialInfoSelector, columnsToYearLabels, type FinancialColumn } from "@/components/calculator";
 import { AssetMethod } from "@/components/calculator/methods";
 import { CouponRedeemForm } from "@/components/calculator/CouponRedeemForm";
 import { calculateAverageAdjustedEBIT, formatCurrency, FinancialYearData } from "@/lib/calculator-utils";
@@ -61,6 +61,8 @@ interface CalculatorState {
   useQuestionnaireMultiple: boolean;
   selectedYears: FinancialColumn[];
   financialData: Record<string, Record<string, string>>;
+  superRate?: number;
+  ownerSalaryData?: Record<string, OwnerSalaryYearData>;
   addbacks: Array<{ id: string; reason: string; customReason?: string; values: Record<string, string> }>;
   selectedMethod: ValuationMethod | "";
   assets: Record<string, string>;
@@ -243,6 +245,21 @@ export default function CalculatorPage() {
   const financialYears = useMemo(() => columnsToYearLabels(selectedYears), [selectedYears]);
 
   const [financialData, setFinancialData] = useState<Record<string, Record<string, string>>>(initialState?.financialData || {});
+  const [superRate, setSuperRate] = useState<number>(initialState?.superRate || 0.12);
+  const [ownerSalaryData, setOwnerSalaryData] = useState<Record<string, OwnerSalaryYearData>>(
+    initialState?.ownerSalaryData || {}
+  );
+
+  const handleOwnerSalaryChange = (year: string, field: "paidSalary" | "marketSalary", value: string) => {
+    setOwnerSalaryData((prev) => ({
+      ...prev,
+      [year]: {
+        ...prev[year],
+        [field]: value,
+      },
+    }));
+  };
+
   const [addbacks, setAddbacks] = useState(
     initialState?.addbacks || [
       { id: "1", reason: "", customReason: "", values: {} as Record<string, string> },
@@ -346,7 +363,21 @@ export default function CalculatorPage() {
     return values;
   }, [calculatedMetrics, financialYears]);
 
-  const totalAddbacksByYear = useMemo(() => {
+  // Calculate Net Owner Salary Adjustment per year (Actual Salary & Super - Market Salary & Super)
+  const netOwnerSalaryAdjustmentByYear = useMemo(() => {
+    const adjustments: Record<string, number> = {};
+    financialYears.forEach((year) => {
+      const paid = parseFloat(ownerSalaryData[year]?.paidSalary || "0") || 0;
+      const mkt = parseFloat(ownerSalaryData[year]?.marketSalary || "0") || 0;
+      const totalPaid = paid * (1 + superRate);
+      const totalMkt = mkt * (1 + superRate);
+      adjustments[year] = totalPaid - totalMkt;
+    });
+    return adjustments;
+  }, [ownerSalaryData, superRate, financialYears]);
+
+  // Total General Addbacks (excluding Owner Salary Adjustment)
+  const totalGeneralAddbacksByYear = useMemo(() => {
     const totals: Record<string, number> = {};
     financialYears.forEach((year) => {
       totals[year] = addbacks.reduce((sum, addback) => sum + (parseFloat(addback.values[year]) || 0), 0);
@@ -354,7 +385,18 @@ export default function CalculatorPage() {
     return totals;
   }, [addbacks, financialYears]);
 
-  // Calculate Adjusted EBIT for each year (EBIT + Addbacks for that year)
+  // Total Combined Addbacks per year (General Addbacks + Net Owner Salary Adjustment)
+  const totalAddbacksByYear = useMemo(() => {
+    const totals: Record<string, number> = {};
+    financialYears.forEach((year) => {
+      const general = totalGeneralAddbacksByYear[year] || 0;
+      const salaryAdj = netOwnerSalaryAdjustmentByYear[year] || 0;
+      totals[year] = general + salaryAdj;
+    });
+    return totals;
+  }, [totalGeneralAddbacksByYear, netOwnerSalaryAdjustmentByYear, financialYears]);
+
+  // Calculate Adjusted EBIT for each year (EBIT + Total Combined Addbacks)
   const adjustedEbitByYear = useMemo(() => {
     const adjusted: Record<string, number> = {};
     financialYears.forEach((year) => {
@@ -1338,7 +1380,20 @@ export default function CalculatorPage() {
                 </div>
 
                 <div className="mt-6">
-                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} onRemoveAddback={handleRemoveAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, (totalAddbacksByYear[year] || 0).toLocaleString()]))} adjustedEbitByYear={adjustedEbitByYear} disabled={false} currencySymbol={currencySymbol} currencyCode={currencyCode} />
+                  <OwnersSalaryTable
+                    financialYears={financialYears}
+                    ownerSalaryData={ownerSalaryData}
+                    onChange={handleOwnerSalaryChange}
+                    superRate={superRate}
+                    onSuperRateChange={setSuperRate}
+                    disabled={false}
+                    currencySymbol={currencySymbol}
+                    currencyCode={currencyCode}
+                  />
+                </div>
+
+                <div className="mt-6">
+                  <AddbacksTable addbacks={addbacks} financialYears={financialYears} onAddbackChange={handleAddbackChange} onAddAddback={handleAddAddback} onRemoveAddback={handleRemoveAddback} totalValuesByYear={Object.fromEntries(financialYears.map((year) => [year, (totalGeneralAddbacksByYear[year] || 0).toLocaleString()]))} adjustedEbitByYear={adjustedEbitByYear} disabled={false} currencySymbol={currencySymbol} currencyCode={currencyCode} />
                 </div>
 
                 {/* Adjusted EBIT Calculation Breakdown */}
@@ -1350,7 +1405,8 @@ export default function CalculatorPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {financialYears.map((year) => {
                         const ebit = calculatedMetrics[year]?.ebit || 0;
-                        const addbacks = totalAddbacksByYear[year] || 0;
+                        const salaryAdj = netOwnerSalaryAdjustmentByYear[year] || 0;
+                        const generalAddbacks = totalGeneralAddbacksByYear[year] || 0;
                         const adjustedEbit = adjustedEbitByYear[year] || 0;
 
                         return (
@@ -1361,14 +1417,20 @@ export default function CalculatorPage() {
                                 <span className="text-gray-600">EBIT:</span>
                                 <span className="font-medium text-gray-900">{formatCurrency(ebit, currencyCode)}</span>
                               </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-gray-600">+ Addbacks:</span>
-                                <span className="font-medium text-gray-900">{formatCurrency(addbacks, currencyCode)}</span>
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-600">± Owner Salary Adj:</span>
+                                <span className={`font-medium ${salaryAdj >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                  {salaryAdj >= 0 ? '+' : ''}{formatCurrency(salaryAdj, currencyCode)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-gray-600">+ General Addbacks:</span>
+                                <span className="font-medium text-gray-900">{formatCurrency(generalAddbacks, currencyCode)}</span>
                               </div>
                               <div className="border-t border-gray-300 pt-2 mt-2">
                                 <div className="flex justify-between items-center">
-                                  <span className="font-bold text-red-700">= Adjusted EBIT:</span>
-                                  <span className="font-bold text-red-700">{formatCurrency(adjustedEbit, currencyCode)}</span>
+                                  <span className="font-bold text-blue-700">= Adjusted EBIT:</span>
+                                  <span className="font-bold text-blue-700">{formatCurrency(adjustedEbit, currencyCode)}</span>
                                 </div>
                               </div>
                             </div>
