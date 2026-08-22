@@ -258,10 +258,6 @@ export default function Home() {
         </section>
       </div>
 
-      <TrustedCompanies />
-
-      <CountriesWeService />
-
       <BusinessValuationFeatures />
 
       <HowItWorks steps={howItWorksSteps} />
