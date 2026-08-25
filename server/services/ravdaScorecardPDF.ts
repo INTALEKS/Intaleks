@@ -65,7 +65,7 @@ export interface RAVDAData {
   multipleSource?: "questionnaire" | "industry" | "custom";
   questionnaireScore?: number;
   score?: number;
-  valuationMethod?: "profit" | "asset" | "dcf";
+  valuationMethod?: "profit" | "asset" | "both" | "dcf";
   finalValuation?: number;
   financialYears?: string[];
   financialData?: Record<
@@ -929,8 +929,8 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
   const methodDescH = 64;
 
   // Determine method title and text based on valuation method
-  const methodTitle = data.valuationMethod === "asset" ? "Asset Method" : "Profit Method";
-  const methodText = data.valuationMethod === "asset" ? "You have selected the asset method to value your business. This approach determines what your business is worth by adding up everything it owns—such as equipment, stock, and property—and subtracting everything it owes, such as debts and liabilities." : "You have selected the profit method to value your business. This approach determines what your business is worth by looking at its ability to generate income and how efficiently it operates day to day.";
+  const methodTitle = data.valuationMethod === "both" ? "Asset & Profit Methods" : data.valuationMethod === "asset" ? "Asset Method" : "Profit Method";
+  const methodText = data.valuationMethod === "both" ? "This report includes both the asset method, which values assets less liabilities, and the profit method, which values sustainable earnings using the selected multiple." : data.valuationMethod === "asset" ? "You have selected the asset method to value your business. This approach determines what your business is worth by adding up everything it owns—such as equipment, stock, and property—and subtracting everything it owes, such as debts and liabilities." : "You have selected the profit method to value your business. This approach determines what your business is worth by looking at its ability to generate income and how efficiently it operates day to day.";
 
   doc.roundedRect(PAGE.marginX, methodDescY, methodDescW, methodDescH, 8).fillAndStroke("#F0F9FF", "#BFDBFE");
 
@@ -2284,9 +2284,10 @@ export async function generateRAVDAScorecardPDF(data: RAVDAData): Promise<Buffer
     const fonts = registerInterFonts(doc);
     drawCenteredIntroPage(doc, resolvedData, fonts); // Page 1
     drawEarlyDisclaimerPage(doc, resolvedData, fonts); // Page 2 - Early disclaimer
-    if (resolvedData.valuationMethod === "asset") {
+    if (resolvedData.valuationMethod === "asset" || resolvedData.valuationMethod === "both") {
       drawAssetSummaryPage(doc, resolvedData, fonts); // Page 3 - Asset summary
-    } else if (resolvedData.valuationMethod === "profit") {
+    }
+    if (resolvedData.valuationMethod === "profit" || resolvedData.valuationMethod === "both") {
       drawValuationSummaryPage(doc, resolvedData, fonts); // Page 3 - Well-formatted valuation summary
     }
     const lastFinancialPageNumber = drawFinancialDataPage(doc, resolvedData, fonts); // Page 4+ - Financial data (may span multiple pages)

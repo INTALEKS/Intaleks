@@ -15,16 +15,16 @@ interface ValuationSummaryCardProps {
   averageAddbacks: number;
   adjustedEbit: number;
 
-  // Valuation
-  valuationMethod: "asset" | "profit" | "";
+  // Profit Method valuation
   valuationMultiple?: number;
-  finalValuation: number;
+  profitFinalValuation: number;
 
   // Asset Method (optional)
   totalAssets?: number;
   totalLiabilities?: number;
   netAssetValueBV?: number;
   netAssetValueFMV?: number;
+  assetFinalValuation: number;
 
   // Questionnaire (optional)
   questionnaireScore?: number;
@@ -39,7 +39,7 @@ interface ValuationSummaryCardProps {
   onShowReport?: () => void;
 }
 
-export function ValuationSummaryCard({ companyName, country, industry, averageSales, averageCOGS, averageEbit, averageAddbacks, adjustedEbit, valuationMethod, valuationMultiple, finalValuation, totalAssets, totalLiabilities, netAssetValueBV, netAssetValueFMV, questionnaireScore, questionnaireCategory, isAuthenticated, hasActiveSubscription, showReport, onShowReport }: ValuationSummaryCardProps) {
+export function ValuationSummaryCard({ companyName, country, industry, averageSales, averageCOGS, averageEbit, averageAddbacks, adjustedEbit, valuationMultiple, profitFinalValuation, totalAssets, totalLiabilities, netAssetValueBV, netAssetValueFMV, assetFinalValuation, questionnaireScore, questionnaireCategory, isAuthenticated, hasActiveSubscription, showReport, onShowReport }: ValuationSummaryCardProps) {
   // Helper function to get badge color based on score
   const getCategoryColor = (score?: number) => {
     if (!score) return { bg: "bg-gray-100", text: "text-gray-800", border: "border-gray-200" };
@@ -107,30 +107,16 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
           <>
             {/* Key Metrics Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
-              {/* Financial Metrics */}
-              {valuationMethod === "profit" && (
-                <>
-                  <MetricCard label="Average Sales" value={formatCurrency(averageSales)} icon="💰" color="blue" />
-                  <MetricCard label="Average COGS" value={formatCurrency(averageCOGS)} icon="📊" color="gray" />
-                  {/* Average EBIT uses distinct indigo scheme so it never clashes with Valuation Multiple bands */}
-                  <MetricCard label="Average EBIT" value={formatCurrency(averageEbit)} icon="📈" color="indigo" />
-                  {/* Average Addbacks now uses neutral gray */}
-                  <MetricCard label="Average Addbacks" value={formatCurrency(averageAddbacks)} icon="➕" color="gray" />
-                  {/* Average Adjusted EBIT gets a distinct purple scheme */}
-                  <MetricCard label="Average Adjusted EBIT" value={formatCurrency(adjustedEbit)} icon="✨" color="purple" />
-                  <MetricCard label="Valuation Multiple" value={valuationMultiple ? `${valuationMultiple.toFixed(2)}x` : "N/A"} icon="🎯" color={getValuationMultipleColor(questionnaireScore)} />
-                </>
-              )}
-
-              {/* Asset Method Metrics */}
-              {valuationMethod === "asset" && (
-                <>
-                  <MetricCard label="Total Assets" value={formatCurrency(totalAssets || 0)} icon="🏢" color="blue" />
-                  <MetricCard label="Total Liabilities" value={formatCurrency(totalLiabilities || 0)} icon="📋" color="red" />
-                  <MetricCard label="Net Asset Value (Book Value)" value={formatCurrency(netAssetValueBV || 0)} icon="📖" color="gray" />
-                  <MetricCard label="Net Asset Value (Fair Market Value)" value={formatCurrency(netAssetValueFMV || 0)} icon="💎" color="green" />
-                </>
-              )}
+              <MetricCard label="Average Sales" value={formatCurrency(averageSales)} icon="💰" color="blue" />
+              <MetricCard label="Average COGS" value={formatCurrency(averageCOGS)} icon="📊" color="gray" />
+              <MetricCard label="Average EBIT" value={formatCurrency(averageEbit)} icon="📈" color="indigo" />
+              <MetricCard label="Average Addbacks" value={formatCurrency(averageAddbacks)} icon="➕" color="gray" />
+              <MetricCard label="Average Adjusted EBIT" value={formatCurrency(adjustedEbit)} icon="✨" color="purple" />
+              <MetricCard label="Valuation Multiple" value={valuationMultiple ? `${valuationMultiple.toFixed(2)}x` : "N/A"} icon="🎯" color={getValuationMultipleColor(questionnaireScore)} />
+              <MetricCard label="Total Assets (FMV)" value={formatCurrency(totalAssets || 0)} icon="🏢" color="blue" />
+              <MetricCard label="Total Liabilities (FMV)" value={formatCurrency(totalLiabilities || 0)} icon="📋" color="red" />
+              <MetricCard label="Net Asset Value (Book Value)" value={formatCurrency(netAssetValueBV || 0)} icon="📖" color="gray" />
+              <MetricCard label="Net Asset Value (Fair Market Value)" value={formatCurrency(netAssetValueFMV || 0)} icon="💎" color="green" />
             </div>
 
             {/* Questionnaire Score (if available) */}
@@ -149,8 +135,9 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
               </div>
             )}
 
-            {/* Final Valuation - Highlighted */}
-            <div className="bg-linear-to-r from-blue-600 to-blue-700 rounded-lg p-4 sm:p-6 text-white relative overflow-hidden">
+            {/* Both valuation methods are always shown together. */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="bg-linear-to-r from-slate-700 to-slate-900 rounded-lg p-4 sm:p-6 text-white relative overflow-hidden">
               {/* Watermark inside valuation box for unauthenticated users */}
               {!isAuthenticated && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
@@ -161,18 +148,25 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
               <div className="relative z-10">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-blue-100 text-xs sm:text-sm mb-1">{!isAuthenticated || !hasActiveSubscription ? "Preview Estimate" : "Estimated Business Valuation"}</p>
-                    <p className="text-2xl sm:text-4xl font-bold break-all">{formatCurrency(finalValuation)}</p>
+                    <p className="text-slate-200 text-xs sm:text-sm mb-1">Asset Method Valuation</p>
+                    <p className="text-2xl sm:text-4xl font-bold break-all">{formatCurrency(assetFinalValuation)}</p>
                     {(!isAuthenticated || !hasActiveSubscription) && <p className="text-blue-200 text-xs mt-2 italic">* Client-side calculation for preview only</p>}
                   </div>
                 </div>
-                <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-blue-500">
-                  <p className="text-blue-100 text-xs">
-                    Method: <span className="font-semibold capitalize">{valuationMethod} Method</span>
-                    {valuationMethod === "profit" && valuationMultiple && <> • Multiple: {valuationMultiple.toFixed(2)}x</>}
-                  </p>
+                <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-slate-500">
+                  <p className="text-slate-200 text-xs">Fair market value of assets less liabilities</p>
                 </div>
               </div>
+            </div>
+            <div className="bg-linear-to-r from-blue-600 to-blue-700 rounded-lg p-4 sm:p-6 text-white relative overflow-hidden">
+              <div className="relative z-10">
+                <p className="text-blue-100 text-xs sm:text-sm mb-1">Profit Method Valuation</p>
+                <p className="text-2xl sm:text-4xl font-bold break-all">{formatCurrency(profitFinalValuation)}</p>
+                <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-blue-500">
+                  <p className="text-blue-100 text-xs">Average adjusted EBIT{valuationMultiple ? ` × ${valuationMultiple.toFixed(2)} multiple` : ""}</p>
+                </div>
+              </div>
+            </div>
             </div>
           </>
         )}

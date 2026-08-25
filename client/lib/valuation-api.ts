@@ -32,7 +32,7 @@ export interface ValuationReportData {
   totalAddbacksPerYear?: Record<string, number>;
 
   // Valuation Method
-  valuationMethod: "asset" | "profit";
+  valuationMethod: "asset" | "profit" | "both";
 
   // Valuation Multiple
   customMultiple?: string;

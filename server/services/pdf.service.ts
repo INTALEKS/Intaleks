@@ -46,7 +46,7 @@ export interface ValuationPDFData {
    * totalAddbacksPerYear[yearLabel] = sum of all add-back items for that year.
    */
   totalAddbacksPerYear?: Record<string, number>;
-  valuationMethod: "profit" | "asset" | "dcf";
+  valuationMethod: "profit" | "asset" | "both" | "dcf";
   finalValuation: number;
 
   // Equity Value (China & Indonesia only)

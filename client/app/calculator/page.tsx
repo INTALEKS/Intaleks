@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Download, Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar, Footer } from "@/components/home";
-import { AccordionSection, MethodToggle, ValuationMethod, CountryIndustrySelector, FinancialDataTable, AddbacksTable, OwnersSalaryTable, type OwnerSalaryYearData, StepProgress, CompanyQuestionnaire, ValuationDocumentList, EarningCapacitySection, AddbacksExamplesSection, ValuationSummaryCard, FinancialInfoSelector, columnsToYearLabels, type FinancialColumn } from "@/components/calculator";
+import { AccordionSection, CountryIndustrySelector, FinancialDataTable, AddbacksTable, OwnersSalaryTable, type OwnerSalaryYearData, StepProgress, CompanyQuestionnaire, ValuationDocumentList, EarningCapacitySection, AddbacksExamplesSection, ValuationSummaryCard, FinancialInfoSelector, columnsToYearLabels, type FinancialColumn } from "@/components/calculator";
 import { AssetMethod } from "@/components/calculator/methods";
 import { CouponRedeemForm } from "@/components/calculator/CouponRedeemForm";
 import { calculateAverageAdjustedEBIT, formatCurrency, FinancialYearData } from "@/lib/calculator-utils";
@@ -64,7 +64,6 @@ interface CalculatorState {
   superRate?: number;
   ownerSalaryData?: Record<string, OwnerSalaryYearData>;
   addbacks: Array<{ id: string; reason: string; customReason?: string; values: Record<string, string> }>;
-  selectedMethod: ValuationMethod | "";
   assets: Record<string, string>;
   liabilities: Record<string, string>;
   companyLogoData?: string; // base64 encoded logo
@@ -271,7 +270,6 @@ export default function CalculatorPage() {
   // ============================================
   // STEP 3: Valuation Model State
   // ============================================
-  const [selectedMethod, setSelectedMethod] = useState<ValuationMethod>(initialState?.selectedMethod || "profit");
 
   // Asset Method
   const [assets, setAssets] = useState<Record<string, string>>(initialState?.assets || {});
@@ -434,34 +432,28 @@ export default function CalculatorPage() {
     return baseIndustryMultiple;
   }, [useQuestionnaireMultiple, calculatedMultiple, customMultiple, baseIndustryMultiple]);
 
-  // Calculate final valuation based on method
-  const finalValuation = useMemo(() => {
-    if (selectedMethod === "asset") {
-      const isChina = country.toLowerCase() === "china";
-      // Calculate FMV total (this is the primary valuation)
-      const totalAssetsFMV = Object.entries(assets).reduce((sum, [key, val]) => {
-        // Only include FMV fields
-        if (!key.endsWith("_fmv")) return sum;
-        if (key === "landUseRights_fmv" && !isChina) return sum;
-        return sum + (parseFloat(String(val)) || 0);
-      }, 0);
-      const totalLiabilitiesFMV = Object.entries(liabilities).reduce((sum, [key, val]) => {
-        // Only include FMV fields
-        if (!key.endsWith("_fmv")) return sum;
-        return sum + (parseFloat(String(val)) || 0);
-      }, 0);
-      return totalAssetsFMV - totalLiabilitiesFMV;
-    } else if (selectedMethod === "profit") {
-      // Valuation = Average Adjusted EBIT × Effective Multiple
-      return averageAdjustedEbit * effectiveProfitMultiple;
-    }
-    return 0;
-  }, [selectedMethod, assets, liabilities, country, averageAdjustedEbit, effectiveProfitMultiple]);
+  // Calculate final valuation for ASSET method (always computed)
+  const assetFinalValuation = useMemo(() => {
+    const isChina = country.toLowerCase() === "china";
+    const totalAssetsFMV = Object.entries(assets).reduce((sum, [key, val]) => {
+      if (!key.endsWith("_fmv")) return sum;
+      if (key === "landUseRights_fmv" && !isChina) return sum;
+      return sum + (parseFloat(String(val)) || 0);
+    }, 0);
+    const totalLiabilitiesFMV = Object.entries(liabilities).reduce((sum, [key, val]) => {
+      if (!key.endsWith("_fmv")) return sum;
+      return sum + (parseFloat(String(val)) || 0);
+    }, 0);
+    return totalAssetsFMV - totalLiabilitiesFMV;
+  }, [assets, liabilities, country]);
 
-  // Calculate Book Value and Fair Market Value separately for Asset Method
+  // Calculate final valuation for PROFIT method (always computed)
+  const profitFinalValuation = useMemo(() => {
+    return averageAdjustedEbit * effectiveProfitMultiple;
+  }, [averageAdjustedEbit, effectiveProfitMultiple]);
+
+  // Calculate Book Value and Fair Market Value separately for Asset Method (always computed)
   const assetMethodValues = useMemo(() => {
-    if (selectedMethod !== "asset") return { bookValue: 0, fairMarketValue: 0 };
-
     const isChina = country.toLowerCase() === "china";
 
     // Calculate Book Value
@@ -489,15 +481,15 @@ export default function CalculatorPage() {
     const fairMarketValue = totalAssetsFMV - totalLiabilitiesFMV;
 
     return { bookValue, fairMarketValue };
-  }, [selectedMethod, assets, liabilities, country]);
+  }, [assets, liabilities, country]);
 
-  // Equity Value = Enterprise Value (finalValuation) - Total Debt + Cash & Equivalents
+  // Equity Value = Profit Enterprise Value - Total Debt + Cash & Equivalents
   // Only relevant for China & Indonesia
   const equityValue = useMemo(() => {
     const debt = parseFloat(totalDebt) || 0;
     const cash = parseFloat(cashEquivalents) || 0;
-    return finalValuation - debt + cash;
-  }, [finalValuation, totalDebt, cashEquivalents]);
+    return profitFinalValuation - debt + cash;
+  }, [profitFinalValuation, totalDebt, cashEquivalents]);
 
   // ============================================
   // EVENT HANDLERS
@@ -527,57 +519,35 @@ export default function CalculatorPage() {
       return;
     }
 
-    // Prepare data for server-side calculation
+    // Prepare data for server-side calculation — always calculate both methods
     try {
-      let calculationData;
-
-      if (selectedMethod === "profit") {
-        // Convert financial data to proper format
-        const formattedFinancialData: Record<string, { sales: number; otherIncome: number; cogs: number; operatingExpenses: number; interestExpense: number; interestIncome: number }> = {};
-        financialYears.forEach((year) => {
-          formattedFinancialData[year] = {
-            sales: parseFloat((financialData?.sales?.[year] as string) || "0"),
-            otherIncome: parseFloat((financialData?.otherIncome?.[year] as string) || "0"),
-            cogs: parseFloat((financialData?.cogs?.[year] as string) || "0"),
-            operatingExpenses: parseFloat((financialData?.operatingExpenses?.[year] as string) || "0"),
-            interestExpense: parseFloat((financialData?.interestExpense?.[year] as string) || "0"),
-            interestIncome: parseFloat((financialData?.interestIncome?.[year] as string) || "0"),
-          };
-        });
-
-        // Format addbacks
-        const formattedAddbacks = addbacks.map((addback) => ({
-          reason: addback.reason,
-          values: Object.fromEntries(Object.entries(addback.values).map(([year, value]) => [year, parseFloat(value as string) || 0])),
-        }));
-
-        calculationData = {
-          valuationMethod: "profit" as const,
-          financialData: formattedFinancialData,
-          addbacks: formattedAddbacks,
-          multiple: effectiveProfitMultiple,
-          years: financialYears,
+      // Format profit data
+      const formattedFinancialData: Record<string, { sales: number; otherIncome: number; cogs: number; operatingExpenses: number; interestExpense: number; interestIncome: number }> = {};
+      financialYears.forEach((year) => {
+        formattedFinancialData[year] = {
+          sales: parseFloat((financialData?.sales?.[year] as string) || "0"),
+          otherIncome: parseFloat((financialData?.otherIncome?.[year] as string) || "0"),
+          cogs: parseFloat((financialData?.cogs?.[year] as string) || "0"),
+          operatingExpenses: parseFloat((financialData?.operatingExpenses?.[year] as string) || "0"),
+          interestExpense: parseFloat((financialData?.interestExpense?.[year] as string) || "0"),
+          interestIncome: parseFloat((financialData?.interestIncome?.[year] as string) || "0"),
         };
-      } else {
-        // Asset method - convert string values to numbers
-        const convertedAssets: Record<string, number> = {};
-        Object.entries(assets).forEach(([key, value]) => {
-          convertedAssets[key] = parseFloat(value as string) || 0;
-        });
+      });
 
-        const convertedLiabilities: Record<string, number> = {};
-        Object.entries(liabilities).forEach(([key, value]) => {
-          convertedLiabilities[key] = parseFloat(value as string) || 0;
-        });
+      const formattedAddbacks = addbacks.map((addback) => ({
+        reason: addback.reason,
+        values: Object.fromEntries(Object.entries(addback.values).map(([year, value]) => [year, parseFloat(value as string) || 0])),
+      }));
 
-        calculationData = {
-          valuationMethod: "asset" as const,
-          assets: convertedAssets,
-          liabilities: convertedLiabilities,
-        };
-      }
+      // Call server with profit method (primary)
+      const calculationData = {
+        valuationMethod: "profit" as const,
+        financialData: formattedFinancialData,
+        addbacks: formattedAddbacks,
+        multiple: effectiveProfitMultiple,
+        years: financialYears,
+      };
 
-      // Call server to calculate
       const result = await calculateValuationMutation.mutateAsync(calculationData);
 
       // Store server-calculated values
@@ -771,8 +741,13 @@ export default function CalculatorPage() {
         adjustedEbit: averageAdjustedEbit,
         adjustedEbitPerYear: Object.fromEntries(financialYears.map((year) => [year, adjustedEbitByYear[year] || 0])),
         totalAddbacksPerYear: Object.fromEntries(financialYears.map((year) => [year, totalAddbacksByYear[year] || 0])),
-        valuationMethod: selectedMethod as "profit" | "asset",
-        finalValuation,
+        valuationMethod: "both",
+        finalValuation: profitFinalValuation,
+        profitValuation: profitFinalValuation,
+        // Asset method data always included
+        assets: Object.fromEntries(Object.entries(assets).map(([key, value]) => [key, parseFloat(value as string) || 0])),
+        liabilities: Object.fromEntries(Object.entries(liabilities).map(([key, value]) => [key, parseFloat(value as string) || 0])),
+        assetValuation: assetFinalValuation,
         // Extended fields for multi-page PDF with cover page
         startedYear: startedYear || undefined,
         employees: employees || undefined,
@@ -792,35 +767,14 @@ export default function CalculatorPage() {
         questionnaireCategory: multipleCategory,
         calculatedMultiple: effectiveProfitMultiple,
         multipleSource,
-        questionnaireScores: questionnaireScores, // Always include questionnaire scores for PDF display
+        questionnaireScores: questionnaireScores,
         // Equity Value for China & Indonesia
-        ...((country.toLowerCase() === "china" || country.toLowerCase() === "indonesia") &&
-          selectedMethod === "profit" && {
-            totalDebt: parseFloat(totalDebt) || 0,
-            cashEquivalents: parseFloat(cashEquivalents) || 0,
-            equityValue,
-          }),
+        ...((country.toLowerCase() === "china" || country.toLowerCase() === "indonesia") && {
+          totalDebt: parseFloat(totalDebt) || 0,
+          cashEquivalents: parseFloat(cashEquivalents) || 0,
+          equityValue,
+        }),
       };
-
-      // Add method-specific data
-      if (selectedMethod === "asset") {
-        // Convert string values to numbers and pass complete assets/liabilities with _bv and _fmv fields
-        const convertedAssets: Record<string, number> = {};
-        Object.entries(assets).forEach(([key, value]) => {
-          convertedAssets[key] = parseFloat(value as string) || 0;
-        });
-
-        const convertedLiabilities: Record<string, number> = {};
-        Object.entries(liabilities).forEach(([key, value]) => {
-          convertedLiabilities[key] = parseFloat(value as string) || 0;
-        });
-
-        reportData.assets = convertedAssets;
-        reportData.liabilities = convertedLiabilities;
-        reportData.assetValuation = finalValuation;
-      } else if (selectedMethod === "profit") {
-        reportData.profitValuation = finalValuation;
-      }
 
       // Download PDF - server will also save to database and R2
       await downloadValuationPDF(reportData);
@@ -861,10 +815,12 @@ export default function CalculatorPage() {
     return isStep1Complete && useQuestionnaireMultiple && calculatedMultiple !== undefined;
   }, [isStep1Complete, useQuestionnaireMultiple, calculatedMultiple]);
 
-  // Step 3 is complete when Step 2 is complete and user has selected a valuation method
+  // Step 3 is complete when Step 2 is complete and at least one asset value has been entered
   const isStep3Complete = useMemo(() => {
-    return isStep2Complete && !!selectedMethod;
-  }, [isStep2Complete, selectedMethod]);
+    if (!isStep2Complete) return false;
+    const hasAssets = Object.values(assets).some((val) => parseFloat(val) > 0);
+    return hasAssets;
+  }, [isStep2Complete, assets]);
 
   // Validate addbacks: if a reason is provided, at least one value must be non-zero
   const validateAddbacks = useMemo(() => {
@@ -882,34 +838,26 @@ export default function CalculatorPage() {
     });
   }, [addbacks]);
 
-  // Step 4 is complete when financial data is entered based on selected method
+  // Step 4 is complete when profit financial data is entered
   const isStep4Complete = useMemo(() => {
     if (!isStep3Complete) return false;
 
     // Require active subscription or coupon access for step 4
     if (!isAuthenticated || !hasCalculatorAccess) return false;
 
-    if (selectedMethod === "profit") {
-      // For profit method, check if sales data exists for all years
-      const hasSalesData = financialYears.every((year) => {
-        const sales = parseFloat((financialData?.sales?.[year] as string) || "0");
-        return sales > 0;
-      });
+    // Check if sales data exists for all years
+    const hasSalesData = financialYears.every((year) => {
+      const sales = parseFloat((financialData?.sales?.[year] as string) || "0");
+      return sales > 0;
+    });
 
-      // Validate addbacks
-      if (!validateAddbacks) {
-        return false;
-      }
-
-      return hasSalesData;
-    } else if (selectedMethod === "asset") {
-      // For asset method, need at least one asset value
-      const hasAssets = Object.values(assets).some((val) => parseFloat(val) > 0);
-      return hasAssets;
+    // Validate addbacks
+    if (!validateAddbacks) {
+      return false;
     }
 
-    return false;
-  }, [isStep3Complete, isAuthenticated, hasCalculatorAccess, selectedMethod, financialData, financialYears, assets, validateAddbacks]);
+    return hasSalesData;
+  }, [isStep3Complete, isAuthenticated, hasCalculatorAccess, financialData, financialYears, validateAddbacks]);
 
   // Step 5 (Download) is complete when step 4 is done
   const isStep5Complete = isStep4Complete;
@@ -937,8 +885,9 @@ export default function CalculatorPage() {
     }
 
     if (isStep2Complete && !isStep3Complete) {
-      if (!selectedMethod) {
-        missing.push("Select valuation method");
+      const hasAssets = Object.values(assets).some((val) => parseFloat(val) > 0);
+      if (!hasAssets) {
+        missing.push("At least one asset value (Step 3 — Asset Method)");
       }
     }
 
@@ -947,7 +896,7 @@ export default function CalculatorPage() {
         missing.push("Log in to continue");
       } else if (!hasCalculatorAccess) {
         missing.push("Active subscription or coupon");
-      } else if (selectedMethod === "profit") {
+      } else {
         const missingSalesYears = financialYears.filter((year) => {
           const sales = parseFloat((financialData?.sales?.[year] as string) || "0");
           return sales <= 0;
@@ -958,16 +907,11 @@ export default function CalculatorPage() {
         if (!validateAddbacks) {
           missing.push("Complete or remove incomplete addbacks");
         }
-      } else if (selectedMethod === "asset") {
-        const hasAssets = Object.values(assets).some((val) => parseFloat(val) > 0);
-        if (!hasAssets) {
-          missing.push("At least one asset value");
-        }
       }
     }
 
     return missing;
-  }, [isStep1Complete, isStep2Complete, isStep3Complete, isStep4Complete, companyName, startedYear, employees, stage, country, industry, useQuestionnaireMultiple, calculatedMultiple, selectedMethod, isAuthenticated, hasCalculatorAccess, financialYears, financialData, assets, validateAddbacks]);
+  }, [isStep1Complete, isStep2Complete, isStep3Complete, isStep4Complete, companyName, startedYear, employees, stage, country, industry, useQuestionnaireMultiple, calculatedMultiple, isAuthenticated, hasCalculatorAccess, financialYears, financialData, assets, validateAddbacks]);
 
   const completedSteps = useMemo(() => {
     const steps: number[] = [];
@@ -990,8 +934,8 @@ export default function CalculatorPage() {
   const steps = [
     { number: 1, label: "Company Info" },
     { number: 2, label: "Multiple Assessment" },
-    { number: 3, label: "Valuation Model" },
-    { number: 4, label: "Financials" },
+    { number: 3, label: "Asset Method" },
+    { number: 4, label: "Profit Method" },
     { number: 5, label: "Download" },
   ];
 
@@ -1044,7 +988,6 @@ export default function CalculatorPage() {
         selectedYears,
         financialData,
         addbacks,
-        selectedMethod,
         assets,
         liabilities,
         companyLogoData: logoData,
@@ -1062,7 +1005,7 @@ export default function CalculatorPage() {
     };
 
     saveState();
-  }, [isInitialMount, companyName, startedYear, employees, stage, country, industry, customMultiple, questionnaireScores, calculatedMultiple, multipleCategory, totalScore, useQuestionnaireMultiple, selectedYears, financialData, addbacks, selectedMethod, assets, liabilities, companyLogo]);
+  }, [isInitialMount, companyName, startedYear, employees, stage, country, industry, customMultiple, questionnaireScores, calculatedMultiple, multipleCategory, totalScore, useQuestionnaireMultiple, selectedYears, financialData, addbacks, assets, liabilities, companyLogo]);
 
   // Restore logo and check terms on mount
   useEffect(() => {
@@ -1218,7 +1161,6 @@ export default function CalculatorPage() {
                   { id: "3", reason: "", values: {} },
                 ],
               );
-              setSelectedMethod(parsed.selectedMethod || "profit");
               setAssets(parsed.assets || {});
               setLiabilities(parsed.liabilities || {});
 
@@ -1329,38 +1271,47 @@ export default function CalculatorPage() {
           <ValuationQuestionnaire scores={questionnaireScores} onScoresChange={setQuestionnaireScores} onCalculate={handleCalculateMultiple} isCalculating={calculatePreviewMutation.isPending} calculatedMultiple={calculatedMultiple} totalScore={totalScore} category={multipleCategory} />
         </AccordionSection>
 
-        {/* STEP 3: Valuation Model Selection Only */}
-        <AccordionSection title="Choose a valuation model" stepNumber={3} isOpen={openSections[3]} onToggle={() => toggleSection(3)}>
-          <MethodToggle selectedMethod={selectedMethod} onMethodChange={setSelectedMethod} />
+        {/* STEP 3: Asset Method */}
+        <AccordionSection title="Asset Method" stepNumber={3} isOpen={openSections[3]} onToggle={() => toggleSection(3)}>
+          <div className="relative">
+            <AssetMethod
+              assets={assets}
+              liabilities={liabilities}
+              onAssetChange={(key, value) => setAssets((prev) => ({ ...prev, [key]: value }))}
+              onLiabilityChange={(key, value) => setLiabilities((prev) => ({ ...prev, [key]: value }))}
+              disabled={false}
+              country={country}
+              currencySymbol={currencySymbol}
+            />
 
-          {/* Sign Up Banner for Unauthenticated Users */}
-          {!isAuthenticated && (
-            <div className="mt-6 bg-linear-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white text-center">
-              <div className="flex flex-col items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <h3 className="text-xl font-semibold mb-2">Log In Required</h3>
-                <p className="text-blue-100 mb-4 max-w-md">Log In and continue your business valuation</p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button className="bg-white text-blue-600 hover:bg-blue-50" onClick={() => router.push("/login?returnUrl=/calculator")}>
-                    Sign In
-                  </Button>
-                  <Button className="border-white text-white" onClick={() => router.push("/signup?returnUrl=/calculator")}>
-                    Sign Up
-                  </Button>
+            {/* Sign Up Banner for Unauthenticated Users */}
+            {!isAuthenticated && (
+              <div className="mt-6 bg-linear-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white text-center">
+                <div className="flex flex-col items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  <h3 className="text-xl font-semibold mb-2">Log In Required</h3>
+                  <p className="text-blue-100 mb-4 max-w-md">Log In and continue your business valuation</p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button className="bg-white text-blue-600 hover:bg-blue-50" onClick={() => router.push("/login?returnUrl=/calculator")}>
+                      Sign In
+                    </Button>
+                    <Button className="border-white text-white" onClick={() => router.push("/signup?returnUrl=/calculator")}>
+                      Sign Up
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </AccordionSection>
 
-        {/* STEP 4: Financial Data + Selected Method Calculation */}
-        <AccordionSection title="Financial Data (Please enter your financial data below)" stepNumber={4} isOpen={openSections[4]} onToggle={() => toggleSection(4)}>
+        {/* STEP 4: Profit Method */}
+        <AccordionSection title="Profit Method" stepNumber={4} isOpen={openSections[4]} onToggle={() => toggleSection(4)}>
           <div className="relative">
-            {selectedMethod === "profit" && (
-              <>
-                <FinancialInfoSelector columns={selectedYears} onColumnsChange={setSelectedYears} disabled={false} />
+            <>
+              <FinancialInfoSelector columns={selectedYears} onColumnsChange={setSelectedYears} disabled={false} />
 
                 <div className="mt-6">
                   <FinancialDataTable
@@ -1469,14 +1420,7 @@ export default function CalculatorPage() {
                     </div>
                   </div>
                 )}
-              </>
-            )}
-
-            {selectedMethod === "asset" && (
-              <div className="mt-6">
-                <AssetMethod assets={assets} liabilities={liabilities} onAssetChange={(key, value) => setAssets((prev) => ({ ...prev, [key]: value }))} onLiabilityChange={(key, value) => setLiabilities((prev) => ({ ...prev, [key]: value }))} disabled={false} country={country} currencySymbol={currencySymbol} />
-              </div>
-            )}
+            </>
           </div>
         </AccordionSection>
 
@@ -1484,10 +1428,32 @@ export default function CalculatorPage() {
         <AccordionSection title="Download Valuation Document (PDF)" stepNumber={5} isOpen={openSections[5]} onToggle={() => toggleSection(5)}>
           <div className="py-6 space-y-6">
             {/* Comprehensive Valuation Summary Card */}
-            <ValuationSummaryCard companyName={companyName} country={country} industry={industry} averageSales={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageSales : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length} averageCOGS={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageCOGS : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length} averageEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageEbit : financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length} averageAddbacks={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageAddbacks : financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0) / financialYears.length} adjustedEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.adjustedEbit : averageAdjustedEbit} valuationMethod={selectedMethod} valuationMultiple={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.valuationMultiple : effectiveProfitMultiple} finalValuation={serverCalculatedValues?.finalValuation ?? finalValuation} totalAssets={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalAssets : selectedMethod === "asset" ? Object.values(assets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} totalLiabilities={serverCalculatedValues?.method === "asset" ? serverCalculatedValues.totalLiabilities : selectedMethod === "asset" ? Object.values(liabilities).reduce((sum, val) => sum + (parseFloat(val) || 0), 0) : undefined} netAssetValueBV={selectedMethod === "asset" ? assetMethodValues.bookValue : undefined} netAssetValueFMV={selectedMethod === "asset" ? assetMethodValues.fairMarketValue : undefined} questionnaireScore={totalScore} questionnaireCategory={multipleCategory} isAuthenticated={isAuthenticated} hasActiveSubscription={hasCalculatorAccess} showReport={showValuationReport} onShowReport={handleShowReport} />
+            <ValuationSummaryCard
+              companyName={companyName}
+              country={country}
+              industry={industry}
+              averageSales={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageSales : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.sales?.[year] as string) || "0"), 0) / financialYears.length}
+              averageCOGS={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageCOGS : financialYears.reduce((sum, year) => sum + parseFloat((financialData?.cogs?.[year] as string) || "0"), 0) / financialYears.length}
+              averageEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageEbit : financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length}
+              averageAddbacks={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.averageAddbacks : financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0) / financialYears.length}
+              adjustedEbit={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.adjustedEbit : averageAdjustedEbit}
+              valuationMultiple={serverCalculatedValues?.method === "profit" ? serverCalculatedValues.valuationMultiple : effectiveProfitMultiple}
+              profitFinalValuation={serverCalculatedValues?.finalValuation ?? profitFinalValuation}
+              totalAssets={Object.entries(assets).filter(([k]) => k.endsWith("_fmv")).reduce((sum, [, val]) => sum + (parseFloat(val) || 0), 0)}
+              totalLiabilities={Object.entries(liabilities).filter(([k]) => k.endsWith("_fmv")).reduce((sum, [, val]) => sum + (parseFloat(val) || 0), 0)}
+              netAssetValueBV={assetMethodValues.bookValue}
+              netAssetValueFMV={assetMethodValues.fairMarketValue}
+              assetFinalValuation={assetFinalValuation}
+              questionnaireScore={totalScore}
+              questionnaireCategory={multipleCategory}
+              isAuthenticated={isAuthenticated}
+              hasActiveSubscription={hasCalculatorAccess}
+              showReport={showValuationReport}
+              onShowReport={handleShowReport}
+            />
 
             {/* Equity Value Card — China & Indonesia only */}
-            {(country.toLowerCase() === "china" || country.toLowerCase() === "indonesia") && selectedMethod === "profit" && (
+            {(country.toLowerCase() === "china" || country.toLowerCase() === "indonesia") && (
               <div className="bg-linear-to-br from-blue-50 to-white border-2 border-blue-200 rounded-xl p-5 shadow-lg">
                 <p className="text-xs font-bold text-blue-700 uppercase tracking-wide mb-4">China &amp; Indonesia Only — Equity Value Calculation</p>
                 {/* Equity Value Result */}
@@ -1503,7 +1469,7 @@ export default function CalculatorPage() {
                     </p>
                     <p className="text-xs text-gray-500">
                       EV ({currencySymbol}
-                      {(serverCalculatedValues?.finalValuation ?? finalValuation).toLocaleString()}) &minus; Total Debt ({currencySymbol}
+                      {(serverCalculatedValues?.finalValuation ?? profitFinalValuation).toLocaleString()}) &minus; Total Debt ({currencySymbol}
                       {(parseFloat(totalDebt) || 0).toLocaleString()}) + Cash ({currencySymbol}
                       {(parseFloat(cashEquivalents) || 0).toLocaleString()})
                     </p>

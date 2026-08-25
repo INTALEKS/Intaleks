@@ -108,7 +108,7 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
     }
 
     const data = req.body as ValuationPDFData & {
-      valuationMethod: "profit" | "asset";
+      valuationMethod: "profit" | "asset" | "both";
       financialData?: any;
       addbacks?: any;
       years?: string[];
@@ -140,7 +140,39 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
     let finalValuation: number;
 
     try {
-      if (data.valuationMethod === "profit") {
+      if (data.valuationMethod === "both") {
+        if (!data.financialData || normalizedYears.length === 0 || !data.calculatedMultiple || !data.assets || !data.liabilities) {
+          return res.status(400).json({
+            error: "Missing required fields for both methods: financialData, years, calculatedMultiple, assets, liabilities",
+          });
+        }
+
+        const profitResult = CalculatorService.validateAndCalculate("profit", {
+          financialData: data.financialData,
+          addbacks: data.addbacks || [],
+          multiple: data.calculatedMultiple,
+          years: normalizedYears,
+        });
+        const assetResult = CalculatorService.validateAndCalculate("asset", {
+          assets: data.assets,
+          liabilities: data.liabilities,
+        });
+
+        // The profit result remains the primary figure for legacy storage/equity fields;
+        // both independently recalculated valuations are passed to the PDF.
+        finalValuation = profitResult.finalValuation;
+        data.finalValuation = finalValuation;
+        data.profitValuation = profitResult.finalValuation;
+        data.assetValuation = assetResult.finalValuation;
+        data.totalAssets = assetResult.totalAssets;
+        data.totalLiabilities = assetResult.totalLiabilities;
+        data.adjustedEbit = profitResult.averageAdjustedEbit;
+        data.financialData = profitResult.yearlyMetrics;
+        data.adjustedEbitPerYear = profitResult.adjustedEbitByYear;
+        data.totalAddbacksPerYear = profitResult.totalAddbacksByYear;
+        data.averageEbit = normalizedYears.reduce((sum, year) => sum + (profitResult.yearlyMetrics[year]?.ebit || 0), 0) / normalizedYears.length;
+        data.financialYears = normalizedYears;
+      } else if (data.valuationMethod === "profit") {
         // Validate required fields for profit method
         if (!data.financialData || normalizedYears.length === 0 || !data.calculatedMultiple) {
           return res.status(400).json({
