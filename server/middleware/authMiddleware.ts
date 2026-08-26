@@ -12,6 +12,7 @@ export interface AuthenticatedUser {
   lastName: string;
   role: UserRole;
   subscriptionStatus: SubscriptionStatus;
+  currentPeriodEnd: Date | null;
   couponAccess: boolean;
   couponUsed: boolean;
   termsAccepted: boolean;
@@ -71,6 +72,7 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         lastName: true,
         role: true,
         subscriptionStatus: true,
+        currentPeriodEnd: true,
         couponAccess: true,
         couponUsed: true,
         emailVerified: true,
@@ -164,7 +166,7 @@ export const requireEmailVerified = (req: Request, res: Response, next: NextFunc
  * Middleware to check if user has an active subscription or valid coupon access
  * Use this on routes that require a paid subscription
  */
-export const requireActiveSubscription = (req: Request, res: Response, next: NextFunction): void => {
+export const requireActiveSubscription = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   if (!req.user) {
     res.status(401).json({ error: "Unauthorized", message: "Authentication required" });
     return;
@@ -201,3 +203,14 @@ export const requireActiveSubscription = (req: Request, res: Response, next: Nex
 
   next();
 };
+  if (hasSubscription && req.user.currentPeriodEnd && req.user.currentPeriodEnd <= new Date()) {
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { subscriptionStatus: SubscriptionStatus.CANCELED, currentPeriodEnd: null, cancelAtPeriodEnd: false },
+    });
+    res.status(403).json({
+      error: "Access period expired",
+      message: "Your Valuator access period has ended. Choose a new access plan to continue.",
+    });
+    return;
+  }

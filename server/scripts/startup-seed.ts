@@ -29,7 +29,7 @@ async function ensureStripePlan(plan: { id: string; name: string; price: number;
   const price = await stripe.prices.create({
     product: product.id,
     unit_amount: plan.price,
-    currency: "usd",
+    currency: "aud",
     ...(plan.billingPeriod === BillingPeriod.MONTHLY && { recurring: { interval: "month" } }),
     ...(plan.billingPeriod === BillingPeriod.YEARLY && { recurring: { interval: "year" } }),
     // ONE_TIME has no recurring
@@ -55,8 +55,8 @@ async function startupSeed() {
       console.log(`✅ Valuation multiples already seeded (${multiplesCount} records) - skipping`);
     }
 
-    // Check and seed subscription plan
-    let plan = await prisma.subscriptionPlan.findUnique({ where: { name: "One-Off" } });
+    // Check and seed the one-time access plans.
+    let plan = await prisma.subscriptionPlan.findUnique({ where: { name: "2 Months Access" } });
 
     const planFeatures = ["Worldwide Industry Multiples (US, Canada, UK, Australia, China, Indonesia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking", "Unlimited Valuations", "Export to PDF"];
 
@@ -64,7 +64,7 @@ async function startupSeed() {
       console.log("🌱 Seeding subscription plan...");
       plan = await prisma.subscriptionPlan.create({
         data: {
-          name: "One-Off",
+          name: "2 Months Access",
           price: 49500,
           billingPeriod: BillingPeriod.ONE_TIME,
           features: planFeatures,
@@ -74,7 +74,7 @@ async function startupSeed() {
     } else {
       // Always keep features in sync
       plan = await prisma.subscriptionPlan.update({
-        where: { name: "One-Off" },
+        where: { name: "2 Months Access" },
         data: { features: planFeatures },
       });
       console.log("✅ Subscription plan already exists - updated features");
@@ -86,6 +86,18 @@ async function startupSeed() {
       await ensureStripePlan(plan);
     } else {
       console.log(`✅ Stripe already configured (Price ID: ${plan.stripePriceId}) - skipping`);
+    }
+
+    for (const accessPlan of [
+      { name: "6 Months Access", price: 69500 },
+      { name: "12 Months Access", price: 99500 },
+    ]) {
+      const existing = await prisma.subscriptionPlan.upsert({
+        where: { name: accessPlan.name },
+        create: { ...accessPlan, billingPeriod: BillingPeriod.ONE_TIME, features: planFeatures, active: true },
+        update: { features: planFeatures, active: true },
+      });
+      if (!existing.stripePriceId) await ensureStripePlan(existing);
     }
 
     // Check and seed super admin user

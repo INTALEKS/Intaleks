@@ -499,6 +499,16 @@ export default function CalculatorPage() {
     setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
+  const continueToStep = (fromStep: number, isComplete: boolean) => {
+    if (!isComplete) {
+      const requirements = getMissingRequirements;
+      toast.error(requirements.length ? `Please complete: ${requirements.join(", ")}` : "Please complete this step before continuing.");
+      return;
+    }
+    setOpenSections({ [fromStep]: false, [fromStep + 1]: true });
+    window.setTimeout(() => document.getElementById(`valuator-step-${fromStep + 1}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+  };
+
   const handleShowReport = async () => {
     // Check authentication and subscription
     if (!isAuthenticated) {
@@ -788,7 +798,7 @@ export default function CalculatorPage() {
       toast.success("Valuation report downloaded successfully!");
     } catch (error) {
       console.error("Download failed:", error);
-      toast.error("Failed to download report. Please try again.");
+      toast.error(error instanceof Error ? error.message : "Failed to download report. Please try again.");
     } finally {
       setIsDownloading(false);
     }
@@ -1197,9 +1207,9 @@ export default function CalculatorPage() {
       {/* Hero Section */}
       <section className="text-center py-12 px-4">
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-          Advanced Business <span className="italic text-blue-500">Valuation</span> Engine
+            Business <span className="italic text-blue-500">Valuator</span>
         </h1>
-        <p className="text-gray-600 max-w-2xl mx-auto mb-6">Input basic information about your company and get professional Business valuation documents.</p>
+         <p className="text-gray-600 max-w-2xl mx-auto mb-6">A clear, guided way to understand what your business is worth.</p>
 
         <Button className="bg-black hover:bg-gray-800" onClick={handleDownloadPDF} disabled={isDownloading || !canAttemptDownload}>
           {!canAttemptDownload ? (
@@ -1238,7 +1248,7 @@ export default function CalculatorPage() {
 
       {/* Calculator Title */}
       <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">The Business Valuation Calculator</h2>
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">The Intaleks Valuator</h2>
       </div>
 
       {/* Step Progress */}
@@ -1263,16 +1273,20 @@ export default function CalculatorPage() {
                 </p>
               )}
             </div>
+            <div className="flex justify-end mt-6">
+              <Button className="bg-[#0d1117] hover:bg-[#1c2530]" onClick={() => continueToStep(1, isStep1Complete)}>Continue</Button>
+            </div>
           </div>
         </AccordionSection>
 
         {/* STEP 2: Business Strength Questionnaire */}
-        <AccordionSection title="Business Strength Assessment (Calculate Your Multiple)" stepNumber={2} isOpen={openSections[2]} onToggle={() => toggleSection(2)}>
+        <div id="valuator-step-2"><AccordionSection title="Business Strength Assessment" stepNumber={2} isOpen={openSections[2]} onToggle={() => toggleSection(2)}>
           <ValuationQuestionnaire scores={questionnaireScores} onScoresChange={setQuestionnaireScores} onCalculate={handleCalculateMultiple} isCalculating={calculatePreviewMutation.isPending} calculatedMultiple={calculatedMultiple} totalScore={totalScore} category={multipleCategory} />
-        </AccordionSection>
+          <div className="flex justify-between mt-6"><Button variant="ghost" onClick={() => setOpenSections({ 1: true, 2: false })}>Back</Button><Button className="bg-[#0d1117] hover:bg-[#1c2530]" onClick={() => continueToStep(2, isStep2Complete)}>Continue</Button></div>
+        </AccordionSection></div>
 
         {/* STEP 3: Asset Method */}
-        <AccordionSection title="Asset Method" stepNumber={3} isOpen={openSections[3]} onToggle={() => toggleSection(3)}>
+        <div id="valuator-step-3"><AccordionSection title="Asset Method" stepNumber={3} isOpen={openSections[3]} onToggle={() => toggleSection(3)}>
           <div className="relative">
             <AssetMethod
               assets={assets}
@@ -1305,10 +1319,11 @@ export default function CalculatorPage() {
               </div>
             )}
           </div>
-        </AccordionSection>
+          <div className="flex justify-between mt-6"><Button variant="ghost" onClick={() => setOpenSections({ 2: true, 3: false })}>Back</Button><Button className="bg-[#0d1117] hover:bg-[#1c2530]" onClick={() => continueToStep(3, isStep3Complete)}>Continue</Button></div>
+        </AccordionSection></div>
 
         {/* STEP 4: Profit Method */}
-        <AccordionSection title="Profit Method" stepNumber={4} isOpen={openSections[4]} onToggle={() => toggleSection(4)}>
+        <div id="valuator-step-4"><AccordionSection title="Profit Method" stepNumber={4} isOpen={openSections[4]} onToggle={() => toggleSection(4)}>
           <div className="relative">
             <>
               <FinancialInfoSelector columns={selectedYears} onColumnsChange={setSelectedYears} disabled={false} />
@@ -1422,7 +1437,8 @@ export default function CalculatorPage() {
                 )}
             </>
           </div>
-        </AccordionSection>
+          <div className="flex justify-between mt-6"><Button variant="ghost" onClick={() => setOpenSections({ 3: true, 4: false })}>Back</Button><Button className="bg-[#0d1117] hover:bg-[#1c2530]" onClick={() => continueToStep(4, isStep4Complete)}>View valuation</Button></div>
+        </AccordionSection></div>
 
         {/* STEP 5: Download */}
         <AccordionSection title="Download Valuation Document (PDF)" stepNumber={5} isOpen={openSections[5]} onToggle={() => toggleSection(5)}>
@@ -1590,7 +1606,7 @@ export default function CalculatorPage() {
         onOpenChange={(open) => {
           // Prevent closing without accepting
           if (!open && !termsAccepted) {
-            toast.error("You must accept the terms and conditions to use the calculator");
+            toast.error("You must accept the terms and conditions to use the Valuator");
             return;
           }
           setShowTermsDialog(open);
@@ -1599,7 +1615,7 @@ export default function CalculatorPage() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl">Terms and Conditions</DialogTitle>
-            <DialogDescription>Please read and accept our terms and conditions before using the Business Valuation Calculator.</DialogDescription>
+            <DialogDescription>Please read and accept our terms and conditions before using the Intaleks Valuator.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">

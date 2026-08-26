@@ -29,7 +29,7 @@ type NavItem = NavLink | NavDropdown;
 
 const navLinks: NavItem[] = [
   { href: "/", label: "Home" },
-  { href: "/calculator", label: "Calculator" },
+  { href: "/calculator", label: "Valuator" },
   // {
   //   label: "Learning",
   //   dropdown: [

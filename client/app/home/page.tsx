@@ -118,8 +118,8 @@ function Hero() {
             className="relative w-full aspect-[4/5] max-h-[540px] rounded-[12px] overflow-hidden shadow-[0_24px_60px_rgba(37,99,235,0.18)] bg-[#EAF1FE]"
           >
             <Image
-              src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80"
-              alt="Female business owner in apron holding a tablet, standing at the doorway of her cafe"
+              src="/aleks-todorovic.jpg"
+              alt="Aleks Todorovic, Founder and CEO of Intaleks"
               fill
               className="object-cover object-top"
               priority
@@ -127,8 +127,9 @@ function Hero() {
           </div>
           {/* Badge */}
           <div className="absolute bottom-[-24px] left-[-24px] bg-[#0d1117] text-white rounded-[12px] px-6 py-4 shadow-[0_16px_40px_rgba(13,17,23,0.28)]">
-            <b className="block text-[26px] font-extrabold tracking-[-0.02em] leading-tight">$495 AUD</b>
-            <span className="text-[13px] text-[#aab4c2]">Includes 2 months access</span>
+            <b className="block text-[18px] font-extrabold tracking-[-0.02em] leading-tight">Aleks Todorovic</b>
+            <span className="block text-[13px] text-[#d6e4fb] mt-1">Founder &amp; CEO, Intaleks</span>
+            <span className="block text-[12px] text-[#aab4c2] mt-1">Expert Business Valuer</span>
           </div>
         </div>
       </div>
@@ -178,19 +179,19 @@ function AssetSection() {
               return (
                 <li
                   key={item.label}
-                  className={`flex justify-between items-center py-3 font-medium text-[15px] ${
+                  className={`flex justify-between items-center gap-3 py-3 font-medium text-[15px] ${
                     isLast
                       ? "bg-[#0d1117] text-white -mx-7 -mb-7 px-7 pb-7 pt-5 rounded-b-[12px] mt-3.5"
                       : "border-b border-[#E3E8F0]"
                   }`}
                 >
-                  <span>{item.label}</span>
+                  <span className="min-w-0">{item.label}</span>
                   {item.known ? (
-                    <span className="text-[13px] font-semibold text-[#3B82F6] bg-[#EAF1FE] rounded-full px-3 py-0.5">
+                    <span className="shrink-0 whitespace-nowrap text-[13px] font-semibold text-[#3B82F6] bg-[#EAF1FE] rounded-full px-3 py-0.5">
                       You know
                     </span>
                   ) : (
-                    <span className="text-[13px] font-semibold text-white bg-[#2563EB] rounded-full px-3 py-0.5">
+                    <span className="shrink-0 whitespace-nowrap text-[13px] font-semibold text-white bg-[#2563EB] rounded-full px-4 py-1">
                       No idea
                     </span>
                   )}
@@ -640,14 +641,14 @@ function FounderSection() {
   return (
     <section className="py-16 px-6 border-t border-[#E3E8F0]">
       <div className="max-w-[1120px] mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-9 items-start max-w-[900px]">
+        <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-9 items-start max-w-[900px]">
           {/* Photo */}
-          <div className="relative w-[140px] h-[140px] md:w-[180px] md:h-[180px] rounded-2xl overflow-hidden ring-4 ring-[#EAF1FE] bg-[#EAF1FE] flex-none">
+          <div className="relative w-full aspect-[4/3] md:w-[220px] md:h-[220px] md:aspect-auto rounded-2xl overflow-hidden ring-4 ring-[#EAF1FE] bg-[#EAF1FE] flex-none">
             <Image
               src="/founder.png"
               alt="Aleks Todorovic, founder of Intaleks"
               fill
-              className="object-cover"
+              className="object-cover object-center"
             />
           </div>
 

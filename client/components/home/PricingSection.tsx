@@ -2,67 +2,74 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Globe } from "lucide-react";
+import { Check, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApiClient, type SubscriptionPlan } from "@/app/services/api";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useCreateCheckout } from "@/app/hooks/usePayments";
-import { usePricing } from "@/app/hooks/usePricing";
 
-/**
- * PricingSection Component
- * Displays subscription plans with dynamic currency conversion based on user location
- */
 export function PricingSection() {
   const router = useRouter();
-  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
 
   const { isAuthenticated, isAuthentiating, hasActiveSubscription, subscription } = useAuthState();
   const createCheckout = useCreateCheckout();
 
-  // Use pricing hook with 24-hour cache
-  const { pricing, loading: priceLoading } = usePricing();
-
   useEffect(() => {
-    async function fetchPlans() {
-      try {
-        const response = await ApiClient.getPublicPlans();
-        if (response.success) {
-          setPlans(response.data);
-        } else {
-          setError("Failed to load pricing plans");
-        }
-      } catch {
-        setError("Failed to load pricing plans");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchPlans();
+    ApiClient.getPublicPlans().then((response) => {
+      if (response.success) setPlans(response.data);
+    }).catch(() => setPlans([]));
   }, []);
 
-  const formatPrice = (price: number): string => {
-    if (pricing && !priceLoading) {
-      const formattedAmount = pricing.amount.toLocaleString("en-US");
-      const dollarCurrencies = ["AUD", "USD", "CAD", "NZD", "SGD", "HKD"];
-      const suffix = dollarCurrencies.includes(pricing.currency.code) ? ` ${pricing.currency.code}` : "";
-      return `${pricing.currency.symbol}${formattedAmount}${suffix}`;
-    }
-    const amount = price / 100;
-    return `$${Math.floor(amount)} AUD`;
-  };
+  // Static pricing definitions for the 3 access tiers
+  const pricingTiers = [
+    {
+      id: plans.find((plan) => plan.name === "2 Months Access" || plan.name === "One-Off")?.id,
+      duration: "2 months",
+      price: "$495",
+      period: "AUD · one payment",
+      subtitle: "Included as standard",
+      isPopular: false,
+      badgeText: "Standard Plan",
+    },
+    {
+      id: plans.find((plan) => plan.name === "6 Months Access")?.id,
+      duration: "6 months",
+      price: "$695",
+      period: "AUD · one payment",
+      subtitle: "Track a full half-year of trading",
+      isPopular: true,
+      badgeText: "Most Popular",
+    },
+    {
+      id: plans.find((plan) => plan.name === "12 Months Access")?.id,
+      duration: "12 months",
+      price: "$995",
+      period: "AUD · one payment",
+      subtitle: "Value at the start and end of the financial year",
+      isPopular: false,
+      badgeText: "Full Year Access",
+    },
+  ];
 
-  const handleSubscribe = (planId: string) => {
+  const commonFeatures = [
+    "Detailed PDF valuation report",
+    "Australian & international industry benchmarks",
+    "Multiple valuation methodologies",
+    "Business assessment framework",
+    "Adjust your figures and rerun as often as you like",
+    "No hidden costs, no engagement fees",
+  ];
+
+  const handleSubscribe = (planId?: string) => {
+    if (!planId) return;
     if (!isAuthenticated) {
       const returnUrl = encodeURIComponent(`/?subscribe=${planId}`);
       router.push(`/login?returnUrl=${returnUrl}`);
       return;
     }
 
-    // Proceed directly to checkout
     setProcessingPlanId(planId);
 
     createCheckout.mutate(
@@ -79,139 +86,102 @@ export function PricingSection() {
     );
   };
 
-  const isCurrentPlan = (planId: string): boolean => {
-    return hasActiveSubscription && subscription?.id === planId;
-  };
-
-  const renderButton = (plan: SubscriptionPlan, isPopular: boolean) => {
-    const baseStyle = "w-full py-4 rounded-xl font-semibold text-lg transition-all duration-200";
-    const primaryStyle = `${baseStyle} bg-gray-900 text-white hover:bg-gray-800 shadow-lg`;
-    const secondaryStyle = `${baseStyle} bg-white border-2 border-gray-300 text-gray-900 hover:bg-gray-50`;
-
-    const isProcessing = processingPlanId === plan.id;
-    const isOtherProcessing = processingPlanId !== null && processingPlanId !== plan.id;
-
-    if (isAuthentiating) {
-      return (
-        <Button className={primaryStyle} disabled>
-          <Loader2 className="w-5 h-5 animate-spin mr-2" />
-          Loading...
-        </Button>
-      );
-    }
-
-    if (isCurrentPlan(plan.id)) {
-      return (
-        <Button className={`${baseStyle} bg-gray-400 text-white cursor-not-allowed`} disabled>
-          Current Plan
-        </Button>
-      );
-    }
-
-    if (hasActiveSubscription) {
-      return (
-        <Button className={primaryStyle} onClick={() => handleSubscribe(plan.id)} disabled={isProcessing || isOtherProcessing}>
-          {isProcessing ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              Processing...
-            </>
-          ) : (
-            "Change Plan"
-          )}
-        </Button>
-      );
-    }
-
-    return (
-      <Button className={primaryStyle} onClick={() => handleSubscribe(plan.id)} disabled={isProcessing || isOtherProcessing}>
-        {isProcessing ? (
-          <>
-            <Loader2 className="w-5 h-5 animate-spin mr-2" />
-            Processing...
-          </>
-        ) : (
-          "Subscribe"
-        )}
-      </Button>
-    );
-  };
-
-  if (loading || priceLoading) {
-    return (
-      <section className="py-20 px-4 bg-linear-to-b from-blue-50 to-cyan-50">
-        <div className="max-w-6xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-12">Pricing</h2>
-          <div className="flex justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (error || plans.length === 0) {
-    return null;
-  }
-
   return (
-    <section id="pricing" className="py-20 px-4 bg-linear-to-b from-blue-50 to-cyan-50">
-      <div className="max-w-5xl mx-auto">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">One Simple Price — $495</h2>
-        <p className="text-gray-600 text-center mb-4 max-w-2xl mx-auto">Your full business appraisal report for a flat $495. No subscriptions, no surprises.</p>
-        <p className="text-gray-600 text-center mb-4 max-w-2xl mx-auto">Don&apos;t overpay for a business appraisal. Some firms charge thousands for the same answer — Intaleks gives you a clear, professional-grade appraisal you can rely on, for $495.</p>
+    <section id="pricing" className="py-20 px-4 bg-gradient-to-b from-blue-50/50 via-white to-gray-50">
+      <div className="max-w-6xl mx-auto">
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <span className="text-blue-600 text-xs font-bold uppercase tracking-wider block mb-2">
+            Simple, affordable, professional
+          </span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-4">
+            One price. Everything you need.
+          </h2>
+          <p className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
+            Choose the access period that fits your business goals. Upgrade or extend your access at any time.
+          </p>
+        </div>
 
-        {/* Currency indicator */}
-        {pricing && pricing.currency.code !== "AUD" && (
-          <div className="flex items-center justify-center gap-2 mb-8 text-sm text-gray-600">
-            <Globe className="w-4 h-4" />
-            <span>
-              Prices shown in {pricing.currency.name} ({pricing.currency.code})
-            </span>
-            <span className="text-gray-400">• Converted from $495 AUD</span>
-          </div>
-        )}
-
-        <div className="max-w-2xl mx-auto grid grid-cols-1 gap-8">
-          {plans.map((plan, index) => {
-            const isPopular = index === 1;
-            const price = formatPrice(plan.price);
-
+        {/* 3-Column Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+          {pricingTiers.map((tier) => {
+            const isProcessing = processingPlanId === tier.id;
             return (
-              <div key={plan.id} className={`relative bg-white rounded-3xl p-8 flex flex-col ${isPopular ? "ring-2 ring-blue-500 shadow-2xl" : "border border-gray-200 shadow-lg"} transition-all duration-300 hover:shadow-xl`}>
-                {/* Plan badge */}
-                <div className="mb-6">
-                  <span className="inline-block bg-yellow-400 text-gray-900 text-sm font-bold px-4 py-2 rounded-lg uppercase tracking-wide">{plan.billingPeriod === "ONE_TIME" ? "ONE-OFF" : plan.name}</span>
-                </div>
-
-                {/* Price */}
-                <div className="mb-8">
-                  <div className="flex items-baseline mb-2">
-                    <span className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900">{price}</span>
-                    <span className="text-gray-500 ml-2 text-lg">{plan.billingPeriod === "ONE_TIME" ? "/one-time" : plan.billingPeriod === "YEARLY" ? "/year" : "/month"}</span>
+              <div
+                key={tier.id}
+                className={`relative bg-white rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
+                  tier.isPopular
+                    ? "border-2 border-blue-600 shadow-2xl scale-102 bg-gradient-to-b from-blue-50/30 to-white"
+                    : "border border-gray-200 shadow-lg hover:shadow-xl"
+                }`}
+              >
+                {/* Popular Badge */}
+                {tier.isPopular && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider shadow-md flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 fill-white" />
+                    {tier.badgeText}
                   </div>
-                  {pricing && pricing.currency.code !== "AUD" && <p className="text-sm text-gray-500">≈ $495 AUD</p>}
-                </div>
+                )}
 
-                {/* Features */}
-                <ul className="space-y-4 mb-8 flex-1">
-                  {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-start gap-3">
-                      <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center shrink-0 mt-0.5">
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                      <span className="text-gray-900 text-lg">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div>
+                  {/* Duration Title */}
+                  <div className="mb-4 pt-2">
+                    <h3 className="text-2xl font-bold text-gray-900">{tier.duration}</h3>
+                    <p className="text-xs text-gray-500 font-medium mt-1">{tier.subtitle}</p>
+                  </div>
+
+                  {/* Price */}
+                  <div className="mb-6 pb-6 border-b border-gray-100">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl sm:text-5xl font-extrabold text-gray-900">{tier.price}</span>
+                    </div>
+                    <p className="text-xs text-gray-500 font-semibold mt-1">{tier.period}</p>
+                  </div>
+
+                  {/* Features */}
+                  <ul className="space-y-3 mb-8">
+                    {commonFeatures.map((feat, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-gray-700">
+                        <div className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </div>
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
                 {/* Button */}
-                <div className="mt-auto">{renderButton(plan, isPopular)}</div>
+                <div className="pt-4 border-t border-gray-100">
+                  <Button
+                    onClick={() => handleSubscribe(tier.id)}
+                    disabled={isProcessing || !tier.id}
+                    className={`w-full py-6 rounded-xl font-bold text-base transition-all duration-200 ${
+                      tier.isPopular
+                        ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                        : "bg-gray-900 hover:bg-black text-white"
+                    }`}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Start My Valuation"
+                    )}
+                  </Button>
+                </div>
               </div>
             );
           })}
+        </div>
+
+        {/* Upgrade / Extension Info Note */}
+        <div className="mt-12 text-center bg-blue-50/80 border border-blue-200 rounded-2xl p-4 sm:p-6 max-w-3xl mx-auto">
+          <p className="text-sm text-blue-900 font-medium">
+            💡 <strong>Tracking your value over time?</strong> Extended access can be added at checkout or any time before your current 2 months expire.
+          </p>
         </div>
       </div>
     </section>

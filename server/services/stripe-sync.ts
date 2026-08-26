@@ -58,7 +58,7 @@ export class StripeSyncService {
       // Create Stripe price
       const priceParams: Stripe.PriceCreateParams = {
         product: product.id,
-        unit_amount: Math.round(plan.price * 100), // Convert dollars to cents
+        unit_amount: plan.price, // Plans are stored in cents.
         currency: "aud", // Australian Dollars
         metadata: {
           planId: plan.id,
@@ -106,7 +106,7 @@ export class StripeSyncService {
       // Create new price with updated amount
       const priceParams: Stripe.PriceCreateParams = {
         product: productId,
-        unit_amount: Math.round(newAmount * 100), // Convert dollars to cents
+        unit_amount: newAmount, // Plans are stored in cents.
         currency: "aud", // Australian Dollars
         metadata: {
           planId,
