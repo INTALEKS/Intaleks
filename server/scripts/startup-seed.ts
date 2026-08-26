@@ -55,22 +55,37 @@ async function startupSeed() {
       console.log(`✅ Valuation multiples already seeded (${multiplesCount} records) - skipping`);
     }
 
-    // Check and seed the one-time access plans.
+    // Migrate the legacy one-off plan, then seed the three one-time access plans.
     let plan = await prisma.subscriptionPlan.findUnique({ where: { name: "2 Months Access" } });
 
     const planFeatures = ["Worldwide Industry Multiples (US, Canada, UK, Australia, China, Indonesia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking", "Unlimited Valuations", "Export to PDF"];
 
     if (!plan) {
-      console.log("🌱 Seeding subscription plan...");
-      plan = await prisma.subscriptionPlan.create({
-        data: {
-          name: "2 Months Access",
-          price: 49500,
-          billingPeriod: BillingPeriod.ONE_TIME,
-          features: planFeatures,
-          active: true,
-        },
-      });
+      const legacyPlan = await prisma.subscriptionPlan.findUnique({ where: { name: "One-Off" } });
+      if (legacyPlan) {
+        console.log("🔄 Migrating legacy One-Off plan to 2 Months Access...");
+        plan = await prisma.subscriptionPlan.update({
+          where: { id: legacyPlan.id },
+          data: {
+            name: "2 Months Access",
+            price: 49500,
+            billingPeriod: BillingPeriod.ONE_TIME,
+            features: planFeatures,
+            active: true,
+          },
+        });
+      } else {
+        console.log("🌱 Seeding subscription plan...");
+        plan = await prisma.subscriptionPlan.create({
+          data: {
+            name: "2 Months Access",
+            price: 49500,
+            billingPeriod: BillingPeriod.ONE_TIME,
+            features: planFeatures,
+            active: true,
+          },
+        });
+      }
     } else {
       // Always keep features in sync
       plan = await prisma.subscriptionPlan.update({

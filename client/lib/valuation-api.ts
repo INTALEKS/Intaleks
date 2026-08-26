@@ -98,8 +98,17 @@ export async function generateValuationPDF(data: ValuationReportData): Promise<B
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Failed to generate PDF");
+    const body = await response.text();
+    let message = "Failed to generate PDF";
+
+    try {
+      const error = JSON.parse(body);
+      message = error?.error?.message || error?.message || error?.error || message;
+    } catch {
+      if (body.trim()) message = body;
+    }
+
+    throw new Error(message);
   }
 
   return response.blob();

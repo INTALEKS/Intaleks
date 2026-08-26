@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { Download, Loader2, LogIn } from "lucide-react";
+import { ArrowLeft, Download, Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar, Footer } from "@/components/home";
 import { AccordionSection, CountryIndustrySelector, FinancialDataTable, AddbacksTable, OwnersSalaryTable, type OwnerSalaryYearData, StepProgress, CompanyQuestionnaire, ValuationDocumentList, ValuationSummaryCard, FinancialInfoSelector, columnsToYearLabels, type FinancialColumn } from "@/components/calculator";
@@ -69,6 +69,21 @@ interface CalculatorState {
   companyLogoData?: string; // base64 encoded logo
   companyLogoName?: string;
   companyLogoType?: string;
+}
+
+const DEFAULT_PERIOD_DATES: Record<FinancialColumn["type"], Date> = {
+  "Year 1": new Date(2024, 5, 30),
+  "Year 2": new Date(2025, 5, 30),
+  "Year 3": new Date(2026, 5, 30),
+  "Year 4": new Date(2027, 5, 30),
+};
+
+function defaultFinancialColumns(): FinancialColumn[] {
+  return ["Year 1", "Year 2", "Year 3"].map((type) => ({
+    type: type as FinancialColumn["type"],
+    daysInPeriod: 365,
+    periodDate: new Date(DEFAULT_PERIOD_DATES[type as FinancialColumn["type"]]),
+  }));
 }
 
 // SubscribeButton component for authenticated users without subscription
@@ -231,13 +246,9 @@ export default function CalculatorPage() {
     initialState?.selectedYears && Array.isArray(initialState.selectedYears) && initialState.selectedYears.length > 0 && typeof (initialState.selectedYears[0] as unknown) !== "number"
       ? (initialState.selectedYears as FinancialColumn[]).slice(0, 4).map((col) => ({
           ...col,
-          periodDate: col.periodDate ? new Date(col.periodDate) : undefined,
+          periodDate: col.periodDate ? new Date(col.periodDate) : new Date(DEFAULT_PERIOD_DATES[col.type]),
         }))
-      : [
-          { type: "Year 1" as const, daysInPeriod: 365, periodDate: undefined },
-          { type: "Year 2" as const, daysInPeriod: 365, periodDate: undefined },
-          { type: "Year 3" as const, daysInPeriod: 365, periodDate: undefined },
-        ],
+      : defaultFinancialColumns(),
   );
 
   // Derive year label strings from the column definitions
@@ -1155,7 +1166,7 @@ export default function CalculatorPage() {
                 setSelectedYears(
                   (parsed.selectedYears as FinancialColumn[]).slice(0, 4).map((col) => ({
                     ...col,
-                    periodDate: col.periodDate ? new Date(col.periodDate) : undefined,
+                    periodDate: col.periodDate ? new Date(col.periodDate) : new Date(DEFAULT_PERIOD_DATES[col.type]),
                   })),
                 );
               }
@@ -1433,6 +1444,12 @@ export default function CalculatorPage() {
         {/* STEP 5: Download */}
         {openSections[5] && <AccordionSection title="Download Valuation Document (PDF)" stepNumber={5} isOpen>
           <div className="py-6 space-y-6">
+            <div>
+              <Button variant="ghost" onClick={() => setOpenSections({ 4: true, 5: false })}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Profit Method
+              </Button>
+            </div>
             {/* Comprehensive Valuation Summary Card */}
             <ValuationSummaryCard
               companyName={companyName}

@@ -201,8 +201,6 @@ export const requireActiveSubscription = async (req: Request, res: Response, nex
     return;
   }
 
-  next();
-};
   if (hasSubscription && req.user.currentPeriodEnd && req.user.currentPeriodEnd <= new Date()) {
     await prisma.user.update({
       where: { id: req.user.id },
@@ -214,3 +212,6 @@ export const requireActiveSubscription = async (req: Request, res: Response, nex
     });
     return;
   }
+
+  next();
+};

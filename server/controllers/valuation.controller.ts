@@ -133,7 +133,13 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
       return res.status(400).json({ error: "Missing required field: valuationMethod" });
     }
 
-    const normalizedYears = [...(Array.isArray(data.years) ? data.years : []), ...(Array.isArray(data.financialYears) ? data.financialYears : [])].map((year) => (typeof year === "string" ? year.trim() : "")).filter((year) => year.length > 0);
+    const normalizedYears = Array.from(
+      new Set(
+        [...(Array.isArray(data.years) ? data.years : []), ...(Array.isArray(data.financialYears) ? data.financialYears : [])]
+          .map((year) => (typeof year === "string" ? year.trim() : ""))
+          .filter((year) => year.length > 0),
+      ),
+    );
 
     // SERVER-SIDE RECALCULATION - Prevent client manipulation
     let recalculatedResult: ReturnType<typeof CalculatorService.validateAndCalculate>;
@@ -257,7 +263,19 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
     console.log(`[AUDIT] User ${userId} generated valuation for ${data.companyName || "Unnamed Company"}: $${finalValuation.toFixed(2)}`);
 
     // Generate RAVDA Scorecard PDF with server-validated data
-    const pdfBuffer = await generateValuationPDF(data);
+    let pdfBuffer: Buffer;
+    try {
+      pdfBuffer = await generateValuationPDF(data);
+    } catch (pdfError) {
+      console.error("PDF generation error:", pdfError);
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: "PDF_GENERATION_FAILED",
+          message: "The valuation report could not be generated. Please review your inputs and try again.",
+        },
+      });
+    }
 
     // Upload PDF to R2 storage
     let fileUrl: string | undefined;
