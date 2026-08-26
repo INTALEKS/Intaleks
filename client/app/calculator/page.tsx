@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Download, Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Navbar, Footer } from "@/components/home";
-import { AccordionSection, CountryIndustrySelector, FinancialDataTable, AddbacksTable, OwnersSalaryTable, type OwnerSalaryYearData, StepProgress, CompanyQuestionnaire, ValuationDocumentList, EarningCapacitySection, AddbacksExamplesSection, ValuationSummaryCard, FinancialInfoSelector, columnsToYearLabels, type FinancialColumn } from "@/components/calculator";
+import { AccordionSection, CountryIndustrySelector, FinancialDataTable, AddbacksTable, OwnersSalaryTable, type OwnerSalaryYearData, StepProgress, CompanyQuestionnaire, ValuationDocumentList, ValuationSummaryCard, FinancialInfoSelector, columnsToYearLabels, type FinancialColumn } from "@/components/calculator";
 import { AssetMethod } from "@/components/calculator/methods";
 import { CouponRedeemForm } from "@/components/calculator/CouponRedeemForm";
 import { calculateAverageAdjustedEBIT, formatCurrency, FinancialYearData } from "@/lib/calculator-utils";
@@ -494,10 +494,6 @@ export default function CalculatorPage() {
   // ============================================
   // EVENT HANDLERS
   // ============================================
-
-  const toggleSection = (section: number) => {
-    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
-  };
 
   const continueToStep = (fromStep: number, isComplete: boolean) => {
     if (!isComplete) {
@@ -1240,12 +1236,6 @@ export default function CalculatorPage() {
         </Button>
       </section>
 
-      {/* Educational Sections */}
-      <div className="max-w-5xl mx-auto px-4 space-y-6 mb-8">
-        <EarningCapacitySection />
-        <AddbacksExamplesSection />
-      </div>
-
       {/* Calculator Title */}
       <div className="text-center mb-8">
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900">The Intaleks Valuator</h2>
@@ -1258,8 +1248,8 @@ export default function CalculatorPage() {
 
       {/* Main Content */}
       <main className="max-w-5xl mx-auto px-4 pb-16 space-y-4">
-        {/* STEP 1: Company Questionnaire */}
-        <AccordionSection title="Company Questionaire" stepNumber={1} isOpen={openSections[1]} onToggle={() => toggleSection(1)}>
+        {/* Only the active step is shown. Continue controls the progression. */}
+        {openSections[1] && <AccordionSection title="Company Questionaire" stepNumber={1} isOpen>
           <CompanyQuestionnaire companyName={companyName} onCompanyNameChange={setCompanyName} startedYear={startedYear} onStartedYearChange={setStartedYear} employees={employees} onEmployeesChange={setEmployees} stage={stage} onStageChange={setStage} valuationReason={valuationReason} onValuationReasonChange={setValuationReason} logo={companyLogo} onLogoChange={setCompanyLogo} />
           <div className="mt-6">
             <CountryIndustrySelector country={country} industry={industry} customMultiple={customMultiple} onCountryChange={setCountry} onIndustryChange={setIndustry} onCustomMultipleChange={setCustomMultiple} />
@@ -1277,16 +1267,16 @@ export default function CalculatorPage() {
               <Button className="bg-[#0d1117] hover:bg-[#1c2530]" onClick={() => continueToStep(1, isStep1Complete)}>Continue</Button>
             </div>
           </div>
-        </AccordionSection>
+        </AccordionSection>}
 
         {/* STEP 2: Business Strength Questionnaire */}
-        <div id="valuator-step-2"><AccordionSection title="Business Strength Assessment" stepNumber={2} isOpen={openSections[2]} onToggle={() => toggleSection(2)}>
+        {openSections[2] && <div id="valuator-step-2"><AccordionSection title="Business Strength Assessment" stepNumber={2} isOpen>
           <ValuationQuestionnaire scores={questionnaireScores} onScoresChange={setQuestionnaireScores} onCalculate={handleCalculateMultiple} isCalculating={calculatePreviewMutation.isPending} calculatedMultiple={calculatedMultiple} totalScore={totalScore} category={multipleCategory} />
           <div className="flex justify-between mt-6"><Button variant="ghost" onClick={() => setOpenSections({ 1: true, 2: false })}>Back</Button><Button className="bg-[#0d1117] hover:bg-[#1c2530]" onClick={() => continueToStep(2, isStep2Complete)}>Continue</Button></div>
-        </AccordionSection></div>
+        </AccordionSection></div>}
 
         {/* STEP 3: Asset Method */}
-        <div id="valuator-step-3"><AccordionSection title="Asset Method" stepNumber={3} isOpen={openSections[3]} onToggle={() => toggleSection(3)}>
+        {openSections[3] && <div id="valuator-step-3"><AccordionSection title="Asset Method" stepNumber={3} isOpen>
           <div className="relative">
             <AssetMethod
               assets={assets}
@@ -1320,10 +1310,10 @@ export default function CalculatorPage() {
             )}
           </div>
           <div className="flex justify-between mt-6"><Button variant="ghost" onClick={() => setOpenSections({ 2: true, 3: false })}>Back</Button><Button className="bg-[#0d1117] hover:bg-[#1c2530]" onClick={() => continueToStep(3, isStep3Complete)}>Continue</Button></div>
-        </AccordionSection></div>
+        </AccordionSection></div>}
 
         {/* STEP 4: Profit Method */}
-        <div id="valuator-step-4"><AccordionSection title="Profit Method" stepNumber={4} isOpen={openSections[4]} onToggle={() => toggleSection(4)}>
+        {openSections[4] && <div id="valuator-step-4"><AccordionSection title="Profit Method" stepNumber={4} isOpen>
           <div className="relative">
             <>
               <FinancialInfoSelector columns={selectedYears} onColumnsChange={setSelectedYears} disabled={false} />
@@ -1438,10 +1428,10 @@ export default function CalculatorPage() {
             </>
           </div>
           <div className="flex justify-between mt-6"><Button variant="ghost" onClick={() => setOpenSections({ 3: true, 4: false })}>Back</Button><Button className="bg-[#0d1117] hover:bg-[#1c2530]" onClick={() => continueToStep(4, isStep4Complete)}>View valuation</Button></div>
-        </AccordionSection></div>
+        </AccordionSection></div>}
 
         {/* STEP 5: Download */}
-        <AccordionSection title="Download Valuation Document (PDF)" stepNumber={5} isOpen={openSections[5]} onToggle={() => toggleSection(5)}>
+        {openSections[5] && <AccordionSection title="Download Valuation Document (PDF)" stepNumber={5} isOpen>
           <div className="py-6 space-y-6">
             {/* Comprehensive Valuation Summary Card */}
             <ValuationSummaryCard
@@ -1594,7 +1584,7 @@ export default function CalculatorPage() {
               </div>
             )}
           </div>
-        </AccordionSection>
+        </AccordionSection>}
       </main>
 
       {/* Footer */}
