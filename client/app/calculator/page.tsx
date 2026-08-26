@@ -1209,7 +1209,7 @@ export default function CalculatorPage() {
           What&apos;s your <span className="italic text-blue-500">business</span> worth?
         </h1>
         <p className="text-gray-600 max-w-2xl mx-auto mb-6">
-          Three short steps. About five minutes. A professional valuation at the end.
+          Five short steps. About five minutes. A professional valuation at the end.
         </p>
 
         <Button className="bg-black hover:bg-gray-800" onClick={handleDownloadPDF} disabled={isDownloading || !canAttemptDownload}>
