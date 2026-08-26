@@ -1202,10 +1202,15 @@ export default function CalculatorPage() {
 
       {/* Hero Section */}
       <section className="text-center py-12 px-4">
+        <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-[#4B6387]">
+          Business Valuation Calculator
+        </p>
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Business <span className="italic text-blue-500">Valuator</span>
+          What&apos;s your <span className="italic text-blue-500">business</span> worth?
         </h1>
-         <p className="text-gray-600 max-w-2xl mx-auto mb-6">A clear, guided way to understand what your business is worth.</p>
+        <p className="text-gray-600 max-w-2xl mx-auto mb-6">
+          Three short steps. About five minutes. A professional valuation at the end.
+        </p>
 
         <Button className="bg-black hover:bg-gray-800" onClick={handleDownloadPDF} disabled={isDownloading || !canAttemptDownload}>
           {!canAttemptDownload ? (
@@ -1235,11 +1240,6 @@ export default function CalculatorPage() {
           )}
         </Button>
       </section>
-
-      {/* Calculator Title */}
-      <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">The Intaleks Valuator</h2>
-      </div>
 
       {/* Step Progress */}
       <div className="max-w-4xl mx-auto px-4">
