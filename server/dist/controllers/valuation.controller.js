@@ -114,12 +114,45 @@ const generatePDF = async (req, res, next) => {
         if (!data.valuationMethod) {
             return res.status(400).json({ error: "Missing required field: valuationMethod" });
         }
-        const normalizedYears = [...(Array.isArray(data.years) ? data.years : []), ...(Array.isArray(data.financialYears) ? data.financialYears : [])].map((year) => (typeof year === "string" ? year.trim() : "")).filter((year) => year.length > 0);
+        const normalizedYears = Array.from(new Set([...(Array.isArray(data.years) ? data.years : []), ...(Array.isArray(data.financialYears) ? data.financialYears : [])]
+            .map((year) => (typeof year === "string" ? year.trim() : ""))
+            .filter((year) => year.length > 0)));
         // SERVER-SIDE RECALCULATION - Prevent client manipulation
         let recalculatedResult;
         let finalValuation;
         try {
-            if (data.valuationMethod === "profit") {
+            if (data.valuationMethod === "both") {
+                if (!data.financialData || normalizedYears.length === 0 || !data.calculatedMultiple || !data.assets || !data.liabilities) {
+                    return res.status(400).json({
+                        error: "Missing required fields for both methods: financialData, years, calculatedMultiple, assets, liabilities",
+                    });
+                }
+                const profitResult = calculator_1.CalculatorService.validateAndCalculate("profit", {
+                    financialData: data.financialData,
+                    addbacks: data.addbacks || [],
+                    multiple: data.calculatedMultiple,
+                    years: normalizedYears,
+                });
+                const assetResult = calculator_1.CalculatorService.validateAndCalculate("asset", {
+                    assets: data.assets,
+                    liabilities: data.liabilities,
+                });
+                // The profit result remains the primary figure for legacy storage/equity fields;
+                // both independently recalculated valuations are passed to the PDF.
+                finalValuation = profitResult.finalValuation;
+                data.finalValuation = finalValuation;
+                data.profitValuation = profitResult.finalValuation;
+                data.assetValuation = assetResult.finalValuation;
+                data.totalAssets = assetResult.totalAssets;
+                data.totalLiabilities = assetResult.totalLiabilities;
+                data.adjustedEbit = profitResult.averageAdjustedEbit;
+                data.financialData = profitResult.yearlyMetrics;
+                data.adjustedEbitPerYear = profitResult.adjustedEbitByYear;
+                data.totalAddbacksPerYear = profitResult.totalAddbacksByYear;
+                data.averageEbit = normalizedYears.reduce((sum, year) => sum + (profitResult.yearlyMetrics[year]?.ebit || 0), 0) / normalizedYears.length;
+                data.financialYears = normalizedYears;
+            }
+            else if (data.valuationMethod === "profit") {
                 // Validate required fields for profit method
                 if (!data.financialData || normalizedYears.length === 0 || !data.calculatedMultiple) {
                     return res.status(400).json({
@@ -195,7 +228,20 @@ const generatePDF = async (req, res, next) => {
         // Log for audit trail
         console.log(`[AUDIT] User ${userId} generated valuation for ${data.companyName || "Unnamed Company"}: $${finalValuation.toFixed(2)}`);
         // Generate RAVDA Scorecard PDF with server-validated data
-        const pdfBuffer = await (0, pdf_service_1.generateValuationPDF)(data);
+        let pdfBuffer;
+        try {
+            pdfBuffer = await (0, pdf_service_1.generateValuationPDF)(data);
+        }
+        catch (pdfError) {
+            console.error("PDF generation error:", pdfError);
+            return res.status(500).json({
+                success: false,
+                error: {
+                    code: "PDF_GENERATION_FAILED",
+                    message: "The valuation report could not be generated. Please review your inputs and try again.",
+                },
+            });
+        }
         // Upload PDF to R2 storage
         let fileUrl;
         let fileSize = pdfBuffer.length;

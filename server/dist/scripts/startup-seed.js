@@ -61,7 +61,7 @@ async function ensureStripePlan(plan) {
     const price = await stripe.prices.create({
         product: product.id,
         unit_amount: plan.price,
-        currency: "usd",
+        currency: "aud",
         ...(plan.billingPeriod === client_1.BillingPeriod.MONTHLY && { recurring: { interval: "month" } }),
         ...(plan.billingPeriod === client_1.BillingPeriod.YEARLY && { recurring: { interval: "year" } }),
         // ONE_TIME has no recurring
@@ -84,25 +84,41 @@ async function startupSeed() {
         else {
             console.log(`✅ Valuation multiples already seeded (${multiplesCount} records) - skipping`);
         }
-        // Check and seed subscription plan
-        let plan = await prisma.subscriptionPlan.findUnique({ where: { name: "One-Off" } });
+        // Migrate the legacy one-off plan, then seed the three one-time access plans.
+        let plan = await prisma.subscriptionPlan.findUnique({ where: { name: "2 Months Access" } });
         const planFeatures = ["Worldwide Industry Multiples (US, Canada, UK, Australia, China, Indonesia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking", "Unlimited Valuations", "Export to PDF"];
         if (!plan) {
-            console.log("🌱 Seeding subscription plan...");
-            plan = await prisma.subscriptionPlan.create({
-                data: {
-                    name: "One-Off",
-                    price: 49500,
-                    billingPeriod: client_1.BillingPeriod.ONE_TIME,
-                    features: planFeatures,
-                    active: true,
-                },
-            });
+            const legacyPlan = await prisma.subscriptionPlan.findUnique({ where: { name: "One-Off" } });
+            if (legacyPlan) {
+                console.log("🔄 Migrating legacy One-Off plan to 2 Months Access...");
+                plan = await prisma.subscriptionPlan.update({
+                    where: { id: legacyPlan.id },
+                    data: {
+                        name: "2 Months Access",
+                        price: 49500,
+                        billingPeriod: client_1.BillingPeriod.ONE_TIME,
+                        features: planFeatures,
+                        active: true,
+                    },
+                });
+            }
+            else {
+                console.log("🌱 Seeding subscription plan...");
+                plan = await prisma.subscriptionPlan.create({
+                    data: {
+                        name: "2 Months Access",
+                        price: 49500,
+                        billingPeriod: client_1.BillingPeriod.ONE_TIME,
+                        features: planFeatures,
+                        active: true,
+                    },
+                });
+            }
         }
         else {
             // Always keep features in sync
             plan = await prisma.subscriptionPlan.update({
-                where: { name: "One-Off" },
+                where: { name: "2 Months Access" },
                 data: { features: planFeatures },
             });
             console.log("✅ Subscription plan already exists - updated features");
@@ -114,6 +130,18 @@ async function startupSeed() {
         }
         else {
             console.log(`✅ Stripe already configured (Price ID: ${plan.stripePriceId}) - skipping`);
+        }
+        for (const accessPlan of [
+            { name: "6 Months Access", price: 69500 },
+            { name: "12 Months Access", price: 99500 },
+        ]) {
+            const existing = await prisma.subscriptionPlan.upsert({
+                where: { name: accessPlan.name },
+                create: { ...accessPlan, billingPeriod: client_1.BillingPeriod.ONE_TIME, features: planFeatures, active: true },
+                update: { features: planFeatures, active: true },
+            });
+            if (!existing.stripePriceId)
+                await ensureStripePlan(existing);
         }
         // Check and seed super admin user
         const email = process.env.ADMIN_EMAIL || "admin@intaleks.com";

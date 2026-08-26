@@ -210,7 +210,8 @@ class WebhookService {
                     console.log(`[WEBHOOK] User ${userId} used referral code ${referralCodeUsed}. Linking referredById = ${referredById}`);
                 }
             }
-            // Get subscription details if available
+            // Get subscription details if available. One-time access plans have a
+            // defined access window instead of an automatically renewing period.
             let currentPeriodEnd = null;
             if (stripeSubscriptionId) {
                 const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
@@ -219,6 +220,12 @@ class WebhookService {
                 if (periodEnd) {
                     currentPeriodEnd = new Date(periodEnd * 1000);
                 }
+            }
+            if (!stripeSubscriptionId && planId) {
+                const accessPlan = await db_1.prisma.subscriptionPlan.findUnique({ where: { id: planId }, select: { name: true } });
+                const months = accessPlan?.name.startsWith("12 Months") ? 12 : accessPlan?.name.startsWith("6 Months") ? 6 : 2;
+                currentPeriodEnd = new Date();
+                currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + months);
             }
             // Update user subscription status to active (Requirement 4.2)
             // Include stripeCustomerId so subsequent webhooks can find the user
