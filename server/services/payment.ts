@@ -2,7 +2,7 @@ import { prisma } from "../config/db";
 import { getStripe } from "../config/stripe";
 import { config } from "../config/environment";
 import { User, BillingPeriod, SubscriptionPlan } from "@prisma/client";
-import { NotFoundError, StripeError, STRIPE_ERROR_CODES, createStripeErrorFromApiError, isStripeApiError } from "../errors";
+import { NotFoundError, StripeError, STRIPE_ERROR_CODES, ValidationError, createStripeErrorFromApiError, isStripeApiError } from "../errors";
 import { invoiceService } from "./invoice";
 import Stripe from "stripe";
 
@@ -186,6 +186,17 @@ export class PaymentService {
 
     if (!user) {
       throw new NotFoundError(`User with ID ${userId} not found`);
+    }
+
+    // Firm members use the separate Partner checkout. This server-side check
+    // prevents a Partner from reaching a Business Owner plan through a copied
+    // URL or an older client page.
+    const partnerMembership = await prisma.partnerMembership.findFirst({
+      where: { userId, active: true },
+      select: { id: true },
+    });
+    if (partnerMembership) {
+      throw new ValidationError("Partner firms must select a Partner plan from the Partner Program dashboard.");
     }
 
     // Find subscription plan

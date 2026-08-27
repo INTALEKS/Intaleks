@@ -14,7 +14,28 @@ export const partnerPlanDetails: Record<PartnerPlanType, { valuationLimit: numbe
 export class PartnerService {
   static async createFirmForApprovedApplication(application: { userId: string; companyName: string; professionalType: string; website: string | null }) {
     const existing = await prisma.partnerMembership.findFirst({ where: { userId: application.userId } });
-    if (existing) return existing.firmId;
+    if (existing) {
+      await prisma.$transaction([
+        prisma.partnerMembership.updateMany({ where: { firmId: existing.firmId }, data: { active: true } }),
+        prisma.partnerMembership.update({ where: { id: existing.id }, data: { active: true, role: PartnerMembershipRole.FIRM_ADMIN } }),
+        prisma.partnerFirm.update({
+          where: { id: existing.firmId },
+          data: {
+            name: application.companyName,
+            professionalType: application.professionalType,
+            website: application.website,
+            status: PartnerFirmStatus.ONBOARDING,
+            planType: null,
+            accessStartsAt: null,
+            accessEndsAt: null,
+            valuationLimit: null,
+            valuationsUsed: 0,
+            renewalReminderSentAt: null,
+          },
+        }),
+      ]);
+      return existing.firmId;
+    }
 
     const firm = await prisma.partnerFirm.create({
       data: {

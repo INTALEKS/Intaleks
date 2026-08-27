@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -12,15 +11,26 @@ import { ApiClient } from "@/app/services/api";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+type PartnerApplication = {
+  id: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  professionalType: string;
+  companyName: string;
+  website?: string | null;
+  feedback?: string | null;
+  createdAt: string;
+  user?: { email?: string; firstName?: string | null; lastName?: string | null };
+};
+
 export default function ReferralsAdminPage() {
-  const [applications, setApplications] = useState<any[]>([]);
+  const [applications, setApplications] = useState<PartnerApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"PENDING" | "APPROVED" | "REJECTED">("PENDING");
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
   // Rejection dialog state
-  const [selectedApp, setSelectedApp] = useState<any>(null);
+  const [selectedApp, setSelectedApp] = useState<PartnerApplication | null>(null);
   const [feedback, setFeedback] = useState("");
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
 
@@ -31,8 +41,8 @@ export default function ReferralsAdminPage() {
       if (res.success) {
         setApplications(res.data || []);
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to load applications");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to load applications");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -55,14 +65,26 @@ export default function ReferralsAdminPage() {
         toast.success("Application approved successfully!");
         fetchApplications();
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to approve application");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to approve application");
     }
   };
 
-  const handleOpenDeclineDialog = (app: any) => {
+  const handleOpenDeclineDialog = (app: PartnerApplication) => {
     setSelectedApp(app);
     setFeedback("");
+  };
+
+  const handleSetPending = async (id: string) => {
+    try {
+      const res = await ApiClient.updateReferralApplicationAdmin(id, "PENDING");
+      if (res.success) {
+        toast.success("Application moved back to pending. Partner access has been suspended.");
+        fetchApplications();
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update application status");
+    }
   };
 
   const handleDeclineSubmit = async () => {
@@ -76,8 +98,8 @@ export default function ReferralsAdminPage() {
         setSelectedApp(null);
         fetchApplications();
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to decline application");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to decline application");
     } finally {
       setSubmittingFeedback(false);
     }
@@ -217,10 +239,16 @@ export default function ReferralsAdminPage() {
                           <X className="w-3.5 h-3.5 mr-1" /> Decline
                         </Button>
                       </div>
+                    ) : activeTab === "APPROVED" ? (
+                      <div className="flex justify-end gap-x-2">
+                        <Button variant="outline" size="sm" onClick={() => handleSetPending(app.id)} className="h-8 px-3">Move to Pending</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleOpenDeclineDialog(app)} className="h-8 px-3 border-red-200 text-red-700 hover:bg-red-50">Decline</Button>
+                      </div>
                     ) : (
-                      <Badge variant={activeTab === "APPROVED" ? "outline" : "destructive"} className="capitalize">
-                        {activeTab.toLowerCase()}
-                      </Badge>
+                      <div className="flex justify-end gap-x-2">
+                        <Button variant="outline" size="sm" onClick={() => handleApprove(app.id)} className="h-8 px-3 bg-green-50 text-green-700 hover:bg-green-100 border-green-200"><Check className="w-3.5 h-3.5 mr-1" />Approve</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleSetPending(app.id)} className="h-8 px-3">Move to Pending</Button>
+                      </div>
                     )}
                   </TableCell>
                 </TableRow>

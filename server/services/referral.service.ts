@@ -1,5 +1,5 @@
 import { prisma } from "../config/db";
-import { ReferralApplicationStatus, ReferralStatus, UserRole } from "@prisma/client";
+import { PartnerFirmStatus, ReferralApplicationStatus, ReferralStatus, UserRole } from "@prisma/client";
 import { NotFoundError, ValidationError, ConflictError } from "../errors";
 import { PartnerService } from "./partner.service";
 
@@ -156,17 +156,14 @@ export class ReferralService {
       throw new NotFoundError("Referral application not found");
     }
 
-    if (application.status !== "PENDING") {
-      throw new ValidationError("Application has already been processed");
-    }
-
-    // Update application record
+    // Update the application record. Administrators can revisit any decision.
     const updatedApplication = await prisma.professionalReferralApplication.update({
       where: { id: applicationId },
-      data: { status, feedback: feedback || null },
+      data: { status, feedback: status === ReferralApplicationStatus.REJECTED ? feedback || null : null },
     });
 
-    // If APPROVED, create the ReferralProfile and Stripe Promotion Code
+    // Approval creates (or restores) the firm administrator and firm. It does
+    // not grant paid access: the firm must still purchase a Partner plan.
     if (status === "APPROVED") {
       const user = application.user;
 
@@ -193,13 +190,42 @@ export class ReferralService {
           },
         });
 
-        await PartnerService.createFirmForApprovedApplication({
-          userId: application.userId,
-          companyName: application.companyName,
-          professionalType: application.professionalType,
-          website: application.website,
+      } else {
+        await prisma.professionalReferralProfile.update({
+          where: { id: existingProfile.id },
+          data: { status: ReferralStatus.ACTIVE },
         });
       }
+
+      await PartnerService.createFirmForApprovedApplication({
+        userId: application.userId,
+        companyName: application.companyName,
+        professionalType: application.professionalType,
+        website: application.website,
+      });
+    } else {
+      // Pending or declined firms must not retain Partner access. Suspending
+      // the firm immediately blocks every member, including a paid firm.
+      const membership = await prisma.partnerMembership.findFirst({
+        where: { userId: application.userId },
+        select: { firmId: true },
+      });
+      if (membership) {
+        await prisma.$transaction([
+          prisma.partnerFirm.update({
+            where: { id: membership.firmId },
+            data: { status: PartnerFirmStatus.SUSPENDED, accessEndsAt: new Date() },
+          }),
+          prisma.partnerMembership.updateMany({
+            where: { firmId: membership.firmId },
+            data: { active: false },
+          }),
+        ]);
+      }
+      await prisma.professionalReferralProfile.updateMany({
+        where: { userId: application.userId },
+        data: { status: ReferralStatus.SUSPENDED },
+      });
     }
 
     return updatedApplication;

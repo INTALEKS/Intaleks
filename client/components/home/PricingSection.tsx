@@ -12,6 +12,7 @@ export function PricingSection() {
   const router = useRouter();
   const [processingPlanId, setProcessingPlanId] = useState<string | null>(null);
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [isPartnerMember, setIsPartnerMember] = useState(false);
 
   const { isAuthenticated, isAuthentiating, hasActiveSubscription, subscription } = useAuthState();
   const createCheckout = useCreateCheckout();
@@ -21,6 +22,13 @@ export function PricingSection() {
       if (response.success) setPlans(response.data);
     }).catch(() => setPlans([]));
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    ApiClient.getPartnerFirmDashboard()
+      .then((response) => setIsPartnerMember(Boolean(response.data)))
+      .catch(() => setIsPartnerMember(false));
+  }, [isAuthenticated]);
 
   // Static pricing definitions for the 3 access tiers
   const pricingTiers = [
@@ -102,6 +110,13 @@ export function PricingSection() {
           </p>
         </div>
 
+        {isPartnerMember ? (
+          <div className="mx-auto max-w-2xl rounded-3xl border border-blue-200 bg-white p-8 text-center shadow-lg">
+            <h3 className="text-2xl font-bold text-gray-900">Partner plans are managed separately</h3>
+            <p className="mt-3 text-gray-600">Your firm can choose, renew, or upgrade its Partner plan from the Partner Program dashboard.</p>
+            <Button className="mt-6 bg-blue-600 hover:bg-blue-700" onClick={() => router.push("/settings?tab=referrals")}>View Partner plans</Button>
+          </div>
+        ) : <>
         {/* 3-Column Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
           {pricingTiers.map((tier) => {
@@ -183,6 +198,7 @@ export function PricingSection() {
             💡 <strong>Tracking your value over time?</strong> Extended access can be added at checkout or any time before your current 2 months expire.
           </p>
         </div>
+        </>}
       </div>
     </section>
   );

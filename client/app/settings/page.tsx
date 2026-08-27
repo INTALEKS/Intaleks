@@ -346,6 +346,13 @@ function MyDetailsTab({ user, onProfileUpdate }: { user: UserData | null; onProf
 function SubscriptionsTab({ user }: { user: UserData | null }) {
   const { data: plans, isLoading } = useActiveSubscriptionPlans();
   const [isCheckingOut, setIsCheckingOut] = useState<string | null>(null);
+  const [isPartnerMember, setIsPartnerMember] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    ApiClient.getPartnerFirmDashboard()
+      .then((response) => setIsPartnerMember(Boolean(response.data)))
+      .catch(() => setIsPartnerMember(false));
+  }, []);
 
   const currentPlan = user?.subscription;
   const hasActiveSubscription = user?.subscriptionStatus === "ACTIVE";
@@ -400,10 +407,20 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isPartnerMember === null) {
     return (
       <div className="flex items-center justify-center py-16">
         <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (isPartnerMember) {
+    return (
+      <div className="max-w-2xl rounded-xl border border-blue-200 bg-blue-50 p-6">
+        <h2 className="text-xl font-semibold text-gray-900">Partner plan management</h2>
+        <p className="mt-2 text-sm text-gray-700">Partner firms use separate one-off 30-day plans. Open the Partner Program dashboard to choose, renew, or upgrade your firm plan.</p>
+        <Button className="mt-5 bg-blue-600 hover:bg-blue-700" onClick={() => window.location.href = "/settings?tab=referrals"}>View Partner plans</Button>
       </div>
     );
   }
@@ -811,14 +828,25 @@ function ReferralsTab({ user }: { user: UserData | null }) {
     );
   }
 
-  // State 4: Approved — the firm is set up directly during guided onboarding.
+  // State 4: Approved — only approved firm administrators can begin checkout.
   return (
     <div className="space-y-6 max-w-4xl">
     <div className="bg-white border rounded-xl p-6 lg:p-8 shadow-sm">
       <CheckCircle className="w-12 h-12 text-green-500 mb-4" />
       <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Welcome to the Partner Program</h2>
-      <p className="text-gray-600 text-sm lg:text-base leading-relaxed">Your application has been approved. Intaleks will contact you to run your onboarding session, create the firm account and help you select the right 30-day Partner plan. Plans do not renew automatically.</p>
-      <a href="/partner-program#partner-pricing" className="inline-flex mt-6 bg-blue-500 hover:bg-blue-600 text-white font-medium px-5 py-2.5 rounded-lg text-sm transition-colors">View Partner Plans</a>
+      <p className="text-gray-600 text-sm lg:text-base leading-relaxed">Your application has been approved and your firm is ready to be set up. Choose a 30-day Partner plan below to pay securely by card. Plans do not renew automatically; you can renew or upgrade when the access period ends.</p>
+      {firmDashboard?.canManageMembers ? (
+        <div className="mt-6 rounded-xl border border-[#D6E4FB] bg-[#F7F9FC] p-5">
+          <h3 className="text-base font-bold text-gray-900">Choose your Partner plan</h3>
+          <p className="mt-1 text-sm text-gray-600">Your onboarding session can continue after payment. Only approved Partner firms can access these plans.</p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button onClick={() => startPartnerCheckout("PARTNER")} variant="outline">Subscribe to Partner — $495 AUD</Button>
+            <Button onClick={() => startPartnerCheckout("PARTNER_UNLIMITED")}>Subscribe to Partner Unlimited — $995 AUD</Button>
+          </div>
+        </div>
+      ) : (
+        <p className="mt-5 text-sm text-gray-600">Your firm access is being prepared. Once it is ready, the Firm Admin can select and pay for a Partner plan here.</p>
+      )}
     </div>
     {firmDashboard && <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
