@@ -377,6 +377,15 @@ Trading as Intaleks
             text,
         });
     }
+    async sendPartnerInvitationEmail(email, firmName, inviteUrl) {
+        const content = `<h2>You've been invited to ${firmName}</h2><p>Your firm has invited you to join its Intaleks Partner Program workspace. Use your own Intaleks login to create valuations for clients.</p><p><a href="${inviteUrl}" style="display:inline-block;padding:14px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold">Accept invitation</a></p><p>This invitation expires in 14 days.</p>`;
+        return this.sendEmail({ to: email, subject: `Join ${firmName} on Intaleks`, html: this.getEmailTemplate(content), text: `Join ${firmName} on Intaleks: ${inviteUrl}` });
+    }
+    async sendPartnerRenewalReminderEmail(email, firmName, accessEndsAt) {
+        const renewalUrl = `${this.frontendUrl}/settings?tab=referrals`;
+        const content = `<h2>Your Partner access is ending soon</h2><p>${firmName}'s current Partner access ends on ${accessEndsAt.toLocaleDateString("en-AU")}. Renew or upgrade before it ends to keep your advisers working.</p><p><a href="${renewalUrl}" style="display:inline-block;padding:14px 24px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold">Manage Partner access</a></p>`;
+        return this.sendEmail({ to: email, subject: `${firmName}: renew Partner access`, html: this.getEmailTemplate(content), text: `${firmName}'s Partner access ends soon. Renew: ${renewalUrl}` });
+    }
     async sendContactNotificationToAdmin(data) {
         const { name, email, message, contactId } = data;
         const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.EMAIL_USER;

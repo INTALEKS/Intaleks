@@ -2,9 +2,11 @@ import { PartnerFirmStatus, PartnerMembershipRole, PartnerPlanType } from "@pris
 import { prisma } from "../config/db";
 import { getStripe } from "../config/stripe";
 import { config } from "../config/environment";
+import { randomBytes } from "crypto";
+import { emailService } from "./email";
 import { ConflictError, NotFoundError, ValidationError } from "../errors";
 
-const planDetails: Record<PartnerPlanType, { valuationLimit: number | null }> = {
+export const partnerPlanDetails: Record<PartnerPlanType, { valuationLimit: number | null }> = {
   PARTNER: { valuationLimit: 5 },
   PARTNER_UNLIMITED: { valuationLimit: null },
 };
@@ -79,7 +81,20 @@ export class PartnerService {
   static async addMember(adminUserId: string, email: string) {
     const adminMembership = await this.getFirmAdminMembership(adminUserId);
     const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
-    if (!user) throw new NotFoundError("The adviser must create an Intaleks account before they can be added to the firm");
+    if (!user) {
+      const normalizedEmail = email.trim().toLowerCase();
+      const token = randomBytes(32).toString("hex");
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 14);
+      const invitation = await prisma.partnerInvitation.upsert({
+        where: { firmId_email: { firmId: adminMembership.firmId, email: normalizedEmail } },
+        create: { firmId: adminMembership.firmId, email: normalizedEmail, token, expiresAt },
+        update: { token, expiresAt, acceptedAt: null },
+        include: { firm: true },
+      });
+      await emailService.sendPartnerInvitationEmail(normalizedEmail, invitation.firm.name, `${config.frontendUrl}/partner-invite/${token}`);
+      return { invitation: true, email: normalizedEmail };
+    }
 
     const existing = await prisma.partnerMembership.findUnique({
       where: { firmId_userId: { firmId: adminMembership.firmId, userId: user.id } },
@@ -92,6 +107,15 @@ export class PartnerService {
     return prisma.partnerMembership.create({ data: { firmId: adminMembership.firmId, userId: user.id, role: PartnerMembershipRole.ADVISER } });
   }
 
+  static async acceptInvitation(userId: string, token: string) {
+    const invite = await prisma.partnerInvitation.findUnique({ where: { token } });
+    if (!invite || invite.expiresAt <= new Date() || invite.acceptedAt) throw new ValidationError("This Partner invitation is invalid or has expired");
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.email.toLowerCase() !== invite.email.toLowerCase()) throw new ValidationError("Sign in with the email address that received this invitation");
+    await prisma.partnerMembership.upsert({ where: { firmId_userId: { firmId: invite.firmId, userId } }, create: { firmId: invite.firmId, userId, role: PartnerMembershipRole.ADVISER }, update: { active: true, role: PartnerMembershipRole.ADVISER } });
+    await prisma.partnerInvitation.update({ where: { id: invite.id }, data: { acceptedAt: new Date() } });
+  }
+
   static async removeMember(adminUserId: string, memberId: string) {
     const adminMembership = await this.getFirmAdminMembership(adminUserId);
     const member = await prisma.partnerMembership.findFirst({ where: { id: memberId, firmId: adminMembership.firmId } });
@@ -101,14 +125,14 @@ export class PartnerService {
   }
 
   static async activateFirm(firmId: string, planType: PartnerPlanType) {
-    const detail = planDetails[planType];
+    const detail = partnerPlanDetails[planType];
     if (!detail) throw new ValidationError("Invalid Partner plan");
     const now = new Date();
     const ends = new Date(now);
     ends.setDate(ends.getDate() + 30);
     return prisma.partnerFirm.update({
       where: { id: firmId },
-      data: { status: PartnerFirmStatus.ACTIVE, planType, accessStartsAt: now, accessEndsAt: ends, valuationLimit: detail.valuationLimit, valuationsUsed: 0 },
+      data: { status: PartnerFirmStatus.ACTIVE, planType, accessStartsAt: now, accessEndsAt: ends, valuationLimit: detail.valuationLimit, valuationsUsed: 0, renewalReminderSentAt: null },
     });
   }
 

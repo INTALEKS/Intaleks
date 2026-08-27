@@ -1,12 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PartnerService = void 0;
+exports.PartnerService = exports.partnerPlanDetails = void 0;
 const client_1 = require("@prisma/client");
 const db_1 = require("../config/db");
 const stripe_1 = require("../config/stripe");
 const environment_1 = require("../config/environment");
+const crypto_1 = require("crypto");
+const email_1 = require("./email");
 const errors_1 = require("../errors");
-const planDetails = {
+exports.partnerPlanDetails = {
     PARTNER: { valuationLimit: 5 },
     PARTNER_UNLIMITED: { valuationLimit: null },
 };
@@ -77,8 +79,20 @@ class PartnerService {
     static async addMember(adminUserId, email) {
         const adminMembership = await this.getFirmAdminMembership(adminUserId);
         const user = await db_1.prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
-        if (!user)
-            throw new errors_1.NotFoundError("The adviser must create an Intaleks account before they can be added to the firm");
+        if (!user) {
+            const normalizedEmail = email.trim().toLowerCase();
+            const token = (0, crypto_1.randomBytes)(32).toString("hex");
+            const expiresAt = new Date();
+            expiresAt.setDate(expiresAt.getDate() + 14);
+            const invitation = await db_1.prisma.partnerInvitation.upsert({
+                where: { firmId_email: { firmId: adminMembership.firmId, email: normalizedEmail } },
+                create: { firmId: adminMembership.firmId, email: normalizedEmail, token, expiresAt },
+                update: { token, expiresAt, acceptedAt: null },
+                include: { firm: true },
+            });
+            await email_1.emailService.sendPartnerInvitationEmail(normalizedEmail, invitation.firm.name, `${environment_1.config.frontendUrl}/partner-invite/${token}`);
+            return { invitation: true, email: normalizedEmail };
+        }
         const existing = await db_1.prisma.partnerMembership.findUnique({
             where: { firmId_userId: { firmId: adminMembership.firmId, userId: user.id } },
         });
@@ -88,6 +102,16 @@ class PartnerService {
             return db_1.prisma.partnerMembership.update({ where: { id: existing.id }, data: { active: true, role: client_1.PartnerMembershipRole.ADVISER } });
         }
         return db_1.prisma.partnerMembership.create({ data: { firmId: adminMembership.firmId, userId: user.id, role: client_1.PartnerMembershipRole.ADVISER } });
+    }
+    static async acceptInvitation(userId, token) {
+        const invite = await db_1.prisma.partnerInvitation.findUnique({ where: { token } });
+        if (!invite || invite.expiresAt <= new Date() || invite.acceptedAt)
+            throw new errors_1.ValidationError("This Partner invitation is invalid or has expired");
+        const user = await db_1.prisma.user.findUnique({ where: { id: userId } });
+        if (!user || user.email.toLowerCase() !== invite.email.toLowerCase())
+            throw new errors_1.ValidationError("Sign in with the email address that received this invitation");
+        await db_1.prisma.partnerMembership.upsert({ where: { firmId_userId: { firmId: invite.firmId, userId } }, create: { firmId: invite.firmId, userId, role: client_1.PartnerMembershipRole.ADVISER }, update: { active: true, role: client_1.PartnerMembershipRole.ADVISER } });
+        await db_1.prisma.partnerInvitation.update({ where: { id: invite.id }, data: { acceptedAt: new Date() } });
     }
     static async removeMember(adminUserId, memberId) {
         const adminMembership = await this.getFirmAdminMembership(adminUserId);
@@ -99,7 +123,7 @@ class PartnerService {
         return db_1.prisma.partnerMembership.update({ where: { id: memberId }, data: { active: false } });
     }
     static async activateFirm(firmId, planType) {
-        const detail = planDetails[planType];
+        const detail = exports.partnerPlanDetails[planType];
         if (!detail)
             throw new errors_1.ValidationError("Invalid Partner plan");
         const now = new Date();
@@ -107,7 +131,7 @@ class PartnerService {
         ends.setDate(ends.getDate() + 30);
         return db_1.prisma.partnerFirm.update({
             where: { id: firmId },
-            data: { status: client_1.PartnerFirmStatus.ACTIVE, planType, accessStartsAt: now, accessEndsAt: ends, valuationLimit: detail.valuationLimit, valuationsUsed: 0 },
+            data: { status: client_1.PartnerFirmStatus.ACTIVE, planType, accessStartsAt: now, accessEndsAt: ends, valuationLimit: detail.valuationLimit, valuationsUsed: 0, renewalReminderSentAt: null },
         });
     }
     static async createCheckout(userId, planType, successUrl, cancelUrl) {

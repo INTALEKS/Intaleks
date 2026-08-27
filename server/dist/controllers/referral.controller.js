@@ -100,6 +100,17 @@ class ReferralController {
             next(error);
         }
     }
+    static async acceptPartnerInvitation(req, res, next) {
+        try {
+            if (!req.user?.id)
+                return res.status(401).json({ success: false, message: "Unauthorized" });
+            await partner_service_1.PartnerService.acceptInvitation(req.user.id, req.body.token);
+            return res.status(200).json({ success: true });
+        }
+        catch (error) {
+            next(error);
+        }
+    }
     static async listApplications(req, res, next) {
         try {
             const status = req.query.status;

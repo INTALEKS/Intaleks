@@ -596,11 +596,13 @@ model PartnerFirm {
   accessEndsAt     DateTime?         @map("access_ends_at")
   valuationLimit   Int?              @map("valuation_limit")
   valuationsUsed   Int               @default(0) @map("valuations_used")
+  renewalReminderSentAt DateTime?    @map("renewal_reminder_sent_at")
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
 
   memberships PartnerMembership[]
   valuations  ValuationDocument[]
+  invitations PartnerInvitation[]
 
   @@map("partner_firms")
 }
@@ -620,6 +622,21 @@ model PartnerMembership {
   @@unique([firmId, userId])
   @@index([userId])
   @@map("partner_memberships")
+}
+
+model PartnerInvitation {
+  id        String   @id @default(cuid())
+  firmId    String   @map("firm_id")
+  email     String
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  acceptedAt DateTime? @map("accepted_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  firm PartnerFirm @relation(fields: [firmId], references: [id], onDelete: Cascade)
+
+  @@unique([firmId, email])
+  @@map("partner_invitations")
 }
 
 model ProfessionalReferralApplication {

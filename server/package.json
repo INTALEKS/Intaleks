@@ -27,6 +27,7 @@
     "db:seed:base-multiples": "tsx scripts/seed-base-multiples-raw.ts",
     "db:seed:all": "tsx scripts/seed-all.ts",
     "db:seed:prod": "node dist/scripts/seed-base-multiples-raw.js",
+    "partner:send-renewal-reminders": "node dist/scripts/send-partner-renewal-reminders.js",
     "db:reset-multiples": "tsx scripts/reset-valuation-multiples.ts",
     "db:fix-migration": "node scripts/fix-migration.js",
     "db:fix-migration-safe": "node scripts/fix-migration.js || echo 'Migration fix completed or not needed'",

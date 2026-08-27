@@ -92,6 +92,14 @@ export class ReferralController {
     } catch (error) { next(error); }
   }
 
+  static async acceptPartnerInvitation(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user?.id) return res.status(401).json({ success: false, message: "Unauthorized" });
+      await PartnerService.acceptInvitation(req.user.id, req.body.token);
+      return res.status(200).json({ success: true });
+    } catch (error) { next(error); }
+  }
+
   static async listApplications(req: Request, res: Response, next: NextFunction) {
     try {
       const status = req.query.status as ReferralApplicationStatus | undefined;

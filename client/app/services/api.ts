@@ -599,6 +599,13 @@ export class ApiClient {
     return data;
   }
 
+  static async acceptPartnerInvitation(token: string) {
+    const response = await fetch(`${this.BASE_URL}/users/referral/firm/invitations/accept`, { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ token }) });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data?.message || "Unable to accept invitation");
+    return data;
+  }
+
   /**
    * Get referral applications list (Admin only)
    */

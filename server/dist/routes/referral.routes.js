@@ -12,4 +12,5 @@ router.get("/firm", referral_controller_1.ReferralController.getPartnerDashboard
 router.post("/firm/members", referral_controller_1.ReferralController.addPartnerMember);
 router.delete("/firm/members/:memberId", referral_controller_1.ReferralController.removePartnerMember);
 router.post("/firm/checkout", referral_controller_1.ReferralController.createPartnerCheckout);
+router.post("/firm/invitations/accept", referral_controller_1.ReferralController.acceptPartnerInvitation);
 exports.default = router;
