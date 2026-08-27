@@ -22,6 +22,7 @@ class ValuationService {
                 fileUrl: data.fileUrl,
                 fileSize: data.fileSize,
                 valuationReason: data.valuationReason,
+                partnerFirmId: data.partnerFirmId,
             },
         });
         return document;

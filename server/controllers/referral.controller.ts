@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ReferralService } from "../services/referral.service";
 import { ReferralApplicationStatus } from "@prisma/client";
+import { PartnerService } from "../services/partner.service";
 
 export class ReferralController {
   static async submitApplication(req: Request, res: Response, next: NextFunction) {
@@ -19,7 +20,7 @@ export class ReferralController {
 
       return res.status(201).json({
         success: true,
-        message: "Application submitted successfully!",
+        message: "Partner Program application submitted successfully!",
         data: application,
       });
     } catch (error) {
@@ -53,6 +54,42 @@ export class ReferralController {
     } catch (error) {
       next(error);
     }
+  }
+
+  static async getPartnerDashboard(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user?.id) return res.status(401).json({ success: false, message: "Unauthorized" });
+      const data = await PartnerService.getDashboard(req.user.id);
+      return res.status(200).json({ success: true, data });
+    } catch (error) { next(error); }
+  }
+
+  static async addPartnerMember(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user?.id) return res.status(401).json({ success: false, message: "Unauthorized" });
+      const member = await PartnerService.addMember(req.user.id, req.body.email);
+      return res.status(201).json({ success: true, data: member });
+    } catch (error) { next(error); }
+  }
+
+  static async removePartnerMember(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user?.id) return res.status(401).json({ success: false, message: "Unauthorized" });
+      await PartnerService.removeMember(req.user.id, req.params.memberId);
+      return res.status(200).json({ success: true });
+    } catch (error) { next(error); }
+  }
+
+  static async createPartnerCheckout(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (!req.user?.id) return res.status(401).json({ success: false, message: "Unauthorized" });
+      const { planType, successUrl, cancelUrl } = req.body;
+      if ((planType !== "PARTNER" && planType !== "PARTNER_UNLIMITED") || !successUrl || !cancelUrl) {
+        return res.status(400).json({ success: false, message: "A Partner plan and return URLs are required" });
+      }
+      const data = await PartnerService.createCheckout(req.user.id, planType, successUrl, cancelUrl);
+      return res.status(200).json({ success: true, data });
+    } catch (error) { next(error); }
   }
 
   static async listApplications(req: Request, res: Response, next: NextFunction) {

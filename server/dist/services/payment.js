@@ -10,7 +10,6 @@ const environment_1 = require("../config/environment");
 const client_1 = require("@prisma/client");
 const errors_1 = require("../errors");
 const invoice_1 = require("./invoice");
-const referral_service_1 = require("./referral.service");
 const stripe_2 = __importDefault(require("stripe"));
 const SubscriptionStatusValues = {
     NONE: "NONE",
@@ -147,92 +146,8 @@ class PaymentService {
         let discountApplied = false;
         let discountType = "none";
         let discountDetail = null;
-        console.log(`[CHECKOUT:REFERRAL] User ${userId} — referredById: ${user.referredById ?? "none"}`);
-        if (user.referredById) {
-            const referralProfile = await db_1.prisma.professionalReferralProfile.findUnique({
-                where: { userId: user.referredById },
-                select: {
-                    id: true,
-                    stripePromoCodeId: true,
-                    status: true,
-                    code: true,
-                    user: {
-                        select: { subscriptionStatus: true }
-                    }
-                },
-            });
-            console.log(`[CHECKOUT:REFERRAL] Profile found: ${referralProfile ? "YES" : "NO"}`);
-            if (referralProfile) {
-                console.log(`[CHECKOUT:REFERRAL] Profile code: ${referralProfile.code}`);
-                console.log(`[CHECKOUT:REFERRAL] Profile status: ${referralProfile.status}`);
-                console.log(`[CHECKOUT:REFERRAL] Referrer subscription status: ${referralProfile.user?.subscriptionStatus ?? "none"}`);
-                console.log(`[CHECKOUT:REFERRAL] Stored stripePromoCodeId: ${referralProfile.stripePromoCodeId ?? "null"}`);
-            }
-            if (referralProfile &&
-                referralProfile.status === "ACTIVE" &&
-                referralProfile.user?.subscriptionStatus === "ACTIVE") {
-                let promoCodeId = referralProfile.stripePromoCodeId;
-                const isMissing = !promoCodeId || promoCodeId.startsWith("dummy_");
-                // Step 1: Try to get/create the per-professional unique Stripe Promotion Code.
-                if (isMissing) {
-                    console.log(`[CHECKOUT:REFERRAL] PromoCodeId missing/dummy — attempting to create in Stripe...`);
-                    promoCodeId = await referral_service_1.ReferralService.getOrCreateReferralPromoCode(referralProfile.code);
-                    console.log(`[CHECKOUT:REFERRAL] getOrCreateReferralPromoCode result: ${promoCodeId ?? "FAILED (null)"}`);
-                    if (promoCodeId) {
-                        await db_1.prisma.professionalReferralProfile.update({
-                            where: { id: referralProfile.id },
-                            data: { stripePromoCodeId: promoCodeId },
-                        });
-                        console.log(`[CHECKOUT:REFERRAL] Persisted new promoCodeId: ${promoCodeId}`);
-                    }
-                }
-                if (promoCodeId) {
-                    discounts = [{ promotion_code: promoCodeId }];
-                    allowPromotionCodes = false;
-                    discountApplied = true;
-                    discountType = "promo_code";
-                    discountDetail = `${referralProfile.code} (${promoCodeId})`;
-                    console.log(`[CHECKOUT:REFERRAL] ✅ Applying promo code: ${discountDetail}`);
-                }
-                else {
-                    // Step 2: Promo code unavailable — fall back to shared 25% coupon.
-                    console.log(`[CHECKOUT:REFERRAL] Promo code unavailable — trying shared coupon fallback...`);
-                    try {
-                        const stripe = (0, stripe_1.getStripe)();
-                        let couponId = process.env.STRIPE_REFERRAL_COUPON_ID;
-                        console.log(`[CHECKOUT:REFERRAL] STRIPE_REFERRAL_COUPON_ID env: ${couponId ?? "NOT SET"}`);
-                        if (!couponId) {
-                            const coupons = await stripe.coupons.list({ limit: 100 });
-                            console.log(`[CHECKOUT:REFERRAL] Fetched ${coupons.data.length} coupons from Stripe`);
-                            const existing = coupons.data.find((c) => c.percent_off === 25 && c.duration === "forever" && c.valid);
-                            if (existing) {
-                                couponId = existing.id;
-                                console.log(`[CHECKOUT:REFERRAL] Found existing 25% coupon: ${couponId}`);
-                            }
-                            else {
-                                const newCoupon = await stripe.coupons.create({
-                                    percent_off: 25,
-                                    duration: "forever",
-                                    name: "Professional Referral 25% Discount",
-                                });
-                                couponId = newCoupon.id;
-                                console.log(`[CHECKOUT:REFERRAL] Created new 25% coupon: ${couponId}`);
-                            }
-                        }
-                        discounts = [{ coupon: couponId }];
-                        allowPromotionCodes = false;
-                        discountApplied = true;
-                        discountType = "coupon";
-                        discountDetail = `shared coupon ${couponId}`;
-                        console.log(`[CHECKOUT:REFERRAL] ✅ Fallback coupon applied: ${discountDetail}`);
-                    }
-                    catch (couponErr) {
-                        console.error(`[CHECKOUT:REFERRAL] ❌ BOTH promo code AND coupon fallback failed:`, couponErr);
-                    }
-                }
-            }
-        }
-        console.log(`[CHECKOUT:REFERRAL] Final discount state — applied: ${discountApplied}, type: ${discountType}, detail: ${discountDetail}`);
+        // Partner firms have their own manually activated plans. They never alter a
+        // Business Owner checkout or create an automatic customer discount.
         // Helper to build checkout session params
         const buildSessionParams = (applyDiscounts, allowPromos) => ({
             customer: customerId,
@@ -255,35 +170,6 @@ class PaymentService {
             return { sessionId: session.id, url: session.url, discountApplied, discountType, discountDetail };
         }
         catch (error) {
-            // If the error is caused by an invalid discount/coupon (e.g. test-mode coupon in live mode),
-            // retry without the discount so checkout is never completely blocked.
-            if ((0, errors_1.isStripeApiError)(error) && discounts && discounts.length > 0) {
-                const stripeErr = error;
-                const isDiscountError = stripeErr.type === "StripeInvalidRequestError" &&
-                    (stripeErr.message?.toLowerCase().includes("coupon") ||
-                        stripeErr.message?.toLowerCase().includes("promotion") ||
-                        stripeErr.message?.toLowerCase().includes("discount") ||
-                        stripeErr.param === "discounts" ||
-                        stripeErr.param === "coupon");
-                if (isDiscountError) {
-                    console.warn(`[CHECKOUT] ⚠️  Discount rejected by Stripe: "${stripeErr.message}" — retrying without discount...`);
-                    try {
-                        const fallbackSession = await (0, stripe_1.getStripe)().checkout.sessions.create(buildSessionParams(undefined, true));
-                        if (!fallbackSession.url) {
-                            throw new errors_1.StripeError("Checkout session created but no URL was returned", errors_1.STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED, 500);
-                        }
-                        console.warn(`[CHECKOUT] ✅ Fallback session created (no discount): ${fallbackSession.id}. User can enter code manually.`);
-                        return { sessionId: fallbackSession.id, url: fallbackSession.url, discountApplied: false, discountType: "none", discountDetail: `FAILED — Stripe rejected: ${stripeErr.message}` };
-                    }
-                    catch (retryError) {
-                        if (retryError instanceof errors_1.StripeError)
-                            throw retryError;
-                        if ((0, errors_1.isStripeApiError)(retryError))
-                            throw (0, errors_1.createStripeErrorFromApiError)(retryError, errors_1.STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED);
-                        throw retryError;
-                    }
-                }
-            }
             if (error instanceof errors_1.StripeError)
                 throw error;
             if ((0, errors_1.isStripeApiError)(error))

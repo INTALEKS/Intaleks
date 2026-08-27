@@ -5,6 +5,7 @@ import { generateValuationPDF, ValuationPDFData } from "../services/pdf.service"
 import { StorageService } from "../services/storage";
 import { CalculatorService } from "../services/calculator";
 import { prisma } from "../config/db";
+import { PartnerService } from "../services/partner.service";
 
 /**
  * Create a new valuation document record
@@ -294,6 +295,15 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
       // Continue without fileUrl - record will be saved without R2 link
     }
 
+    // Attach a partner valuation to the active firm and count it only after
+    // the report itself has been generated successfully.
+    let partnerFirmId: string | undefined;
+    try {
+      partnerFirmId = (await PartnerService.recordValuation(userId)) || undefined;
+    } catch (partnerError) {
+      return next(partnerError);
+    }
+
     // Save document record to database (with or without R2 URL)
     try {
       await ValuationService.createDocument({
@@ -306,6 +316,7 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
         fileUrl: fileUrl, // Will be undefined if R2 upload failed
         fileSize: fileSize,
         valuationReason: data.valuationReason,
+        partnerFirmId,
       });
     } catch (dbError) {
       console.error("Failed to save valuation document to database:", dbError);

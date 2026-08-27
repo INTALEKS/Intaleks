@@ -62,6 +62,7 @@ model User {
   referredClients                  User[]                            @relation("ProfessionalReferrals")
   professionalReferralApplication  ProfessionalReferralApplication?
   professionalReferralProfile      ProfessionalReferralProfile?
+  partnerMemberships               PartnerMembership[]
 
   @@map("users")
 }
@@ -444,10 +445,13 @@ model ValuationDocument {
   fileUrl         String?  @map("file_url")
   fileSize        Int?     @map("file_size") // Size in bytes
   valuationReason String?  @map("valuation_reason")
+  partnerFirmId   String?  @map("partner_firm_id")
   createdAt       DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partnerFirm PartnerFirm? @relation(fields: [partnerFirmId], references: [id], onDelete: SetNull)
 
+  @@index([partnerFirmId])
   @@map("valuation_documents")
 }
 
@@ -562,6 +566,60 @@ enum ReferralApplicationStatus {
 enum ReferralStatus {
   ACTIVE
   SUSPENDED
+}
+
+enum PartnerPlanType {
+  PARTNER
+  PARTNER_UNLIMITED
+}
+
+enum PartnerFirmStatus {
+  ONBOARDING
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+}
+
+enum PartnerMembershipRole {
+  FIRM_ADMIN
+  ADVISER
+}
+
+model PartnerFirm {
+  id               String            @id @default(cuid())
+  name             String
+  professionalType String             @map("professional_type")
+  website          String?
+  status           PartnerFirmStatus @default(ONBOARDING)
+  planType         PartnerPlanType?  @map("plan_type")
+  accessStartsAt   DateTime?         @map("access_starts_at")
+  accessEndsAt     DateTime?         @map("access_ends_at")
+  valuationLimit   Int?              @map("valuation_limit")
+  valuationsUsed   Int               @default(0) @map("valuations_used")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  memberships PartnerMembership[]
+  valuations  ValuationDocument[]
+
+  @@map("partner_firms")
+}
+
+model PartnerMembership {
+  id        String                @id @default(cuid())
+  firmId    String                @map("firm_id")
+  userId    String                @map("user_id")
+  role      PartnerMembershipRole @default(ADVISER)
+  active    Boolean               @default(true)
+  createdAt DateTime              @default(now()) @map("created_at")
+  updatedAt DateTime              @updatedAt @map("updated_at")
+
+  firm PartnerFirm @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([firmId, userId])
+  @@index([userId])
+  @@map("partner_memberships")
 }
 
 model ProfessionalReferralApplication {

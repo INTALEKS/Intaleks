@@ -2,6 +2,7 @@ import { prisma } from "../config/db";
 import { getStripe, stripeConfig } from "../config/stripe";
 import { StripeError, STRIPE_ERROR_CODES } from "../errors";
 import { WebhookErrorLogger } from "./webhook-logger";
+import { PartnerService } from "./partner.service";
 import { invoiceService } from "./invoice";
 import { emailService } from "./email";
 import Stripe from "stripe";
@@ -204,6 +205,39 @@ export class WebhookService {
         eventType: event.type,
         message: "Missing userId in session metadata",
       };
+    }
+
+    // Partner access is a separate one-off firm purchase. It never creates or
+    // renews a Business Owner subscription.
+    if (session.metadata?.checkoutType === "partner") {
+      const firmId = session.metadata.partnerFirmId;
+      const planType = session.metadata.partnerPlanType as "PARTNER" | "PARTNER_UNLIMITED";
+      if (!firmId || (planType !== "PARTNER" && planType !== "PARTNER_UNLIMITED")) {
+        return { success: false, eventType: event.type, message: "Partner checkout is missing firm or plan metadata" };
+      }
+      try {
+        const paymentId = (session.payment_intent as string | null) || session.id;
+        const existingPayment = await prisma.payment.findUnique({ where: { stripePaymentId: paymentId } });
+        if (existingPayment) {
+          return { success: true, eventType: event.type, message: "Partner checkout already processed" };
+        }
+        if (!existingPayment) {
+          await prisma.payment.create({
+            data: {
+              userId,
+              amount: session.amount_total || 0,
+              currency: session.currency || "aud",
+              status: PaymentStatusValues.SUCCEEDED,
+              stripePaymentId: paymentId,
+              description: `${planType === "PARTNER" ? "Partner" : "Partner Unlimited"} firm access — 30 days`,
+            },
+          });
+        }
+        await PartnerService.activateFirm(firmId, planType);
+        return { success: true, eventType: event.type, message: "Partner firm activated for 30 days" };
+      } catch (error) {
+        return { success: false, eventType: event.type, message: error instanceof Error ? error.message : "Partner activation failed" };
+      }
     }
 
     try {

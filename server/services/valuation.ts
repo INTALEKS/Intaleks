@@ -14,6 +14,7 @@ export interface CreateValuationDocumentData {
   fileUrl?: string;
   fileSize?: number;
   valuationReason?: string;
+  partnerFirmId?: string;
 }
 
 /**
@@ -51,6 +52,7 @@ export class ValuationService {
         fileUrl: data.fileUrl,
         fileSize: data.fileSize,
         valuationReason: data.valuationReason,
+        partnerFirmId: data.partnerFirmId,
       },
     });
 

@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { CookieUtils } from "../utils/cookieUtils";
 import { AuthService } from "../services/auth";
 import { prisma } from "../config/db";
+import { PartnerService } from "../services/partner.service";
 import { UserRole, SubscriptionStatus } from "@prisma/client";
 
 // Define user type without password
@@ -179,10 +180,12 @@ export const requireActiveSubscription = async (req: Request, res: Response, nex
   }
 
   const hasSubscription = req.user.subscriptionStatus === SubscriptionStatus.ACTIVE;
+  const partnerFirm = await PartnerService.getActiveFirmForUser(req.user.id);
+  const hasPartnerAccess = Boolean(partnerFirm);
   const hasCouponAccess = req.user.couponAccess === true;
   const couponAlreadyUsed = req.user.couponUsed === true;
 
-  if (!hasSubscription && !hasCouponAccess) {
+  if (!hasSubscription && !hasCouponAccess && !hasPartnerAccess) {
     res.status(403).json({
       error: "Active subscription required",
       message: "This feature requires an active subscription. Please subscribe or redeem a coupon code to continue.",
@@ -192,7 +195,7 @@ export const requireActiveSubscription = async (req: Request, res: Response, nex
   }
 
   // Coupon users get exactly one use — block if already consumed
-  if (!hasSubscription && hasCouponAccess && couponAlreadyUsed) {
+  if (!hasSubscription && !hasPartnerAccess && hasCouponAccess && couponAlreadyUsed) {
     res.status(403).json({
       error: "Coupon access expired",
       message: "Your one-time coupon access has already been used. Please subscribe to continue.",

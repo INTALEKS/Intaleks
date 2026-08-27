@@ -99,8 +99,8 @@ export default function ReferralsAdminPage() {
     <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Referral Partners Applications</h1>
-          <p className="text-sm text-gray-500">Manage and review professional registration requests to join the referral network.</p>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Partner Program Applications</h1>
+          <p className="text-sm text-gray-500">Review professional firm applications before guided onboarding and manual plan activation.</p>
         </div>
         <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing} className="flex items-center gap-x-1">
           <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
@@ -237,7 +237,7 @@ export default function ReferralsAdminPage() {
             <DialogHeader>
               <DialogTitle>Decline Application</DialogTitle>
               <DialogDescription>
-                Provide feedback or a reason for declining the referral application for{" "}
+                Provide feedback or a reason for declining the Partner Program application for{" "}
                 <span className="font-semibold">{selectedApp.companyName}</span>.
               </DialogDescription>
             </DialogHeader>

@@ -212,20 +212,20 @@ function AssetSection() {
 function TooLateSection() {
   const moments = [
     {
-      title: "An offer lands out of nowhere",
-      body: "Thirty years of work, and a fortnight to decide.",
+      title: "Buying or selling",
+      body: "A price is on the table. Is it fair and reasonable? You've got no way to tell.",
     },
     {
-      title: "A partner wants out",
-      body: "Yesterday you built it together. Today you're negotiating.",
+      title: "A partner is leaving",
+      body: "Someone has to buy the other out. What's a fair share worth?",
     },
     {
-      title: "A marriage ends",
-      body: "The business is on the table, and nobody knows what it's worth.",
+      title: "A relationship ends",
+      body: "The business has to be split. Neither side can agree on a figure.",
     },
     {
-      title: "Health forces your hand",
-      body: "Retirement stops being a plan and becomes a deadline.",
+      title: "Thinking about retiring",
+      body: "Is there enough in it to walk away? You've never actually checked.",
     },
   ];
 
@@ -245,27 +245,23 @@ function TooLateSection() {
           <span className="text-[#BFD6FD]">The hard truth</span>
         </Eyebrow>
         <SectionH2 className="text-white max-w-[20ch]">
-          Nobody plans for the day they need to know their business value
+          One day you'll need this number. It won't be a good day to start looking.
         </SectionH2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-6 mb-5">
           {moments.map((m) => (
             <div
               key={m.title}
-              className="bg-white/10 border border-white/20 rounded-[10px] p-5"
+              className="bg-[#F7F9FC] text-[#0d1117] rounded-[10px] p-5"
             >
-              <b className="block text-[16.5px] font-bold mb-1.5">{m.title}</b>
-              <span className="block text-[14.5px] text-[#D6E4FB] leading-relaxed">{m.body}</span>
+              <b className="block text-[15px] uppercase tracking-[1.2px] text-[#3476C6] font-bold mb-2">{m.title}</b>
+              <span className="block text-[15px] text-[#53657F] leading-relaxed">{m.body}</span>
             </div>
           ))}
         </div>
 
-        <p className="text-[#E2ECFC] max-w-[60ch] leading-relaxed">
-          These moments arrive without warning, and they never wait for you to get organised.{" "}
-          <strong className="text-white">
-            The best outcomes don't go to the biggest businesses. They go to the owners who already knew
-            their business value.
-          </strong>
+        <p className="text-white max-w-[60ch] leading-relaxed font-semibold">
+          The owners who do well already know their number. Everyone else finds out under pressure.
         </p>
       </div>
     </section>
@@ -282,8 +278,8 @@ const industries = [
     desc: "Plumbing, electrical, building, HVAC, landscaping, roofing",
     cta: "What's my trade business worth →",
     photo:
-      "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=700&q=70",
-    photoAlt: "Electrician at work",
+      "/industry-trades-construction.jpg",
+    photoAlt: "Tradesperson working beside a construction vehicle",
     href: "/calculator",
     light: false,
   },
@@ -292,8 +288,8 @@ const industries = [
     desc: "Rent roll, sales performance, team and brand strength",
     cta: "What's my agency worth →",
     photo:
-      "https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?auto=format&fit=crop&w=700&q=70",
-    photoAlt: "Sold sign outside a home",
+      "/industry-real-estate-agencies.webp",
+    photoAlt: "Real estate agency storefront",
     href: "/calculator",
     light: false,
   },
@@ -312,8 +308,8 @@ const industries = [
     desc: "Agencies, consultancies, allied health and advisory firms",
     cta: "What's my practice worth →",
     photo:
-      "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=700&q=70",
-    photoAlt: "Consultants in a meeting",
+      "/industry-professional-services.webp",
+    photoAlt: "Professional advisers working together",
     href: "/calculator",
     light: false,
   },
@@ -322,8 +318,8 @@ const industries = [
     desc: "Freight, couriers, earthmoving and equipment-heavy operators",
     cta: "What's my operation worth →",
     photo:
-      "https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=700&q=70",
-    photoAlt: "Delivery trucks at a depot",
+      "/industry-transport-logistics.jpg",
+    photoAlt: "Transport and logistics operation",
     href: "/calculator",
     light: false,
   },
@@ -652,17 +648,27 @@ function FounderSection() {
             />
           </div>
 
-          {/* Quote */}
+          {/* Founder story */}
           <div>
-            <Eyebrow>From the founder</Eyebrow>
-            <blockquote className="text-[20px] leading-[1.6] font-medium border-l-[3px] border-[#3B82F6] pl-[22px] m-0">
-              "I've spent 25+ years valuing businesses, and I've seen how hard it is for owners to get
-              clear, honest guidance on what their business is worth. I built Intaleks so any business
-              owner can get a professional-grade appraisal without the cost, complexity or delay."
-            </blockquote>
-            <cite className="block mt-4 not-italic text-[#5A6472] text-[15px]">
-              Aleks Todorovic — Founder, Intaleks &amp; Executive Business Valuers
-            </cite>
+            <Eyebrow>Meet Aleks Todorovic — Founder, Intaleks</Eyebrow>
+            <div className="space-y-4 text-[15px] leading-relaxed text-[#374151]">
+              <p>
+                I&apos;ve spent more than 26 years in corporate Australia, leading finance and operational teams. I&apos;ve sat in the rooms where the numbers get decided, and I&apos;ve seen how a single figure on a page can change the direction of a company — and the lives of the people behind it.
+              </p>
+              <p>
+                I started Executive Business Valuers because business owners deserve valuations that hold up under scrutiny. Defensible. Compliant. Built for shareholder disputes, family law matters, buy-outs where two people who once shook hands can&apos;t be in the same room.
+              </p>
+              <p>
+                But I kept hearing the same thing. A builder. A café owner. A couple facing a divorce, staring down a settlement, with no idea what the business they&apos;d spent a decade building would mean for the outcome. They weren&apos;t ready to spend thousands on a formal report. They just wanted to know what they were walking into.
+              </p>
+              <p>Every time, I had to quote a price built for litigation — for a question that didn&apos;t need it yet. Most of them walked away without an answer.</p>
+              <p>That never sat well with me.</p>
+              <p>
+                Intaleks exists to fix that. Same rigour, same 26 years behind it, at a price a real business owner can say yes to. Clear guidance on what your business is worth, so you can plan and negotiate from a position of understanding — not guesswork.
+              </p>
+              <p>Because anyone who has poured years into building something deserves to know what it&apos;s worth.</p>
+            </div>
+            <cite className="block mt-5 not-italic text-[#0d1117] text-[15px] font-semibold">— Aleks Todorovic, Founder</cite>
           </div>
         </div>
       </div>

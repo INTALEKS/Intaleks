@@ -4,6 +4,7 @@ exports.requireActiveSubscription = exports.requireEmailVerified = exports.requi
 const cookieUtils_1 = require("../utils/cookieUtils");
 const auth_1 = require("../services/auth");
 const db_1 = require("../config/db");
+const partner_service_1 = require("../services/partner.service");
 const client_1 = require("@prisma/client");
 /**
  * Authentication middleware to protect routes
@@ -135,9 +136,11 @@ const requireActiveSubscription = async (req, res, next) => {
         return;
     }
     const hasSubscription = req.user.subscriptionStatus === client_1.SubscriptionStatus.ACTIVE;
+    const partnerFirm = await partner_service_1.PartnerService.getActiveFirmForUser(req.user.id);
+    const hasPartnerAccess = Boolean(partnerFirm);
     const hasCouponAccess = req.user.couponAccess === true;
     const couponAlreadyUsed = req.user.couponUsed === true;
-    if (!hasSubscription && !hasCouponAccess) {
+    if (!hasSubscription && !hasCouponAccess && !hasPartnerAccess) {
         res.status(403).json({
             error: "Active subscription required",
             message: "This feature requires an active subscription. Please subscribe or redeem a coupon code to continue.",
@@ -146,7 +149,7 @@ const requireActiveSubscription = async (req, res, next) => {
         return;
     }
     // Coupon users get exactly one use — block if already consumed
-    if (!hasSubscription && hasCouponAccess && couponAlreadyUsed) {
+    if (!hasSubscription && !hasPartnerAccess && hasCouponAccess && couponAlreadyUsed) {
         res.status(403).json({
             error: "Coupon access expired",
             message: "Your one-time coupon access has already been used. Please subscribe to continue.",

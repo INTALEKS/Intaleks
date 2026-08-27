@@ -2,9 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReferralService = void 0;
 const db_1 = require("../config/db");
-const stripe_1 = require("../config/stripe");
 const client_1 = require("@prisma/client");
 const errors_1 = require("../errors");
+const partner_service_1 = require("./partner.service");
 class ReferralService {
     /**
      * Submit an application to join the professional referral program
@@ -14,7 +14,7 @@ class ReferralService {
         if (!professionalType || !companyName) {
             throw new errors_1.ValidationError("Professional type and company name are required");
         }
-        // Retrieve user and their subscription status
+        // Partner onboarding is independent of Business Owner plans.
         const user = await db_1.prisma.user.findUnique({
             where: { id: userId },
             include: {
@@ -24,10 +24,6 @@ class ReferralService {
         });
         if (!user) {
             throw new errors_1.NotFoundError("User not found");
-        }
-        // Require active subscription
-        if (user.subscriptionStatus !== "ACTIVE") {
-            throw new errors_1.ValidationError("To join the referral program, you must be an active subscriber");
         }
         // Check if they already have an active profile
         if (user.professionalReferralProfile) {
@@ -90,6 +86,7 @@ class ReferralService {
                         email: true,
                         firstName: true,
                         lastName: true,
+                        partnerMemberships: { include: { firm: true } },
                     },
                 },
             },
@@ -153,70 +150,25 @@ class ReferralService {
             });
             if (!existingProfile) {
                 const code = await this.generateUniqueCode(user.firstName || "", user.lastName || "", application.professionalType);
-                // Create the Stripe Promotion Code for this professional.
-                // Returns the Stripe promo code object ID, or null if Stripe is unavailable.
-                const stripePromoCodeId = await ReferralService.getOrCreateReferralPromoCode(code);
-                // Save ProfessionalReferralProfile to database
+                // Billing is set up manually during guided onboarding. Do not create a
+                // customer discount or an automatic recurring Stripe subscription here.
                 await db_1.prisma.professionalReferralProfile.create({
                     data: {
                         userId: user.id,
                         code,
-                        stripePromoCodeId,
+                        stripePromoCodeId: null,
                         status: client_1.ReferralStatus.ACTIVE,
                     },
+                });
+                await partner_service_1.PartnerService.createFirmForApprovedApplication({
+                    userId: application.userId,
+                    companyName: application.companyName,
+                    professionalType: application.professionalType,
+                    website: application.website,
                 });
             }
         }
         return updatedApplication;
-    }
-    /**
-     * Get or create a Stripe Promotion Code for a given referral code string.
-     * - Reuses the shared 25% referral coupon (creates it once if missing).
-     * - Checks Stripe for an existing promo code with that string before creating.
-     * - Returns the Stripe Promotion Code ID, or null on failure.
-     */
-    static async getOrCreateReferralPromoCode(code) {
-        try {
-            const stripe = (0, stripe_1.getStripe)();
-            // Step 1: Get or create the shared 25% referral coupon.
-            let couponId = process.env.STRIPE_REFERRAL_COUPON_ID;
-            if (!couponId) {
-                const coupons = await stripe.coupons.list({ limit: 100 });
-                const existing = coupons.data.find((c) => c.percent_off === 25 && c.duration === "forever" && c.valid);
-                if (existing) {
-                    couponId = existing.id;
-                }
-                else {
-                    const newCoupon = await stripe.coupons.create({
-                        percent_off: 25,
-                        duration: "forever",
-                        name: "Professional Referral 25% Discount",
-                    });
-                    couponId = newCoupon.id;
-                    console.log(`[REFERRAL] Created shared 25% referral coupon in Stripe: ${couponId}`);
-                }
-            }
-            // Step 2: Check if a Stripe Promotion Code already exists for this code string.
-            const existing = await stripe.promotionCodes.list({ code, limit: 1 });
-            if (existing.data.length > 0) {
-                console.log(`[REFERRAL] Reusing existing Stripe promo code: ${code} (${existing.data[0].id})`);
-                return existing.data[0].id;
-            }
-            // Step 3: Create a new unique Stripe Promotion Code for this professional.
-            const promoCode = await stripe.promotionCodes.create({
-                promotion: {
-                    type: "coupon",
-                    coupon: couponId,
-                },
-                code,
-            });
-            console.log(`[REFERRAL] Created Stripe promo code: ${code} (${promoCode.id})`);
-            return promoCode.id;
-        }
-        catch (err) {
-            console.error(`[REFERRAL] Failed to create Stripe promo code for "${code}". Will retry at checkout:`, err);
-            return null;
-        }
     }
     /**
      * Get referred clients for a professional, including their valuation documents and inputs

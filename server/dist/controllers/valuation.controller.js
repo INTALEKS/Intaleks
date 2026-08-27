@@ -7,6 +7,7 @@ const pdf_service_1 = require("../services/pdf.service");
 const storage_1 = require("../services/storage");
 const calculator_1 = require("../services/calculator");
 const db_1 = require("../config/db");
+const partner_service_1 = require("../services/partner.service");
 /**
  * Create a new valuation document record
  * POST /api/valuations
@@ -258,6 +259,15 @@ const generatePDF = async (req, res, next) => {
             console.error("Failed to upload PDF to R2:", storageError);
             // Continue without fileUrl - record will be saved without R2 link
         }
+        // Attach a partner valuation to the active firm and count it only after
+        // the report itself has been generated successfully.
+        let partnerFirmId;
+        try {
+            partnerFirmId = (await partner_service_1.PartnerService.recordValuation(userId)) || undefined;
+        }
+        catch (partnerError) {
+            return next(partnerError);
+        }
         // Save document record to database (with or without R2 URL)
         try {
             await valuation_1.ValuationService.createDocument({
@@ -270,6 +280,7 @@ const generatePDF = async (req, res, next) => {
                 fileUrl: fileUrl, // Will be undefined if R2 upload failed
                 fileSize: fileSize,
                 valuationReason: data.valuationReason,
+                partnerFirmId,
             });
         }
         catch (dbError) {

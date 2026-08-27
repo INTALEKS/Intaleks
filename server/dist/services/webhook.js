@@ -8,6 +8,7 @@ const db_1 = require("../config/db");
 const stripe_1 = require("../config/stripe");
 const errors_1 = require("../errors");
 const webhook_logger_1 = require("./webhook-logger");
+const partner_service_1 = require("./partner.service");
 const invoice_1 = require("./invoice");
 const email_1 = require("./email");
 const stripe_2 = __importDefault(require("stripe"));
@@ -176,6 +177,39 @@ class WebhookService {
                 eventType: event.type,
                 message: "Missing userId in session metadata",
             };
+        }
+        // Partner access is a separate one-off firm purchase. It never creates or
+        // renews a Business Owner subscription.
+        if (session.metadata?.checkoutType === "partner") {
+            const firmId = session.metadata.partnerFirmId;
+            const planType = session.metadata.partnerPlanType;
+            if (!firmId || (planType !== "PARTNER" && planType !== "PARTNER_UNLIMITED")) {
+                return { success: false, eventType: event.type, message: "Partner checkout is missing firm or plan metadata" };
+            }
+            try {
+                const paymentId = session.payment_intent || session.id;
+                const existingPayment = await db_1.prisma.payment.findUnique({ where: { stripePaymentId: paymentId } });
+                if (existingPayment) {
+                    return { success: true, eventType: event.type, message: "Partner checkout already processed" };
+                }
+                if (!existingPayment) {
+                    await db_1.prisma.payment.create({
+                        data: {
+                            userId,
+                            amount: session.amount_total || 0,
+                            currency: session.currency || "aud",
+                            status: PaymentStatusValues.SUCCEEDED,
+                            stripePaymentId: paymentId,
+                            description: `${planType === "PARTNER" ? "Partner" : "Partner Unlimited"} firm access — 30 days`,
+                        },
+                    });
+                }
+                await partner_service_1.PartnerService.activateFirm(firmId, planType);
+                return { success: true, eventType: event.type, message: "Partner firm activated for 30 days" };
+            }
+            catch (error) {
+                return { success: false, eventType: event.type, message: error instanceof Error ? error.message : "Partner activation failed" };
+            }
         }
         try {
             // Get the subscription ID if this was a subscription checkout

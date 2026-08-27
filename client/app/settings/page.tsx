@@ -89,7 +89,7 @@ function SettingsPageContent() {
     { key: "subscriptions" as TabType, label: "Subscriptions" },
     { key: "invoices" as TabType, label: "Invoices" },
     { key: "contact" as TabType, label: "Contact Admin" },
-    { key: "referrals" as TabType, label: "Referral Program" },
+    { key: "referrals" as TabType, label: "Partner Program" },
   ];
 
   return (
@@ -588,24 +588,20 @@ function InvoicesTab() {
   );
 }
 
-// Professional Referral Program Tab Component
+// Partner Program onboarding tab. The API path remains stable for existing applications.
 function ReferralsTab({ user }: { user: UserData | null }) {
   const [profile, setProfile] = useState<any>(null);
   const [application, setApplication] = useState<any>(null);
-  const [clients, setClients] = useState<any[]>([]);
+  const [firmDashboard, setFirmDashboard] = useState<any>(null);
+  const [memberEmail, setMemberEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
-  const [copiedCode, setCopiedCode] = useState(false);
-  const [selectedClient, setSelectedClient] = useState<any>(null);
   const [reapplyMode, setReapplyMode] = useState(false);
 
   // Form state
   const [professionalType, setProfessionalType] = useState("Accountant");
   const [companyName, setCompanyName] = useState("");
   const [website, setWebsite] = useState("");
-
-  const isActiveSubscriber = user?.subscriptionStatus === "ACTIVE";
 
   const fetchReferralData = async () => {
     try {
@@ -614,13 +610,9 @@ function ReferralsTab({ user }: { user: UserData | null }) {
       if (res.success && res.data) {
         setProfile(res.data.profile);
         setApplication(res.data.application);
-
-        // If approved, fetch referred clients
         if (res.data.profile) {
-          const clientsRes = await ApiClient.getReferredClients();
-          if (clientsRes.success) {
-            setClients(clientsRes.data || []);
-          }
+          const firmRes = await ApiClient.getPartnerFirmDashboard();
+          setFirmDashboard(firmRes.data);
         }
       }
     } catch (err: any) {
@@ -631,12 +623,8 @@ function ReferralsTab({ user }: { user: UserData | null }) {
   };
 
   useEffect(() => {
-    if (isActiveSubscriber) {
-      fetchReferralData();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
+    fetchReferralData();
+  }, []);
 
   const handleSubmitApplication = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -665,21 +653,30 @@ function ReferralsTab({ user }: { user: UserData | null }) {
     }
   };
 
-  const handleCopyLink = () => {
-    if (!profile?.code) return;
-    const referralLink = `${window.location.origin}/signup?ref=${profile.code}`;
-    navigator.clipboard.writeText(referralLink);
-    setCopiedLink(true);
-    toast.success("Referral link copied to clipboard!");
-    setTimeout(() => setCopiedLink(false), 2000);
+  const addMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await ApiClient.addPartnerFirmMember(memberEmail);
+      setMemberEmail("");
+      toast.success("Firm member added");
+      fetchReferralData();
+    } catch (error: any) { toast.error(error.message || "Unable to add firm member"); }
   };
 
-  const handleCopyCode = () => {
-    if (!profile?.code) return;
-    navigator.clipboard.writeText(profile.code);
-    setCopiedCode(true);
-    toast.success("Promo code copied to clipboard!");
-    setTimeout(() => setCopiedCode(false), 2000);
+  const removeMember = async (memberId: string) => {
+    try {
+      await ApiClient.removePartnerFirmMember(memberId);
+      toast.success("Firm member removed");
+      fetchReferralData();
+    } catch (error: any) { toast.error(error.message || "Unable to remove firm member"); }
+  };
+
+  const startPartnerCheckout = async (planType: "PARTNER" | "PARTNER_UNLIMITED") => {
+    try {
+      const returnUrl = `${window.location.origin}/settings?tab=referrals`;
+      const checkout = await ApiClient.createPartnerCheckout(planType, `${returnUrl}&partnerCheckout=success`, `${returnUrl}&partnerCheckout=cancelled`);
+      window.location.assign(checkout.data.url);
+    } catch (error: any) { toast.error(error.message || "Unable to start secure checkout"); }
   };
 
   if (loading) {
@@ -690,38 +687,7 @@ function ReferralsTab({ user }: { user: UserData | null }) {
     );
   }
 
-  // State 1: User is not active subscriber
-  if (!isActiveSubscriber) {
-    return (
-      <div className="bg-white border rounded-xl p-6 lg:p-8 max-w-2xl shadow-sm">
-        <Award className="w-12 h-12 text-blue-500 mb-4" />
-        <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Professional Referral Program</h2>
-        <p className="text-gray-600 mb-6 text-sm lg:text-base leading-relaxed">
-          Our Professional Referral Program is designed specifically for lawyers, accountants, financial advisors, and other business consultants. Provide your clients with a <strong>25% discount</strong> on their lifetime valuation report subscription and gain direct, secure access to view and download their completed valuation reports.
-        </p>
-        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-6">
-          <p className="text-sm text-blue-700 font-medium">
-            Subscription Required
-          </p>
-          <p className="text-xs text-blue-600 mt-1">
-            To maintain program integrity and enable you to understand our tool firsthand, you must have an active subscription to join.
-          </p>
-        </div>
-        <button
-          onClick={() => {
-            const pricing = document.getElementById("pricing");
-            if (pricing) pricing.scrollIntoView({ behavior: "smooth" });
-            else window.location.href = "/#pricing";
-          }}
-          className="bg-blue-500 hover:bg-blue-600 text-white font-medium px-6 py-2.5 rounded-lg text-sm transition-colors duration-200"
-        >
-          View Subscription Plans
-        </button>
-      </div>
-    );
-  }
-
-  // State 2: Active subscriber, show Application Form (if not applied or in reapply mode)
+  // State 1: Application form (or reapplication)
   const hasApplied = !!application;
   const isPending = application?.status === "PENDING";
   const isApproved = application?.status === "APPROVED" || !!profile;
@@ -731,9 +697,9 @@ function ReferralsTab({ user }: { user: UserData | null }) {
     return (
       <div className="bg-white border rounded-xl p-6 lg:p-8 max-w-2xl shadow-sm">
         <Award className="w-12 h-12 text-blue-500 mb-4" />
-        <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1">Apply for Referral Program</h2>
+        <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1">Apply for the Partner Program</h2>
         <p className="text-gray-600 mb-6 text-sm">
-          Please fill out the form below. Once approved, you will receive a unique referral link and code to share with your clients.
+          Intaleks will review your application, book an onboarding session and set up your firm account. Partner access and pricing are separate from Business Owner plans.
         </p>
 
         <form onSubmit={handleSubmitApplication} className="space-y-4">
@@ -800,14 +766,14 @@ function ReferralsTab({ user }: { user: UserData | null }) {
     );
   }
 
-  // State 3: Pending review
+  // State 2: Pending onboarding review
   if (isPending) {
     return (
       <div className="bg-white border rounded-xl p-6 lg:p-8 max-w-2xl text-center shadow-sm">
         <Clock className="w-16 h-16 text-yellow-500 mx-auto mb-4 animate-pulse" />
-        <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Application Under Review</h2>
+        <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Partner Application Under Review</h2>
         <p className="text-gray-600 mb-6 text-sm lg:text-base leading-relaxed">
-          Thank you for applying to the Intaleks Professional Referral Program! Our admin team is manually reviewing your application. We will update you with our feedback as soon as possible.
+          Thank you for applying to the Intaleks Partner Program. Our team will review your application, then arrange a guided onboarding session to set up your firm and plan.
         </p>
         <div className="bg-gray-50 border rounded-lg p-4 inline-block text-left text-xs text-gray-600 space-y-1">
           <p><strong>Practice:</strong> {application.companyName}</p>
@@ -818,14 +784,14 @@ function ReferralsTab({ user }: { user: UserData | null }) {
     );
   }
 
-  // State 4: Rejected with feedback
+  // State 3: Rejected with feedback
   if (isRejected && !reapplyMode) {
     return (
       <div className="bg-white border rounded-xl p-6 lg:p-8 max-w-2xl shadow-sm">
         <XCircle className="w-12 h-12 text-red-500 mb-4" />
         <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Application Declined</h2>
         <p className="text-gray-600 mb-6 text-sm">
-          We appreciate your interest. Unfortunately, your professional referral application was declined by the administrator.
+          We appreciate your interest. Unfortunately, your Partner Program application was declined by the administrator.
         </p>
 
         {application.feedback && (
@@ -845,221 +811,25 @@ function ReferralsTab({ user }: { user: UserData | null }) {
     );
   }
 
-  // State 5: Approved & Active Profile Dashboard
+  // State 4: Approved — the firm is set up directly during guided onboarding.
   return (
-    <div className="space-y-6">
-      {/* Overview stats & Link cards */}
+    <div className="space-y-6 max-w-4xl">
+    <div className="bg-white border rounded-xl p-6 lg:p-8 shadow-sm">
+      <CheckCircle className="w-12 h-12 text-green-500 mb-4" />
+      <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-2">Welcome to the Partner Program</h2>
+      <p className="text-gray-600 text-sm lg:text-base leading-relaxed">Your application has been approved. Intaleks will contact you to run your onboarding session, create the firm account and help you select the right 30-day Partner plan. Plans do not renew automatically.</p>
+      <a href="/partner-program#partner-pricing" className="inline-flex mt-6 bg-blue-500 hover:bg-blue-600 text-white font-medium px-5 py-2.5 rounded-lg text-sm transition-colors">View Partner Plans</a>
+    </div>
+    {firmDashboard && <>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Stats card */}
-        <div className="bg-white border rounded-xl p-5 flex flex-col justify-between shadow-sm">
-          <div>
-            <Users className="w-5 h-5 text-blue-500 mb-1" />
-            <h3 className="text-sm font-semibold text-gray-500">Referred Clients</h3>
-          </div>
-          <p className="text-3xl font-extrabold text-gray-900 mt-2">{clients.length}</p>
-          <p className="text-xs text-gray-500 mt-1">Total linked accounts</p>
-        </div>
-
-        {/* Promo code card */}
-        <div className="bg-white border rounded-xl p-5 flex flex-col justify-between shadow-sm">
-          <div>
-            <Award className="w-5 h-5 text-green-500 mb-1" />
-            <h3 className="text-sm font-semibold text-gray-500">Referral Discount Code</h3>
-          </div>
-          <div className="flex items-center justify-between mt-3 bg-gray-50 border rounded-lg px-3 py-1.5">
-            <span className="font-mono text-sm font-bold text-gray-800">{profile?.code}</span>
-            <button
-              onClick={handleCopyCode}
-              className="text-blue-500 hover:text-blue-600 text-xs font-medium flex items-center gap-x-0.5"
-            >
-              {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-              {copiedCode ? "Copied" : "Copy"}
-            </button>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">Clients get 25% discount</p>
-        </div>
-
-        {/* Link card */}
-        <div className="bg-white border rounded-xl p-5 flex flex-col justify-between shadow-sm">
-          <div>
-            <ExternalLink className="w-5 h-5 text-purple-500 mb-1" />
-            <h3 className="text-sm font-semibold text-gray-500">Referral Link</h3>
-          </div>
-          <button
-            onClick={handleCopyLink}
-            className="mt-3 w-full bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium py-2 rounded-lg text-xs flex items-center justify-center gap-x-1.5 transition-colors border border-blue-100"
-          >
-            {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-            {copiedLink ? "Link Copied" : "Copy Referral Link"}
-          </button>
-          <p className="text-xs text-gray-500 mt-2">Auto-applies code during checkout</p>
-        </div>
+        <div className="bg-white border rounded-xl p-5"><p className="text-sm text-gray-500">Firm</p><p className="mt-1 text-lg font-bold text-gray-900">{firmDashboard.firm.name}</p><p className="mt-2 text-xs font-semibold text-blue-600">{firmDashboard.firm.status}</p></div>
+        <div className="bg-white border rounded-xl p-5"><p className="text-sm text-gray-500">Partner plan</p><p className="mt-1 text-lg font-bold text-gray-900">{firmDashboard.firm.planType?.replace("_", " ") || "Set up during onboarding"}</p><p className="mt-2 text-xs text-gray-500">No automatic renewal</p></div>
+        <div className="bg-white border rounded-xl p-5"><p className="text-sm text-gray-500">Firm valuations</p><p className="mt-1 text-lg font-bold text-gray-900">{firmDashboard.firm.valuationsUsed}{firmDashboard.firm.valuationLimit ? ` / ${firmDashboard.firm.valuationLimit}` : ""}</p><p className="mt-2 text-xs text-gray-500">Current 30-day period</p></div>
       </div>
-
-      {/* Clients Management List */}
-      <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
-        <div className="px-5 py-4 border-b">
-          <h2 className="text-lg font-bold text-gray-900">Referred Clients Directory</h2>
-          <p className="text-xs text-gray-500">View your referred clients, their inputs, and download their valuation reports.</p>
-        </div>
-
-        {clients.length === 0 ? (
-          <div className="p-8 text-center">
-            <Users className="w-12 h-12 text-gray-300 mx-auto mb-2" />
-            <p className="text-sm font-medium text-gray-600">No referred clients yet</p>
-            <p className="text-xs text-gray-400 mt-1">Share your link or code to start onboarding your clients.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-gray-500">
-              <thead className="bg-gray-50 text-gray-700 text-xs font-semibold border-b">
-                <tr>
-                  <th className="px-5 py-3">Client</th>
-                  <th className="px-5 py-3">Joined Date</th>
-                  <th className="px-5 py-3">Subscription Status</th>
-                  <th className="px-5 py-3">Valuations</th>
-                  <th className="px-5 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {clients.map((client) => (
-                  <tr key={client.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-5 py-4">
-                      <div className="font-semibold text-gray-900">
-                        {client.firstName || client.lastName
-                          ? `${client.firstName || ""} ${client.lastName || ""}`.trim()
-                          : "User"}
-                      </div>
-                      <div className="text-xs text-gray-400 font-mono mt-0.5">{client.email}</div>
-                    </td>
-                    <td className="px-5 py-4 text-xs">
-                      {new Date(client.createdAt).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span
-                        className={cn(
-                          "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
-                          client.subscriptionStatus === "ACTIVE"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        )}
-                      >
-                        {client.subscriptionStatus}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-xs font-semibold text-gray-900">
-                      {client.valuationDocuments.length} reports
-                    </td>
-                    <td className="px-5 py-4 text-right">
-                      <button
-                        onClick={() => setSelectedClient(client)}
-                        className="text-blue-500 hover:text-blue-600 font-semibold text-xs inline-flex items-center gap-x-0.5"
-                      >
-                        View Client Data <ChevronRight className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Client Detail Sheet / Modal */}
-      {selectedClient && (
-        <Dialog open={!!selectedClient} onOpenChange={() => setSelectedClient(null)}>
-          <DialogContent className="max-w-4xl max-h-[90dvh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-xl">
-                Client Profile: {selectedClient.firstName || selectedClient.lastName
-                  ? `${selectedClient.firstName || ""} ${selectedClient.lastName || ""}`.trim()
-                  : "User"}
-              </DialogTitle>
-              <DialogDescription className="font-mono text-xs">{selectedClient.email}</DialogDescription>
-            </DialogHeader>
-
-            <div className="mt-4 space-y-6">
-              {/* Valuation Documents */}
-              <div>
-                <h3 className="font-bold text-gray-900 text-sm mb-3 uppercase tracking-wider">Valuation Reports</h3>
-                {selectedClient.valuationDocuments.length === 0 ? (
-                  <p className="text-xs text-gray-500 italic p-3 bg-gray-50 rounded-lg">No valuation reports generated by this client yet.</p>
-                ) : (
-                  <div className="space-y-4">
-                    {selectedClient.valuationDocuments.map((doc: any) => (
-                      <div key={doc.id} className="border rounded-xl p-4 bg-gray-50/50 space-y-3">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b pb-2">
-                          <div>
-                            <h4 className="font-bold text-gray-900 text-sm">{doc.companyName}</h4>
-                            <p className="text-xs text-gray-500 capitalize">
-                              {doc.industry} &bull; {doc.country} &bull; {doc.method} Method
-                            </p>
-                          </div>
-                          <div className="text-left sm:text-right">
-                            <span className="text-xs text-gray-400 block">Valuation Amount</span>
-                            <span className="font-extrabold text-blue-600 text-base">
-                              ${doc.valuation.toLocaleString(undefined, { minimumFractionDigits: 0 })}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Financial Inputs & Scores */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                          {/* Left: Questionnaire Scores */}
-                          {doc.questionnaireResponse ? (
-                            <div className="space-y-2">
-                              <h5 className="font-bold text-gray-700">Questionnaire Scores & Factors</h5>
-                              <div className="grid grid-cols-2 gap-x-2 gap-y-1 border rounded-lg p-2.5 bg-white shadow-sm">
-                                <div>Total Score: <span className="font-semibold">{doc.questionnaireResponse.totalScore}/50</span></div>
-                                <div>Multiple Category: <span className="font-semibold capitalize text-blue-600">{doc.questionnaireResponse.multipleCategory}</span></div>
-                                <div>Calculated Multiple: <span className="font-semibold">{doc.questionnaireResponse.calculatedMultiple}x</span></div>
-                                <div>Growth Rate: <span className="font-semibold">{doc.questionnaireResponse.growthRate}/5</span></div>
-                                <div>Recurring Rev: <span className="font-semibold">{doc.questionnaireResponse.recurringRevenue}/5</span></div>
-                                <div>Owner Dep: <span className="font-semibold">{doc.questionnaireResponse.ownerDependence}/5</span></div>
-                              </div>
-                            </div>
-                          ) : (
-                            <p className="text-xs text-gray-400 italic">No questionnaire data associated.</p>
-                          )}
-
-                          {/* Right: Actions / Download */}
-                          <div className="flex flex-col justify-end items-start md:items-end gap-2">
-                            <span className="text-xs text-gray-400">
-                              Generated {new Date(doc.createdAt).toLocaleDateString()}
-                            </span>
-                            {doc.fileUrl ? (
-                              <a
-                                href={doc.fileUrl}
-                                download
-                                target="_blank"
-                                rel="noreferrer"
-                                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold text-xs px-3.5 py-2 rounded-lg inline-flex items-center gap-x-1.5 transition-colors shadow-sm"
-                              >
-                                <Download className="w-3.5 h-3.5" /> Download PDF Report
-                              </a>
-                            ) : (
-                              <span className="text-xs text-red-500 italic font-medium">PDF report not ready</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <DialogFooter className="mt-6 border-t pt-4">
-              <Button onClick={() => setSelectedClient(null)}>Close</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+      {firmDashboard.canManageMembers && <div className="bg-[#F7F9FC] border border-[#D6E4FB] rounded-xl p-6"><h3 className="text-lg font-bold text-gray-900">{firmDashboard.firm.status === "ACTIVE" ? "Renew or upgrade firm access" : "Choose your Partner plan"}</h3><p className="mt-1 text-sm text-gray-600">Payment is a secure one-off card purchase for 30 days. Your firm will not be charged automatically.</p><div className="mt-4 flex flex-wrap gap-3"><Button onClick={() => startPartnerCheckout("PARTNER")} variant="outline">Partner — $495 AUD</Button><Button onClick={() => startPartnerCheckout("PARTNER_UNLIMITED")}>Partner Unlimited — $995 AUD</Button></div></div>}
+      {firmDashboard.canManageMembers && <div className="bg-white border rounded-xl p-6 shadow-sm"><h3 className="text-lg font-bold text-gray-900">Firm members</h3><p className="mt-1 text-sm text-gray-500">Add advisers with an existing Intaleks account. They can create valuations for clients using their own login.</p><form onSubmit={addMember} className="mt-4 flex flex-col sm:flex-row gap-3"><Input type="email" value={memberEmail} onChange={(e) => setMemberEmail(e.target.value)} placeholder="adviser@firm.com" required/><Button type="submit">Add adviser</Button></form><div className="mt-5 divide-y">{firmDashboard.members.map((member: any) => <div key={member.id} className="flex items-center justify-between gap-3 py-3"><div><p className="text-sm font-semibold text-gray-900">{[member.user.firstName, member.user.lastName].filter(Boolean).join(" ") || member.user.email}</p><p className="text-xs text-gray-500">{member.user.email} · {member.role === "FIRM_ADMIN" ? "Firm admin" : "Adviser"}</p></div>{member.role !== "FIRM_ADMIN" && <Button type="button" variant="outline" size="sm" onClick={() => removeMember(member.id)}>Remove</Button>}</div>)}</div></div>}
+      <div className="bg-white border rounded-xl overflow-hidden shadow-sm"><div className="p-6 border-b"><h3 className="text-lg font-bold text-gray-900">{firmDashboard.canManageMembers ? "Firm valuations" : "My valuations"}</h3><p className="mt-1 text-sm text-gray-500">Valuations are created under the adviser who completed them and visible at firm level.</p></div>{firmDashboard.valuations.length === 0 ? <p className="p-6 text-sm text-gray-500">No valuations have been generated for this firm yet.</p> : <div className="divide-y">{firmDashboard.valuations.map((valuation: any) => <div key={valuation.id} className="flex justify-between gap-4 p-5"><div><p className="font-semibold text-gray-900">{valuation.companyName}</p><p className="text-xs text-gray-500">{valuation.user.email} · {new Date(valuation.createdAt).toLocaleDateString()}</p></div><p className="font-bold text-blue-600">${Number(valuation.valuation).toLocaleString()}</p></div>)}</div>}</div>
+    </>}
     </div>
   );
 }

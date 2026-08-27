@@ -565,6 +565,40 @@ export class ApiClient {
     }
   }
 
+  static async getPartnerFirmDashboard() {
+    const response = await fetch(`${this.BASE_URL}/users/referral/firm`, { credentials: "include" });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data?.message || "Failed to retrieve firm dashboard");
+    return data;
+  }
+
+  static async addPartnerFirmMember(email: string) {
+    const response = await fetch(`${this.BASE_URL}/users/referral/firm/members`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ email }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data?.message || "Failed to add firm member");
+    return data;
+  }
+
+  static async removePartnerFirmMember(memberId: string) {
+    const response = await fetch(`${this.BASE_URL}/users/referral/firm/members/${memberId}`, {
+      method: "DELETE", credentials: "include",
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data?.message || "Failed to remove firm member");
+    return data;
+  }
+
+  static async createPartnerCheckout(planType: "PARTNER" | "PARTNER_UNLIMITED", successUrl: string, cancelUrl: string) {
+    const response = await fetch(`${this.BASE_URL}/users/referral/firm/checkout`, {
+      method: "POST", headers: { "Content-Type": "application/json" }, credentials: "include", body: JSON.stringify({ planType, successUrl, cancelUrl }),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data?.message || "Unable to start Partner checkout");
+    return data;
+  }
+
   /**
    * Get referral applications list (Admin only)
    */
@@ -615,4 +649,5 @@ export class ApiClient {
       throw err;
     }
   }
+
 }

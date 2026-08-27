@@ -29,7 +29,7 @@ const PRIMARY_NAV_ITEMS = [
   { icon: DashboardIcon, text: "Dashboard", path: "/admin/dashboard" },
   { icon: SubscribePlanIcon, text: "Subscription Plans", path: "/admin/subscription-plans" },
   { icon: SubscribeUserIcon, text: "Users Management", path: "/admin/users" },
-  { icon: SubscribeUserIcon, text: "Referral Partners", path: "/admin/referrals" },
+  { icon: SubscribeUserIcon, text: "Partner Program", path: "/admin/referrals" },
   { icon: RevenueIcon, text: "Payment Management", path: "/admin/payments" },
   { icon: ForumIcon, text: "Forum Management", path: "/admin/forum" },
   { icon: VideoManageIcon, text: "Video Management", path: "/admin/videos" },
