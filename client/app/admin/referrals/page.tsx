@@ -215,7 +215,7 @@ export default function ReferralsAdminPage() {
                     })}
                   </TableCell>
                   {activeTab === "REJECTED" && (
-                    <TableCell className="max-w-xs truncate text-xs text-gray-500 italic" title={app.feedback}>
+                    <TableCell className="max-w-xs truncate text-xs text-gray-500 italic" title={app.feedback ?? undefined}>
                       {app.feedback || "No feedback provided"}
                     </TableCell>
                   )}
