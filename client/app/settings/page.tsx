@@ -69,6 +69,14 @@ function SettingsPageContent() {
 
   const { user, isAuthentiating, isAuthenticated, refetch } = useAuthState();
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
+  const [isPartnerMember, setIsPartnerMember] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    ApiClient.getPartnerFirmDashboard()
+      .then((response) => setIsPartnerMember(Boolean(response.data)))
+      .catch(() => setIsPartnerMember(false));
+  }, [isAuthenticated]);
 
   // Redirect if not authenticated
   if (!isAuthentiating && !isAuthenticated) {
@@ -86,11 +94,12 @@ function SettingsPageContent() {
 
   const tabs = [
     { key: "details" as TabType, label: "My Details" },
-    { key: "subscriptions" as TabType, label: "Subscriptions" },
+    ...(!isPartnerMember ? [{ key: "subscriptions" as TabType, label: "Subscriptions" }] : []),
     { key: "invoices" as TabType, label: "Invoices" },
     { key: "contact" as TabType, label: "Contact Admin" },
     { key: "referrals" as TabType, label: "Partner Program" },
   ];
+  const contentTab = isPartnerMember && activeTab === "subscriptions" ? "referrals" : activeTab;
 
   return (
     <div className="min-h-screen bg-white">
@@ -123,11 +132,11 @@ function SettingsPageContent() {
           <div className="flex-1 min-w-0">
             <h1 className="text-2xl lg:text-3xl font-bold mb-6 lg:mb-8">Settings</h1>
 
-            {activeTab === "details" && <MyDetailsTab user={user} onProfileUpdate={refetch} />}
-            {activeTab === "subscriptions" && <SubscriptionsTab user={user} />}
-            {activeTab === "invoices" && <InvoicesTab />}
-            {activeTab === "contact" && <ContactAdminTab user={user} />}
-            {activeTab === "referrals" && <ReferralsTab user={user} />}
+            {contentTab === "details" && <MyDetailsTab user={user} onProfileUpdate={refetch} />}
+            {contentTab === "subscriptions" && <SubscriptionsTab user={user} />}
+            {contentTab === "invoices" && <InvoicesTab />}
+            {contentTab === "contact" && <ContactAdminTab user={user} />}
+            {contentTab === "referrals" && <ReferralsTab user={user} />}
           </div>
         </div>
       </div>
