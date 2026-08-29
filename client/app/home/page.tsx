@@ -77,6 +77,92 @@ function TickItem({ children }: { children: React.ReactNode }) {
    1. HERO
 ───────────────────────────────────────────── */
 
+const heroIndustryImages = [
+  {
+    src: "/industry-trades-construction.jpg",
+    alt: "Tradesperson working beside a construction vehicle",
+  },
+  {
+    src: "/industry-real-estate-agencies.webp",
+    alt: "Real estate agency storefront",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=700&q=70",
+    alt: "Restaurant interior for hospitality and retail businesses",
+  },
+  {
+    src: "/industry-professional-services.webp",
+    alt: "Professional advisers working together",
+  },
+  {
+    src: "/industry-transport-logistics.jpg",
+    alt: "Transport and logistics operation",
+  },
+  {
+    src: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=700&q=70",
+    alt: "Legal documents for family law matters",
+  },
+];
+
+function IndustryCollage() {
+  return (
+    <div
+      className="hero-industry-collage relative w-full aspect-[4/5] max-h-[540px] overflow-hidden rounded-[16px] bg-[#DCEAFE] p-2 shadow-[0_24px_60px_rgba(37,99,235,0.18)]"
+      aria-label="A selection of the industries Intaleks supports"
+    >
+      {heroIndustryImages.map((image, index) => (
+        <div
+          key={image.alt}
+          className={`hero-industry-tile hero-industry-tile-${index + 1} overflow-hidden rounded-[10px] bg-[#C7DDFB] bg-cover bg-center`}
+          role="img"
+          aria-label={image.alt}
+          style={{ backgroundImage: `url('${image.src}')` }}
+        />
+      ))}
+
+      <style jsx>{`
+        .hero-industry-collage {
+          display: grid;
+          grid-template-columns: repeat(12, minmax(0, 1fr));
+          grid-template-rows: repeat(12, minmax(0, 1fr));
+          gap: 8px;
+        }
+
+        .hero-industry-tile {
+          animation: hero-industry-drift 12s ease-in-out infinite alternate;
+          will-change: transform;
+        }
+
+        .hero-industry-tile-1 {
+          grid-area: 1 / 1 / 7 / 8;
+          animation-name: hero-industry-focus;
+          animation-duration: 15s;
+        }
+
+        .hero-industry-tile-2 { grid-area: 1 / 8 / 5 / 13; animation-delay: -3s; }
+        .hero-industry-tile-3 { grid-area: 5 / 8 / 9 / 13; animation-delay: -7s; }
+        .hero-industry-tile-4 { grid-area: 7 / 1 / 10 / 6; animation-delay: -5s; }
+        .hero-industry-tile-5 { grid-area: 9 / 6 / 13 / 13; animation-delay: -10s; }
+        .hero-industry-tile-6 { grid-area: 10 / 1 / 13 / 6; animation-delay: -1s; }
+
+        @keyframes hero-industry-drift {
+          from { transform: scale(1.015) translate3d(0, 0, 0); }
+          to { transform: scale(1.06) translate3d(0, -5px, 0); }
+        }
+
+        @keyframes hero-industry-focus {
+          0%, 100% { transform: scale(1.02); }
+          50% { transform: scale(1.075) translate3d(2px, -4px, 0); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .hero-industry-tile { animation: none; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 function Hero() {
   return (
     <section
@@ -112,25 +198,9 @@ function Hero() {
           </p>
         </div>
 
-        {/* Right photo */}
+        {/* Right industry collage */}
         <div className="relative">
-          <div
-            className="relative w-full aspect-[4/5] max-h-[540px] rounded-[12px] overflow-hidden shadow-[0_24px_60px_rgba(37,99,235,0.18)] bg-[#EAF1FE]"
-          >
-            <Image
-              src="/aleks-todorovic.jpg"
-              alt="Aleks Todorovic, Founder and CEO of Intaleks"
-              fill
-              className="object-cover object-top"
-              priority
-            />
-          </div>
-          {/* Badge */}
-          <div className="absolute bottom-[-24px] left-[-24px] bg-[#0d1117] text-white rounded-[12px] px-6 py-4 shadow-[0_16px_40px_rgba(13,17,23,0.28)]">
-            <b className="block text-[18px] font-extrabold tracking-[-0.02em] leading-tight">Aleks Todorovic</b>
-            <span className="block text-[13px] text-[#d6e4fb] mt-1">Founder &amp; CEO, Intaleks</span>
-            <span className="block text-[12px] text-[#aab4c2] mt-1">Expert Business Valuer</span>
-          </div>
+          <IndustryCollage />
         </div>
       </div>
     </section>
