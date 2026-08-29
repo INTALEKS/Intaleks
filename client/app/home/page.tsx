@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import { Navbar } from "@/components/home/Navbar";
 import { HomeFooter } from "@/components/home/HomeFooter";
 
@@ -105,14 +106,51 @@ const heroIndustryImages = [
 ];
 
 function IndustryCollage() {
+  const [featuredImageIndex, setFeaturedImageIndex] = useState(0);
+  const collageRef = useRef<HTMLDivElement>(null);
+
+  const orderedImages = heroIndustryImages.map(
+    (_, index) => heroIndustryImages[(featuredImageIndex + index) % heroIndustryImages.length]
+  );
+
+  useEffect(() => {
+    let previousScrollY = window.scrollY;
+    let accumulatedScroll = 0;
+
+    const rotateCollage = () => {
+      const currentScrollY = window.scrollY;
+      const scrollChange = currentScrollY - previousScrollY;
+      previousScrollY = currentScrollY;
+
+      const collageBounds = collageRef.current?.getBoundingClientRect();
+      const collageIsVisible =
+        collageBounds && collageBounds.top < window.innerHeight && collageBounds.bottom > 0;
+
+      if (!collageIsVisible || Math.abs(scrollChange) < 1) return;
+
+      accumulatedScroll += scrollChange;
+      if (Math.abs(accumulatedScroll) < 80) return;
+
+      const direction = accumulatedScroll > 0 ? 1 : -1;
+      setFeaturedImageIndex((currentIndex) =>
+        (currentIndex + direction + heroIndustryImages.length) % heroIndustryImages.length
+      );
+      accumulatedScroll = 0;
+    };
+
+    window.addEventListener("scroll", rotateCollage, { passive: true });
+    return () => window.removeEventListener("scroll", rotateCollage);
+  }, []);
+
   return (
     <div
+      ref={collageRef}
       className="hero-industry-collage relative w-full aspect-[4/5] max-h-[540px] overflow-hidden rounded-[16px] bg-[#DCEAFE] p-2 shadow-[0_24px_60px_rgba(37,99,235,0.18)]"
       aria-label="A selection of the industries Intaleks supports"
     >
-      {heroIndustryImages.map((image, index) => (
+      {orderedImages.map((image, index) => (
         <div
-          key={image.alt}
+          key={`${featuredImageIndex}-${image.alt}`}
           className={`hero-industry-tile hero-industry-tile-${index + 1} overflow-hidden rounded-[10px] bg-[#C7DDFB] bg-cover bg-center`}
           role="img"
           aria-label={image.alt}
@@ -129,14 +167,13 @@ function IndustryCollage() {
         }
 
         .hero-industry-tile {
-          animation: hero-industry-drift 12s ease-in-out infinite alternate;
+          animation: hero-industry-swap-in 520ms ease-out both, hero-industry-drift 12s ease-in-out 520ms infinite alternate;
           will-change: transform;
         }
 
         .hero-industry-tile-1 {
           grid-area: 1 / 1 / 7 / 8;
-          animation-name: hero-industry-focus;
-          animation-duration: 15s;
+          animation: hero-industry-swap-in 520ms ease-out both, hero-industry-focus 15s ease-in-out 520ms infinite;
         }
 
         .hero-industry-tile-2 { grid-area: 1 / 8 / 5 / 13; animation-delay: -3s; }
@@ -144,6 +181,11 @@ function IndustryCollage() {
         .hero-industry-tile-4 { grid-area: 7 / 1 / 10 / 6; animation-delay: -5s; }
         .hero-industry-tile-5 { grid-area: 9 / 6 / 13 / 13; animation-delay: -10s; }
         .hero-industry-tile-6 { grid-area: 10 / 1 / 13 / 6; animation-delay: -1s; }
+
+        @keyframes hero-industry-swap-in {
+          from { opacity: 0.72; transform: scale(0.94); }
+          to { opacity: 1; transform: scale(1.015); }
+        }
 
         @keyframes hero-industry-drift {
           from { transform: scale(1.015) translate3d(0, 0, 0); }
