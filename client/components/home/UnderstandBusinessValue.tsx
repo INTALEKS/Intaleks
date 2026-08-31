@@ -1,20 +1,42 @@
 "use client";
 
-// import Image from "next/image";
+import { CheckCircle } from "lucide-react";
 
 export function UnderstandBusinessValue() {
+  const equityBenefits = [
+    "Greater wealth",
+    "Better exit opportunities",
+    "More investor interest",
+    "Increased financial security",
+    "More options for the future",
+  ];
+
   return (
-    <section id="understand-value" className=" pb-10 px-4 bg-white">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 gap-4 items-center">
-          {/* Left Content */}
-          <div className="bg-cyan-100 rounded-lg p-8 md:p-6 col-span-2">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Understand Your Business Value in <span className="text-blue-500">Minutes</span>
-            </h2>
-            <p className="text-black mb-3 leading-relaxed">Running a small or medium business means making big decisions. How much is your business really worth? Whether you&apos;re thinking about selling, bringing in a partner, planning ahead, or dealing with a dispute, knowing your value is essential.</p>
-            <p className="text-black leading-relaxed">Intaleks makes it simple. Enter a few basic details and instantly get a clear, reliable indication of what your business is worth — no complex formulas, no guesswork.</p>
+    <section id="equity-focus" className="py-16 px-4 max-w-6xl mx-auto">
+      <div className="bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-950 text-white rounded-3xl p-8 sm:p-12 shadow-xl relative overflow-hidden">
+        <div className="max-w-3xl relative z-10">
+          <span className="text-blue-300 text-xs font-bold uppercase tracking-wider block mb-2">
+            Focus on building equity
+          </span>
+          <h2 className="text-2xl sm:text-4xl font-extrabold leading-tight mb-4">
+            The most successful owners know their business value
+          </h2>
+          <p className="text-blue-100 text-sm sm:text-base leading-relaxed mb-8">
+            Most owners focus on working in their business. Successful owners focus on increasing the value of it. A more valuable business creates:
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+            {equityBenefits.map((benefit, idx) => (
+              <div key={idx} className="flex items-center gap-3 bg-white/10 backdrop-blur-xs p-3 rounded-xl border border-white/10">
+                <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span className="text-sm font-semibold text-white">{benefit}</span>
+              </div>
+            ))}
           </div>
+
+          <p className="text-xs sm:text-sm text-blue-200 font-medium italic">
+            Understanding your current value is the first step towards improving it.
+          </p>
         </div>
       </div>
     </section>

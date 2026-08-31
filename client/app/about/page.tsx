@@ -80,11 +80,8 @@ export default function AboutPage() {
               <blockquote className="max-w-[16ch] font-serif text-[clamp(30px,3.5vw,48px)] leading-[1.1] text-[#F4F8FF]">
                 “You built it. You deserve to know what it’s worth.”
               </blockquote>
-              <div className="mt-9 flex flex-wrap gap-5">
+              <div className="mt-9">
                 <PrimaryLink>Start My Business Valuation</PrimaryLink>
-                <Link href="/valuation-sample.pdf" className="self-center font-semibold text-[#DCEAFE] underline underline-offset-4 hover:text-white">
-                  View Sample Report
-                </Link>
               </div>
             </div>
             <div className="relative min-h-[430px] lg:min-h-[650px]">

@@ -2,49 +2,43 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Quote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function AboutFounder() {
   return (
-    <section id="about" className="py-6 px-4">
-      <div className="w-full md:w-[90%] p-6 md:p-8 bg-(--sky-light-blue) rounded-md mx-auto">
-        {/* Logo */}
-        <div className="mb-8">
-          <Image src="/intaleks.png" alt="Intaleks" width={120} height={30} />
-        </div>
+    <section id="about" className="py-16 px-4 max-w-6xl mx-auto">
+      <div className="bg-gray-900 text-white rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 md:gap-12">
-          {/* Left Column - Title and Image */}
-          <div className="w-full md:w-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">Why I Built Intaleks</h2>
-
-            {/* Founder Image */}
-            <div className="relative">
-              <div className="w-full h-80 relative overflow-hidden rounded-lg bg-white" style={{ boxShadow: "inset 0 60px 60px -10px #c0dfff" }}>
-                <Image src="/founder.png" alt="Aleks Todorovic" fill className="object-cover" />
-              </div>
-              <div className="mt-4">
-                <p className="font-semibold text-gray-900">Aleks Todorovic</p>
-                <p className="text-gray-600 text-sm font-medium">Founder</p>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-12 items-center relative z-10">
+          {/* Founder Photo */}
+          <div className="flex flex-col items-center text-center">
+            <div className="relative w-48 h-48 sm:w-56 sm:h-56 rounded-full overflow-hidden border-4 border-blue-500/30 shadow-xl mb-4">
+              <Image src="/founder.png" alt="Aleks Todorovic" fill className="object-cover" />
             </div>
+            <h3 className="text-xl font-bold text-white">Aleks Todorovic</h3>
+            <p className="text-xs text-blue-400 font-semibold uppercase tracking-wider mt-1">
+              Founder, Intaleks &amp; Executive Business Valuers
+            </p>
           </div>
 
-          {/* Right Column - Content */}
-          <div className="flex flex-col justify-center space-y-6 col-span-2">
-            <p className="text-gray-700 leading-relaxed">I&apos;m Aleks Todorovic — an accountant and business valuation specialist with more than 25 years across corporate finance, commercial advisory, and professional valuation work. Through my firm, Executive Business Valuers, I&apos;ve helped business owners, lawyers, and advisors with valuations for complex commercial, strategic, and legal matters.</p>
+          {/* Quote & Bio */}
+          <div className="lg:col-span-2 space-y-6">
+            <Quote className="w-10 h-10 text-blue-500 opacity-60" />
+            <blockquote className="text-lg sm:text-2xl font-medium leading-relaxed italic text-gray-100">
+              "I've spent 25+ years valuing businesses, and I've seen how hard it is for owners to get clear, honest guidance on what their business is worth. I built Intaleks so any business owner can get a professional-grade appraisal without the cost, complexity or delay."
+            </blockquote>
 
-            <p className="text-gray-700 leading-relaxed">Over the years I&apos;ve seen how hard it is for small business owners to get clear, reliable guidance on what their business is worth. Traditional valuations are often costly, slow, and full of technical language that shuts people out.</p>
+            <p className="text-sm text-gray-300 leading-relaxed">
+              Through Executive Business Valuers, Aleks has delivered business valuations across Australia for complex commercial, strategic, and legal matters. Intaleks brings that valuation framework directly to Australian business owners in a fast, accessible format.
+            </p>
 
-            <p className="text-gray-700 leading-relaxed">I built Intaleks to change that — a high-quality tool that makes professional-grade appraisal insights accessible to any business owner, with no financial background needed. Answer a few straightforward questions and you get a clear, commercially grounded appraisal you can rely on.</p>
-
-            <p className="text-gray-700 leading-relaxed">My goal is simple: give every business owner the ability to understand what their business is worth — without the cost, complexity, or delay. Whether you&apos;re preparing to sell, considering a purchase, planning ahead, or just want clarity, Intaleks is a trusted starting point.</p>
-
-            <div className="pt-4">
+            <div className="pt-2">
               <Link href="/calculator">
-                <Button className="bg-black hover:bg-gray-800 px-6 py-5 text-base">
-                  See What My Business Is Worth
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-5 text-sm font-bold rounded-xl shadow-lg">
+                  Get My Business Valuation Today
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </Link>

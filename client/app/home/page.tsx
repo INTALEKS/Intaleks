@@ -5,6 +5,9 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Navbar } from "@/components/home/Navbar";
 import { HomeFooter } from "@/components/home/HomeFooter";
+import { ApiClient, type SubscriptionPlan } from "@/app/services/api";
+import { useAuthState } from "@/app/hooks/useAuthState";
+import { useCreateCheckout } from "@/app/hooks/usePayments";
 
 /* ─────────────────────────────────────────────
    Shared helpers
@@ -208,52 +211,21 @@ function IndustryCollage({ className = "" }: { className?: string }) {
 function Hero() {
   return (
     <>
-      <section className="bg-[#F4F7FC] px-0" id="top">
-        <div className="mx-auto grid max-w-[1600px] grid-cols-1 overflow-hidden bg-[#11294A] lg:grid-cols-[minmax(360px,0.82fr)_minmax(0,1.18fr)]">
-          <div className="relative min-h-[400px] overflow-hidden lg:min-h-[620px]">
-            <Image
-              src="/aleks-todorovic.jpg"
-              alt="Aleks Todorovic, CEO and Founder of Intaleks"
-              fill
-              priority
-              sizes="(min-width: 1024px) 40vw, 100vw"
-              className="object-cover object-center"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#071629]/45 via-transparent to-transparent" />
-          </div>
-
-          <div className="relative min-h-[470px] overflow-hidden lg:min-h-[620px]">
-            <IndustryCollage className="h-full min-h-[470px] max-h-none aspect-auto rounded-none p-1 shadow-none lg:min-h-[620px]" />
-            <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(7,22,41,0.94),rgba(16,43,81,0.86),rgba(15,42,79,0.72))]" />
-            <div className="absolute inset-0 flex items-center px-7 py-12 sm:px-12 lg:px-[clamp(3rem,6vw,7.5rem)]">
-              <div className="max-w-[690px] text-white">
-                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.16em] text-[#BFD6FD]">
-                  Business valuation, made simple
-                </p>
-                <h1 className="text-[clamp(38px,5vw,72px)] font-extrabold leading-[1.04] tracking-[-0.035em]">
-                  You know what your house is worth. What about your{" "}
-                  <em className="font-serif font-medium text-[#DCEAFE]">business?</em>
-                </h1>
-                <div className="mt-8 flex flex-col items-start gap-4">
-                  <BtnDark
-                    href="/calculator"
-                    className="bg-[#2F78E6] hover:bg-[#1D66D2] px-8 py-4 text-[17px]"
-                  >
-                    Start My Business Valuation
-                  </BtnDark>
-                  <p className="text-[14.5px] text-[#D7E5F8]">
-                    From $495 AUD · one payment · includes 2 months access
-                  </p>
-                  <BtnOutline
-                    href="/valuation-sample.pdf"
-                    className="!border-white/70 !bg-white/10 !text-white hover:!bg-white/20"
-                  >
-                    View Sample Report
-                  </BtnOutline>
-                </div>
-              </div>
-            </div>
-          </div>
+      <section className="w-full bg-[#102947]" id="top">
+        <div className="relative w-full overflow-hidden aspect-[12/5]">
+          <Image
+            src="/intaleks-hero-salon-bright.jpg"
+            alt="A salon owner alongside the industries Intaleks supports"
+            fill
+            priority
+            sizes="100vw"
+            className="object-contain"
+          />
+          <Link
+            href="/calculator"
+            aria-label="Start my business valuation"
+            className="absolute left-[49%] top-[59%] h-[12%] w-[28%] rounded-[10px] focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-4"
+          />
         </div>
       </section>
 
@@ -720,12 +692,58 @@ const pricingFeatures = [
 ];
 
 const tiers = [
-  { term: "2 months", price: "$495", desc: "Included as standard", best: false },
-  { term: "6 months", price: "$695", desc: "Track a full half-year of trading", best: true },
-  { term: "12 months", price: "$79/mo", desc: "$948 paid once · value across the full financial year", best: false },
+  { planName: "2 Months Access", term: "2 months", price: "$495", desc: "Included as standard", best: false },
+  { planName: "6 Months Access", term: "6 months", price: "$695", desc: "Track a full half-year of trading", best: true },
+  { planName: "12 Months Access", term: "12 months", price: "$79/mo", desc: "$948 paid once · value across the full financial year", best: false },
 ];
 
 function PricingSection() {
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [processingPlanName, setProcessingPlanName] = useState<string | null>(null);
+  const { isAuthenticated, isAuthentiating } = useAuthState();
+  const createCheckout = useCreateCheckout();
+
+  useEffect(() => {
+    ApiClient.getPublicPlans()
+      .then((response) => {
+        if (response.success) setPlans(response.data);
+      })
+      .catch(() => setPlans([]));
+  }, []);
+
+  const beginCheckout = (planName: string) => {
+    const plan = plans.find((item) => item.name === planName);
+    if (!plan) return;
+
+    if (!isAuthenticated) {
+      const returnUrl = `/?checkout=${encodeURIComponent(planName)}#pricing`;
+      window.location.assign(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
+      return;
+    }
+
+    setProcessingPlanName(planName);
+    createCheckout.mutate(
+      {
+        planId: plan.id,
+        successUrl: `${window.location.origin}/?checkout=success#pricing`,
+        cancelUrl: `${window.location.origin}/?checkout=cancelled#pricing`,
+      },
+      { onSettled: () => setProcessingPlanName(null) },
+    );
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated || isAuthentiating || plans.length === 0) return;
+
+    const checkoutPlanName = new URLSearchParams(window.location.search).get("checkout");
+    if (!checkoutPlanName || !plans.some((plan) => plan.name === checkoutPlanName)) return;
+
+    window.history.replaceState(null, "", `${window.location.pathname}#pricing`);
+    beginCheckout(checkoutPlanName);
+    // The checkout query is removed before the request so this runs once after sign-in.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, isAuthentiating, plans]);
+
   return (
     <section className="py-[68px] px-6 text-center" id="pricing">
       <div className="max-w-[1120px] mx-auto">
@@ -747,9 +765,14 @@ function PricingSection() {
                 <TickItem key={f}>{f}</TickItem>
               ))}
             </ul>
-            <BtnDark href="/calculator" className="block text-center w-full">
-              Start My Valuation
-            </BtnDark>
+            <button
+              type="button"
+              onClick={() => beginCheckout("2 Months Access")}
+              disabled={isAuthentiating || plans.length === 0 || processingPlanName === "2 Months Access"}
+              className="block w-full rounded-[10px] bg-[#0d1117] px-7 py-3.5 text-center text-base font-semibold text-white transition-all hover:-translate-y-px hover:bg-[#1c2530] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {processingPlanName === "2 Months Access" ? "Opening secure checkout…" : "Choose 2-month access"}
+            </button>
           </div>
         </div>
 
@@ -760,13 +783,16 @@ function PricingSection() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {tiers.map((t) => (
-              <div
+              <button
+                type="button"
                 key={t.term}
+                onClick={() => beginCheckout(t.planName)}
+                disabled={isAuthentiating || plans.length === 0 || processingPlanName !== null}
                 className={`relative rounded-[12px] border px-[22px] py-[26px] text-center ${
                   t.best
                     ? "border-[#3B82F6] bg-[#F2F7FF] shadow-[0_10px_28px_rgba(37,99,235,0.12)]"
                     : "border-[#E3E8F0] bg-white"
-                }`}
+                } cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-[#3B82F6] focus-visible:outline-offset-4 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:opacity-60`}
               >
                 {t.best && (
                   <span className="absolute -top-[11px] left-1/2 -translate-x-1/2 bg-[#3B82F6] text-white text-[11.5px] font-bold uppercase tracking-[1px] rounded-full px-3 py-1 whitespace-nowrap">
@@ -782,7 +808,7 @@ function PricingSection() {
                   {t.price}
                 </b>
                 <span className="block text-[14px] text-[#5A6472] leading-snug">{t.desc}</span>
-              </div>
+              </button>
             ))}
           </div>
           <p className="text-[15px] text-[#5A6472] mt-5">

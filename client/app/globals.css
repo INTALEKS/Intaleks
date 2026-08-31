@@ -94,6 +94,17 @@
   --radius-xl: calc(var(--radius) + 4px);
 
   --sky-light-blue: #c0dfff;
+
+  /* Homepage design tokens */
+  --hp-black: #0d1117;
+  --hp-blue: #3B82F6;
+  --hp-blue-dark: #2563EB;
+  --hp-blue-tint: #EAF1FE;
+  --hp-blue-mist: #F2F7FF;
+  --hp-grey-bg: #F7F9FC;
+  --hp-grey-line: #E3E8F0;
+  --hp-grey-text: #5A6472;
+  --hp-radius: 12px;
 }
 
 .dark {

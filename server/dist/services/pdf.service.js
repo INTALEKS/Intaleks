@@ -103,6 +103,8 @@ async function generateValuationPDF(data) {
         totalAddbacksPerYear: data.totalAddbacksPerYear,
         valuationMethod: data.valuationMethod,
         finalValuation: data.finalValuation,
+        assetValuation: data.assetValuation,
+        profitValuation: data.profitValuation,
         calculatedMultiple: data.calculatedMultiple,
         multipleSource: data.multipleSource,
         // Questionnaire data
