@@ -105,7 +105,7 @@ const heroIndustryImages = [
   },
 ];
 
-function IndustryCollage() {
+function IndustryCollage({ className = "" }: { className?: string }) {
   const [featuredImageIndex, setFeaturedImageIndex] = useState(0);
   const collageRef = useRef<HTMLDivElement>(null);
 
@@ -145,7 +145,7 @@ function IndustryCollage() {
   return (
     <div
       ref={collageRef}
-      className="hero-industry-collage relative w-full aspect-[4/5] max-h-[540px] overflow-hidden rounded-[16px] bg-[#DCEAFE] p-2 shadow-[0_24px_60px_rgba(37,99,235,0.18)]"
+      className={`hero-industry-collage relative w-full aspect-[4/5] max-h-[540px] overflow-hidden rounded-[16px] bg-[#DCEAFE] p-2 shadow-[0_24px_60px_rgba(37,99,235,0.18)] ${className}`}
       aria-label="A selection of the industries Intaleks supports"
     >
       {orderedImages.map((image, index) => (
@@ -207,45 +207,79 @@ function IndustryCollage() {
 
 function Hero() {
   return (
-    <section
-      className="bg-gradient-to-b from-white via-[#F2F7FF] to-[#EAF1FE] pt-[60px] pb-[68px] px-6"
-      id="top"
-    >
-      <div className="max-w-[1120px] mx-auto grid grid-cols-1 lg:grid-cols-[1.08fr_0.92fr] gap-14 items-center">
-        {/* Left copy */}
-        <div>
-          <Eyebrow>Business Valuation, Made Simple</Eyebrow>
-          <h1 className="text-[clamp(36px,4.9vw,58px)] font-extrabold leading-[1.12] tracking-[-0.02em]">
-            You know what your house is worth. What about your{" "}
-            <em className="not-italic text-[#3B82F6] font-extrabold">business?</em>
-          </h1>
-          <p className="text-lg text-[#5A6472] mt-[22px] mb-[26px] max-w-[52ch] leading-relaxed">
-            Most Australians know what their home is worth — they track property prices and watch the
-            market. Yet ask a business owner what their business is worth, and most have no idea.
-          </p>
-          <p className="font-bold text-[19px] mb-[18px]">Welcome to Intaleks.</p>
-          <ul className="list-none mb-7 p-0">
-            <TickItem>Professional business valuation</TickItem>
-            <TickItem>Australian market data &amp; benchmarks</TickItem>
-            <TickItem>No spreadsheets or complex financial models</TickItem>
-            <TickItem>Completed in minutes</TickItem>
-            <TickItem>Detailed PDF valuation report</TickItem>
-          </ul>
-          <div className="flex flex-wrap gap-3.5">
-            <BtnDark href="/calculator">Get My Business Valuation</BtnDark>
-            <BtnOutline href="/valuation-sample.pdf">View Sample Report</BtnOutline>
+    <>
+      <section className="bg-[#F4F7FC] px-0" id="top">
+        <div className="mx-auto grid max-w-[1600px] grid-cols-1 overflow-hidden bg-[#11294A] lg:grid-cols-[minmax(360px,0.82fr)_minmax(0,1.18fr)]">
+          <div className="relative min-h-[400px] overflow-hidden lg:min-h-[620px]">
+            <Image
+              src="/aleks-todorovic.jpg"
+              alt="Aleks Todorovic, CEO and Founder of Intaleks"
+              fill
+              priority
+              sizes="(min-width: 1024px) 40vw, 100vw"
+              className="object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#071629]/45 via-transparent to-transparent" />
           </div>
-          <p className="mt-4 text-[14.5px] text-[#5A6472] italic">
-            $495 AUD, one payment — includes 2 months access. Extended plans available.
-          </p>
-        </div>
 
-        {/* Right industry collage */}
-        <div className="relative">
-          <IndustryCollage />
+          <div className="relative min-h-[470px] overflow-hidden lg:min-h-[620px]">
+            <IndustryCollage className="h-full min-h-[470px] max-h-none aspect-auto rounded-none p-1 shadow-none lg:min-h-[620px]" />
+            <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(7,22,41,0.94),rgba(16,43,81,0.86),rgba(15,42,79,0.72))]" />
+            <div className="absolute inset-0 flex items-center px-7 py-12 sm:px-12 lg:px-[clamp(3rem,6vw,7.5rem)]">
+              <div className="max-w-[690px] text-white">
+                <p className="mb-4 text-xs font-semibold uppercase tracking-[0.16em] text-[#BFD6FD]">
+                  Business valuation, made simple
+                </p>
+                <h1 className="text-[clamp(38px,5vw,72px)] font-extrabold leading-[1.04] tracking-[-0.035em]">
+                  You know what your house is worth. What about your{" "}
+                  <em className="font-serif font-medium text-[#DCEAFE]">business?</em>
+                </h1>
+                <div className="mt-8 flex flex-col items-start gap-4">
+                  <BtnDark
+                    href="/calculator"
+                    className="bg-[#2F78E6] hover:bg-[#1D66D2] px-8 py-4 text-[17px]"
+                  >
+                    Start My Business Valuation
+                  </BtnDark>
+                  <p className="text-[14.5px] text-[#D7E5F8]">
+                    From $495 AUD · one payment · includes 2 months access
+                  </p>
+                  <BtnOutline
+                    href="/valuation-sample.pdf"
+                    className="border-white/70 bg-transparent text-white hover:bg-white/10"
+                  >
+                    View Sample Report
+                  </BtnOutline>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <section className="border-b border-[#E3E8F0] bg-white px-6 py-12 sm:py-14">
+        <div className="mx-auto grid max-w-[1120px] grid-cols-1 gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
+          <div>
+            <Eyebrow>Know where you stand</Eyebrow>
+            <SectionH2>Most Australians know what their home is worth.</SectionH2>
+            <Lede>
+              They track property prices and watch the market. Yet ask a business owner what their
+              business is worth, and most have no idea.
+            </Lede>
+          </div>
+          <div className="rounded-[16px] border border-[#DCE6F5] bg-[#F7FAFF] p-7 sm:p-8">
+            <h2 className="text-[22px] font-bold tracking-[-0.02em]">Welcome to Intaleks.</h2>
+            <ul className="mt-5 grid list-none grid-cols-1 gap-x-6 p-0 sm:grid-cols-2">
+              <TickItem>Professional business valuation</TickItem>
+              <TickItem>Australian market data &amp; benchmarks</TickItem>
+              <TickItem>No spreadsheets or complex financial models</TickItem>
+              <TickItem>Completed in minutes</TickItem>
+              <TickItem>Detailed PDF valuation report</TickItem>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
 
@@ -388,61 +422,45 @@ const industries = [
   {
     title: "Trades & Construction",
     desc: "Plumbing, electrical, building, HVAC, landscaping, roofing",
-    cta: "What's my trade business worth →",
-    photo:
-      "/industry-trades-construction.jpg",
+    photo: "/industry-trades-construction.jpg",
     photoAlt: "Tradesperson working beside a construction vehicle",
-    href: "/calculator",
     light: false,
   },
   {
     title: "Real Estate Agencies",
     desc: "Rent roll, sales performance, team and brand strength",
-    cta: "What's my agency worth →",
-    photo:
-      "/industry-real-estate-agencies.webp",
+    photo: "/industry-real-estate-agencies.webp",
     photoAlt: "Real estate agency storefront",
-    href: "/calculator",
     light: false,
   },
   {
     title: "Hospitality & Retail",
     desc: "Cafés, restaurants, bars, salons and shopfront businesses",
-    cta: "What's my venue worth →",
     photo:
       "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=700&q=70",
     photoAlt: "Restaurant interior",
-    href: "/calculator",
     light: false,
   },
   {
     title: "Professional Services",
     desc: "Agencies, consultancies, allied health and advisory firms",
-    cta: "What's my practice worth →",
-    photo:
-      "/industry-professional-services.webp",
+    photo: "/industry-professional-services.webp",
     photoAlt: "Professional advisers working together",
-    href: "/calculator",
     light: false,
   },
   {
     title: "Transport & Logistics",
     desc: "Freight, couriers, earthmoving and equipment-heavy operators",
-    cta: "What's my operation worth →",
-    photo:
-      "/industry-transport-logistics.jpg",
+    photo: "/industry-transport-logistics.jpg",
     photoAlt: "Transport and logistics operation",
-    href: "/calculator",
     light: false,
   },
   {
     title: "Family Lawyers",
     desc: "Scope the asset pool early — then escalate to a certified, court-ready report",
-    cta: "For legal matters →",
     photo:
       "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=700&q=70",
     photoAlt: "Legal documents on a desk",
-    href: "https://executivebusinessvaluers.com.au/#quote",
     light: true,
   },
 ];
@@ -451,59 +469,38 @@ function IndustriesSection() {
   return (
     <section className="py-16 px-6" id="industries">
       <div className="max-w-[1120px] mx-auto">
-        <Eyebrow>Built for your industry</Eyebrow>
-        <SectionH2>Intaleks helps businesses like yours know their value</SectionH2>
+        <SectionH2>Industries we cover</SectionH2>
         <Lede className="mb-8">
-          A rent roll doesn't earn like a workshop. A client book doesn't sell like a fleet of vans. We
-          apply the benchmarks and methods that fit your industry — so the valuation reflects how your
-          business actually makes money.
+          Whatever you&apos;ve built, it has a value. Find yours below.
         </Lede>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[18px]">
-          {industries.map((ind) => {
-            const isExternal = ind.href.startsWith("http");
-            const cardContent = (
-              <>
-                <div
-                  className="aspect-[16/9] bg-[#EAF1FE] bg-cover bg-center"
-                  style={{ backgroundImage: `url('${ind.photo}')` }}
-                  role="img"
-                  aria-label={ind.photoAlt}
-                />
-                <div className={`px-6 py-5 ${ind.light ? "bg-[#F7F9FC]" : "bg-white"}`}>
-                  <h3 className="text-[18px] font-bold mb-1.5">{ind.title}</h3>
-                  <p className="text-[14.5px] text-[#5A6472] mb-3.5">{ind.desc}</p>
-                  <span className="text-[14px] font-semibold text-[#3B82F6]">{ind.cta}</span>
-                </div>
-              </>
-            );
-
-            return isExternal ? (
-              <a
-                key={ind.title}
-                href={ind.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block overflow-hidden rounded-[12px] border border-[#E3E8F0] bg-white no-underline text-inherit transition-all hover:border-[#3B82F6] hover:shadow-[0_10px_28px_rgba(37,99,235,0.1)] hover:-translate-y-0.5"
-              >
-                {cardContent}
-              </a>
-            ) : (
-              <Link
-                key={ind.title}
-                href={ind.href}
-                className="block overflow-hidden rounded-[12px] border border-[#E3E8F0] bg-white no-underline text-inherit transition-all hover:border-[#3B82F6] hover:shadow-[0_10px_28px_rgba(37,99,235,0.1)] hover:-translate-y-0.5"
-              >
-                {cardContent}
-              </Link>
-            );
-          })}
+          {industries.map((ind) => (
+            <article
+              key={ind.title}
+              className="overflow-hidden rounded-[12px] border border-[#E3E8F0] bg-white text-inherit"
+            >
+              <div
+                className="aspect-[16/9] bg-[#EAF1FE] bg-cover bg-center"
+                style={{ backgroundImage: `url('${ind.photo}')` }}
+                role="img"
+                aria-label={ind.photoAlt}
+              />
+              <div className={`px-6 py-5 ${ind.light ? "bg-[#F7F9FC]" : "bg-white"}`}>
+                <h3 className="text-[18px] font-bold mb-1.5">{ind.title}</h3>
+                <p className="text-[14.5px] text-[#5A6472]">{ind.desc}</p>
+              </div>
+            </article>
+          ))}
         </div>
 
-        <p className="mt-5 text-[15px] text-[#5A6472]">
-          Don't see yours? Intaleks covers businesses across every sector — enter your industry and we'll
-          apply the right benchmarks.
-        </p>
+        <div className="mt-8 flex flex-col items-center gap-4 text-center">
+          <p className="text-[15px] text-[#5A6472]">
+            Don&apos;t see yours? Intaleks covers businesses across every sector — enter your industry and
+            we&apos;ll apply the right benchmarks.
+          </p>
+          <BtnDark href="/calculator">Start your business valuation</BtnDark>
+        </div>
       </div>
     </section>
   );
@@ -515,35 +512,91 @@ function IndustriesSection() {
 
 const whyCards = [
   {
-    title: "Recognised methodologies",
-    body: "Intaleks applies established valuation approaches used by professional advisors — not guesswork.",
+    title: "Plain English, start to finish",
+    body: "Simple questions in, a number you understand out.",
   },
   {
-    title: "Australian market benchmarks",
-    body: "Your result is grounded in real-world comparable data from Australian industries, not generic global averages.",
+    title: "Built for Australian businesses",
+    body: "Sized against businesses like yours, here at home.",
   },
   {
-    title: "In minutes, not months",
-    body: "Traditional valuations take weeks and cost thousands. Intaleks delivers a professional-grade result in minutes.",
+    title: "Decide when to sell, borrow or grow",
+    body: "Know where you stand before the big conversations.",
   },
 ];
 
 function WhySection() {
   return (
-    <section className="bg-[#F7F9FC] border-t border-[#E3E8F0] py-[88px] px-6">
-      <div className="max-w-[1120px] mx-auto">
-        <Eyebrow>Why Intaleks</Eyebrow>
-        <SectionH2>Professional-grade results, without the professional price tag</SectionH2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-[18px] mt-7">
-          {whyCards.map((card) => (
-            <div
-              key={card.title}
-              className="bg-white border border-[#E3E8F0] rounded-[12px] p-7 hover:border-[#3B82F6] hover:shadow-[0_8px_24px_rgba(37,99,235,0.08)] transition-all"
-            >
-              <h3 className="text-[18px] font-bold mb-2">{card.title}</h3>
-              <p className="text-[15px] text-[#5A6472]">{card.body}</p>
+    <section className="border-y border-[#E3E8F0] bg-[#F6F8FC] px-6 py-[76px] sm:py-[96px]">
+      <div className="mx-auto max-w-[1120px] rounded-[20px] border border-[#E1E8F4] bg-[#F5F7FB] p-6 shadow-[0_24px_60px_rgba(20,42,75,0.07)] sm:p-10 lg:p-12">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[0.94fr_1.06fr] lg:gap-14">
+          <div>
+            <span className="inline-flex rounded-full bg-[#4267E9] px-4 py-1.5 text-[12px] font-bold text-white shadow-sm">
+              Australia&apos;s number 1 valuation tool
+            </span>
+            <h2 className="mt-5 max-w-[12ch] text-[clamp(34px,4.4vw,54px)] font-extrabold leading-[1.03] tracking-[-0.04em] text-[#14254A]">
+              Know what your business is worth
+            </h2>
+            <p className="mt-4 max-w-[44ch] text-[16px] leading-relaxed text-[#5A6472]">
+              Answer a few simple questions. Get a number that puts you in control.
+            </p>
+            <div className="mt-8 border-y border-[#DCE4F0]">
+              {whyCards.map((card, index) => (
+                <div key={card.title} className="flex gap-4 py-4">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EAF1FE] text-[12px] font-bold text-[#2563EB]">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <h3 className="text-[14px] font-bold text-[#243655]">{card.title}</h3>
+                    <p className="mt-0.5 text-[13px] leading-relaxed text-[#5A6472]">{card.body}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
+          <div className="rounded-[18px] bg-[#142D5A] p-6 text-white shadow-[0_18px_36px_rgba(20,45,90,0.22)] sm:p-8">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#A9C2F0]">Your business is worth about</p>
+            <div className="mt-1 text-[clamp(36px,5vw,58px)] font-extrabold tracking-[-0.045em]">$1,240,000</div>
+            <div className="mt-4 h-1.5 rounded-full bg-[#2C4776]">
+              <div className="h-full w-[70%] rounded-full bg-[#37D39E]" />
+            </div>
+            <div className="mt-1 flex justify-between text-[10px] text-[#B4C6E3]">
+              <span>$980,000</span><span>$1,510,000</span>
+            </div>
+            <div className="mt-7 border-t border-white/15 pt-5">
+              <div className="mb-2 flex items-center justify-between text-[12px] font-semibold"><span>Watch your value grow</span><span className="text-[#37D39E]">+51% since 2022</span></div>
+              <svg viewBox="0 0 420 120" className="h-auto w-full" role="img" aria-label="Illustrative business value growth chart">
+                <defs>
+                  <linearGradient id="valueFill" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#37D39E" stopOpacity="0.28" />
+                    <stop offset="100%" stopColor="#37D39E" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d="M4 108 L4 84 L72 77 L140 66 L208 54 L276 42 L344 23 L416 12 L416 108 Z" fill="url(#valueFill)" />
+                <path d="M4 84 L72 77 L140 66 L208 54 L276 42 L344 23 L416 12" fill="none" stroke="#37D39E" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="416" cy="12" r="5" fill="#37D39E" />
+              </svg>
+              <div className="mt-1 flex justify-between text-[10px] text-[#B4C6E3]"><span>$820,000 · 2022</span><span>$1,240,000 · today</span></div>
+            </div>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <div className="rounded-[10px] bg-white/10 p-3"><p className="text-[9px] uppercase tracking-[0.13em] text-[#A9C2F0]">The usual way</p><p className="mt-1 text-[18px] font-bold">6 weeks</p></div>
+              <div className="rounded-[10px] bg-white/10 p-3"><p className="text-[9px] uppercase tracking-[0.13em] text-[#A9C2F0]">With Intaleks</p><p className="mt-1 text-[18px] font-bold">30 minutes</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-10 grid grid-cols-1 overflow-hidden rounded-[14px] border border-[#DDE5F0] bg-white md:grid-cols-2">
+          <div className="border-b border-[#DDE5F0] p-6 md:border-b-0 md:border-r">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#4267E9]">One-off valuation</p>
+            <p className="mt-1 text-[22px] font-extrabold tracking-[-0.025em]">From $495 once</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-[#5A6472]">Get your valuation and keep access for 2 months.</p>
+          </div>
+          <div className="p-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#4267E9]">12 months</p>
+            <p className="mt-1 text-[22px] font-extrabold tracking-[-0.025em]">$79 per month</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-[#5A6472]">12-month access, paid once upfront ($948 total). No automatic renewal.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -669,7 +722,7 @@ const pricingFeatures = [
 const tiers = [
   { term: "2 months", price: "$495", desc: "Included as standard", best: false },
   { term: "6 months", price: "$695", desc: "Track a full half-year of trading", best: true },
-  { term: "12 months", price: "$995", desc: "Value at the start and end of the financial year", best: false },
+  { term: "12 months", price: "$79/mo", desc: "$948 paid once · value across the full financial year", best: false },
 ];
 
 function PricingSection() {
@@ -742,54 +795,7 @@ function PricingSection() {
 }
 
 /* ─────────────────────────────────────────────
-   9. FOUNDER QUOTE
-───────────────────────────────────────────── */
-
-function FounderSection() {
-  return (
-    <section className="py-16 px-6 border-t border-[#E3E8F0]">
-      <div className="max-w-[1120px] mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-9 items-start max-w-[900px]">
-          {/* Photo */}
-          <div className="relative w-full aspect-[4/3] md:w-[220px] md:h-[220px] md:aspect-auto rounded-2xl overflow-hidden ring-4 ring-[#EAF1FE] bg-[#EAF1FE] flex-none">
-            <Image
-              src="/founder.png"
-              alt="Aleks Todorovic, founder of Intaleks"
-              fill
-              className="object-cover object-center"
-            />
-          </div>
-
-          {/* Founder story */}
-          <div>
-            <Eyebrow>Meet Aleks Todorovic — Founder, Intaleks</Eyebrow>
-            <div className="space-y-4 text-[15px] leading-relaxed text-[#374151]">
-              <p>
-                I&apos;ve spent more than 26 years in corporate Australia, leading finance and operational teams. I&apos;ve sat in the rooms where the numbers get decided, and I&apos;ve seen how a single figure on a page can change the direction of a company — and the lives of the people behind it.
-              </p>
-              <p>
-                I started Executive Business Valuers because business owners deserve valuations that hold up under scrutiny. Defensible. Compliant. Built for shareholder disputes, family law matters, buy-outs where two people who once shook hands can&apos;t be in the same room.
-              </p>
-              <p>
-                But I kept hearing the same thing. A builder. A café owner. A couple facing a divorce, staring down a settlement, with no idea what the business they&apos;d spent a decade building would mean for the outcome. They weren&apos;t ready to spend thousands on a formal report. They just wanted to know what they were walking into.
-              </p>
-              <p>Every time, I had to quote a price built for litigation — for a question that didn&apos;t need it yet. Most of them walked away without an answer.</p>
-              <p>That never sat well with me.</p>
-              <p>
-                Intaleks exists to fix that. Same rigour, same 26 years behind it, at a price a real business owner can say yes to. Clear guidance on what your business is worth, so you can plan and negotiate from a position of understanding — not guesswork.
-              </p>
-              <p>Because anyone who has poured years into building something deserves to know what it&apos;s worth.</p>
-            </div>
-            <cite className="block mt-5 not-italic text-[#0d1117] text-[15px] font-semibold">— Aleks Todorovic, Founder</cite>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   10. FINAL CTA
+   9. FINAL CTA
 ───────────────────────────────────────────── */
 
 function FinalCTA() {
@@ -824,7 +830,6 @@ export default function HomeLandingPage() {
         <StepsSection />
         <EquitySection />
         <PricingSection />
-        <FounderSection />
         <FinalCTA />
       </main>
       <HomeFooter />

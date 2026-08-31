@@ -6,12 +6,12 @@
   "scripts": {
     "dev": "nodemon index.ts",
     "dev:local": "NODE_ENV=development nodemon index.ts",
-    "build": "tsc && cp -r assets dist/ && cp -r scripts dist/",
+    "build": "tsc && node -e \"require('fs').cpSync('assets', 'dist/assets', { recursive: true, force: true })\"",
     "start": "node dist/index.js",
-    "start:prod": "npm run db:migrate:prod && npx prisma generate && npm start",
-    "start:prod:with-seed": "npm run db:fix-migration-safe && npm run db:migrate:prod && npx prisma generate && npm run db:seed:prod && npm start",
-    "start:dev": "npm run db:seed:all && npm run dev",
-    "postdeploy": "npm run db:seed:prod",
+    "start:prod": "pnpm run db:migrate:prod && pnpm exec prisma generate && pnpm run start",
+    "start:prod:with-seed": "pnpm run db:fix-migration-safe && pnpm run db:migrate:prod && pnpm exec prisma generate && pnpm run db:seed:prod && pnpm run start",
+    "start:dev": "pnpm run db:seed:all && pnpm run dev",
+    "postdeploy": "pnpm run db:seed:prod",
     "test": "vitest --run",
     "test:watch": "vitest",
     "docker:up": "docker-compose up -d",
@@ -34,9 +34,10 @@
     "create-admin": "tsx scripts/create-admin.ts",
     "create-admin-interactive": "tsx scripts/create-admin-interactive.ts",
     "setup-stripe": "tsx scripts/setup-stripe-product.ts",
-    "render:build": "npm install && npm run build && npm run db:generate",
-    "render:start": "npm run db:migrate:prod && npm start"
+    "render:build": "pnpm install --frozen-lockfile && pnpm run build && pnpm run db:generate",
+    "render:start": "pnpm run db:migrate:prod && pnpm run start"
   },
+  "packageManager": "pnpm@10.18.1",
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -79,14 +80,5 @@
     "tsx": "^4.6.2",
     "typescript": "^5.3.3",
     "vitest": "^4.0.15"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "bcrypt",
-      "@prisma/client",
-      "prisma",
-      "esbuild",
-      "@prisma/engines"
-    ]
   }
 }

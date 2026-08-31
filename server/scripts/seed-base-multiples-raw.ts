@@ -342,7 +342,8 @@ async function main() {
 async function seedSubscriptionPlan() {
   console.log("\n🌱 Checking subscription plan...");
 
-  // Upsert One-Off plan
+  // Upsert the standard two-month, one-time access plan. Additional access
+  // terms are synchronised by the startup seed when the API starts.
   const planData = {
     price: 49500, // AUD $495.00 in cents
     billingPeriod: "ONE_TIME" as const,
@@ -351,24 +352,24 @@ async function seedSubscriptionPlan() {
   };
 
   const existingPlan = await prisma.subscriptionPlan.findUnique({
-    where: { name: "One-Off" },
+    where: { name: "2 Months Access" },
   });
 
   let plan;
   if (existingPlan) {
     plan = await prisma.subscriptionPlan.update({
-      where: { name: "One-Off" },
+      where: { name: "2 Months Access" },
       data: planData,
     });
-    console.log("✅ One-Off subscription plan updated to AUD $495");
+    console.log("✅ 2 Months Access subscription plan updated to AUD $495");
   } else {
     plan = await prisma.subscriptionPlan.create({
       data: {
-        name: "One-Off",
+        name: "2 Months Access",
         ...planData,
       },
     });
-    console.log("✅ One-Off subscription plan created at AUD $495");
+    console.log("✅ 2 Months Access subscription plan created at AUD $495");
   }
 
   // Set up Stripe product and price if Stripe is configured
@@ -382,7 +383,7 @@ async function seedSubscriptionPlan() {
 
       // Create Stripe product
       const product = await stripe.products.create({
-        name: "Business Valuation - One-Off",
+        name: "Business Valuation - 2 Months Access",
         description: "Complete business valuation with worldwide industry multiples, professional PDF report, and comprehensive assessment tools",
         metadata: {
           planId: plan.id,

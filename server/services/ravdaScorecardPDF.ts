@@ -1083,13 +1083,8 @@ function drawValuationSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, font
       lineGap: 1.4,
     });
 
-  // Page number
-  const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(8).fillColor("#111827").text("3", 0, footerY, {
-    width: PAGE.width,
-    align: "center",
-    lineBreak: false,
-  });
+  // This page ends with the valuation panel at the lower margin. A footer
+  // would overlap the panel, so the page number is intentionally omitted.
 }
 
 function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): number {
@@ -1097,7 +1092,7 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
   drawIntaleksLogo(doc);
 
-  let currentPageNumber = 4; // This is page 4 in the sequence
+  let currentPageNumber = doc.bufferedPageRange().count;
 
   // Title
   doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation Inputs", PAGE.marginX, 76, { lineBreak: false });
@@ -1574,50 +1569,26 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
   const strengthScore = getScoreOutOf50(data);
   const strengthRating = getStrengthRating(strengthScore);
 
-  doc.font(fonts.semibold).fontSize(14).fillColor("#111827").text("Asset Method Summary", PAGE.marginX, 94, { lineBreak: false });
+  doc.font(fonts.semibold).fontSize(14).fillColor("#111827").text("Asset Method Summary", PAGE.marginX, 82, { lineBreak: false });
 
-  // Company info line with justified spacing
-  const infoY = 130;
-  const infoStartX = PAGE.marginX + 26;
-  const infoEndX = PAGE.width - PAGE.marginX - 26;
-  const infoWidth = infoEndX - infoStartX;
-
+  // Keep the company information on separate, deliberately sized lines. The
+  // previous justified single line collided for longer business and industry names.
   const baseMultiple = typeof data.calculatedMultiple === "number" ? (data.calculatedMultiple % 1 === 0 ? data.calculatedMultiple.toFixed(0) : data.calculatedMultiple.toFixed(1)) : "0";
-  const industryText = `Industry: ${toDisplayLabel(data.industry) || "N/A"}(Base: ${baseMultiple}x)`;
-
-  // Calculate widths
-  doc.font(fonts.bold).fontSize(13);
-  const companyWidth = doc.widthOfString(data.companyName || "-");
-  doc.font(fonts.regular).fontSize(13);
-  const countryWidth = doc.widthOfString(sanitizeCountry(data.country));
-  const industryWidth = doc.widthOfString(industryText);
-
-  // Calculate spacing
-  const totalTextWidth = companyWidth + countryWidth + industryWidth;
-  const spacing = (infoWidth - totalTextWidth) / 2;
-
-  // Draw company name
-  doc
-    .font(fonts.bold)
-    .fontSize(13)
-    .fillColor("#111827")
-    .text(data.companyName || "-", infoStartX, infoY, { lineBreak: false });
-
-  // Draw country
-  const countryX = infoStartX + companyWidth + spacing;
-  doc.font(fonts.regular).fontSize(13).fillColor("#111827").text(sanitizeCountry(data.country), countryX, infoY, { lineBreak: false });
-
-  // Draw industry with base multiple
-  const industryX = countryX + countryWidth + spacing;
+  doc.font(fonts.bold).fontSize(12).fillColor("#111827").text(data.companyName || "-", PAGE.marginX, 108, {
+    width: PAGE.width - PAGE.marginX * 2,
+    lineBreak: false,
+  });
   doc
     .font(fonts.regular)
-    .fontSize(13)
-    .fillColor("#111827")
-    .text(`Industry: ${toDisplayLabel(data.industry) || "N/A"}`, industryX, infoY, { lineBreak: false, continued: true });
-  doc.font(fonts.regular).fontSize(13).fillColor("#9CA3AF").text(`(Base: ${baseMultiple}x)`, { lineBreak: false });
+    .fontSize(9)
+    .fillColor("#6B7280")
+    .text(`${sanitizeCountry(data.country)} · ${toDisplayLabel(data.industry) || "N/A"} · Base: ${baseMultiple}x`, PAGE.marginX, 126, {
+      width: PAGE.width - PAGE.marginX * 2,
+      lineBreak: false,
+    });
 
   // Method description box
-  const methodDescY = 152;
+  const methodDescY = 146;
   const methodDescW = PAGE.width - PAGE.marginX * 2;
   const methodDescH = 50;
 
@@ -1649,7 +1620,9 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
   const tableW = PAGE.width - PAGE.marginX * 2;
   const labelColW = tableW * 0.4;
   const valueColW = (tableW - labelColW) / 2; // Split remaining space for BV and FMV
-  const rowH = 20;
+  // Keep the comprehensive asset and liability tables on one A4 page, leaving
+  // the footer clear of the final valuation panel.
+  const rowH = 18;
   const gridColor = "#D1D5DB";
 
   // Assets header
@@ -1896,25 +1869,11 @@ function drawAssetSummaryPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: P
     .fillColor("#DBEAFE")
     .text("Method: Asset Method", panelX + 12, panelY + 74, { lineBreak: false });
 
-  // Disclaimer
-  const narrative = "This valuation estimate is generated from your asset and liability data, showing both Book Value and Fair Market Value. The Estimated Business Valuation uses the Fair Market Value calculation. This is an automated, model-based estimate designed to support planning, discussions with advisors, and high-level decision-making. It is not a certified valuation and should not be used for tax, legal, lending, or regulatory purposes.";
-  doc
-    .font(fonts.regular)
-    .fontSize(8)
-    .fillColor("#111827")
-    .text(narrative, PAGE.marginX, panelY + panelH + 12, {
-      width: PAGE.width - PAGE.marginX * 2,
-      align: "justify",
-      lineGap: 1.3,
-    });
+  // The report-wide disclaimer appears on page two. Repeating a long version
+  // beneath this full-page table causes PDFKit to create a mostly blank page.
 
-  // Page number
-  const footerY = PAGE.height - PAGE.marginX - 20;
-  doc.font(fonts.regular).fontSize(8).fillColor("#111827").text("3", 0, footerY, {
-    width: PAGE.width,
-    align: "center",
-    lineBreak: false,
-  });
+  // The asset table deliberately occupies the full page, so its footer is
+  // omitted rather than risking a collision with the valuation panel.
 }
 
 function drawQuestionnaireResponsesPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): void {

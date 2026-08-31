@@ -10,7 +10,14 @@ import Stripe from "stripe";
 
 const prisma = new PrismaClient();
 
-async function ensureStripePlan(plan: { id: string; name: string; price: number; billingPeriod: BillingPeriod }): Promise<void> {
+async function ensureStripePlan(plan: {
+  id: string;
+  name: string;
+  price: number;
+  billingPeriod: BillingPeriod;
+  stripeProductId?: string | null;
+  stripePriceId?: string | null;
+}): Promise<void> {
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeKey) {
     console.warn("⚠️  STRIPE_SECRET_KEY not set — skipping Stripe product sync");
@@ -19,21 +26,42 @@ async function ensureStripePlan(plan: { id: string; name: string; price: number;
 
   const stripe = new Stripe(stripeKey);
 
-  // Create Stripe product
-  const product = await stripe.products.create({
-    name: plan.name,
-    metadata: { planId: plan.id },
-  });
+  const createPrice = async (productId: string) =>
+    stripe.prices.create({
+      product: productId,
+      unit_amount: plan.price,
+      currency: "aud",
+      ...(plan.billingPeriod === BillingPeriod.MONTHLY && { recurring: { interval: "month" } }),
+      ...(plan.billingPeriod === BillingPeriod.YEARLY && { recurring: { interval: "year" } }),
+      // ONE_TIME has no recurring
+    });
 
-  // Create Stripe price
-  const price = await stripe.prices.create({
-    product: product.id,
-    unit_amount: plan.price,
-    currency: "aud",
-    ...(plan.billingPeriod === BillingPeriod.MONTHLY && { recurring: { interval: "month" } }),
-    ...(plan.billingPeriod === BillingPeriod.YEARLY && { recurring: { interval: "year" } }),
-    // ONE_TIME has no recurring
-  });
+  if (plan.stripePriceId && plan.stripeProductId) {
+    try {
+      const existingPrice = await stripe.prices.retrieve(plan.stripePriceId);
+      if (existingPrice.active && existingPrice.unit_amount === plan.price) {
+        console.log(`✅ Stripe price already matches plan "${plan.name}"`);
+        return;
+      }
+
+      // Stripe prices are immutable: archive the old price and replace it on
+      // the existing product so checkout always uses the database amount.
+      await stripe.prices.update(plan.stripePriceId, { active: false });
+      const replacementPrice = await createPrice(plan.stripeProductId);
+      await prisma.subscriptionPlan.update({
+        where: { id: plan.id },
+        data: { stripePriceId: replacementPrice.id },
+      });
+      console.log(`✅ Stripe price updated for plan "${plan.name}": ${replacementPrice.id}`);
+      return;
+    } catch (error) {
+      console.warn(`⚠️  Could not verify existing Stripe price for "${plan.name}", creating a replacement`, error);
+    }
+  }
+
+  // Create a Stripe product only when the plan has not been linked before.
+  const product = await stripe.products.create({ name: plan.name, metadata: { planId: plan.id } });
+  const price = await createPrice(product.id);
 
   // Store IDs back to DB
   await prisma.subscriptionPlan.update({
@@ -60,8 +88,8 @@ async function startupSeed() {
 
     const planFeatures = ["Worldwide Industry Multiples (US, Canada, UK, Australia, China, Indonesia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking", "Unlimited Valuations", "Export to PDF"];
 
+    const legacyPlan = await prisma.subscriptionPlan.findUnique({ where: { name: "One-Off" } });
     if (!plan) {
-      const legacyPlan = await prisma.subscriptionPlan.findUnique({ where: { name: "One-Off" } });
       if (legacyPlan) {
         console.log("🔄 Migrating legacy One-Off plan to 2 Months Access...");
         plan = await prisma.subscriptionPlan.update({
@@ -86,6 +114,11 @@ async function startupSeed() {
           },
         });
       }
+    } else if (legacyPlan?.active) {
+      // Keep historic data intact, but never expose the retired plan at
+      // checkout once the current two-month plan exists.
+      await prisma.subscriptionPlan.update({ where: { id: legacyPlan.id }, data: { active: false } });
+      console.log("✅ Retired legacy One-Off subscription plan");
     } else {
       // Always keep features in sync
       plan = await prisma.subscriptionPlan.update({
@@ -95,24 +128,19 @@ async function startupSeed() {
       console.log("✅ Subscription plan already exists - updated features");
     }
 
-    // Sync Stripe product/price if missing
-    if (!plan.stripePriceId) {
-      console.log("🔗 Linking plan to Stripe...");
-      await ensureStripePlan(plan);
-    } else {
-      console.log(`✅ Stripe already configured (Price ID: ${plan.stripePriceId}) - skipping`);
-    }
+    // Keep Stripe aligned with the plan details; this is safe to run at startup.
+    await ensureStripePlan(plan);
 
     for (const accessPlan of [
       { name: "6 Months Access", price: 69500 },
-      { name: "12 Months Access", price: 99500 },
+      { name: "12 Months Access", price: 94800 },
     ]) {
       const existing = await prisma.subscriptionPlan.upsert({
         where: { name: accessPlan.name },
         create: { ...accessPlan, billingPeriod: BillingPeriod.ONE_TIME, features: planFeatures, active: true },
-        update: { features: planFeatures, active: true },
+        update: { price: accessPlan.price, billingPeriod: BillingPeriod.ONE_TIME, features: planFeatures, active: true },
       });
-      if (!existing.stripePriceId) await ensureStripePlan(existing);
+      await ensureStripePlan(existing);
     }
 
     // Check and seed super admin user

@@ -5,6 +5,7 @@ import Image from "next/image";
 
 const footerLinks = [
   { label: "Get a Valuation", href: "/calculator" },
+  { label: "About", href: "/about" },
   { label: "Sample Report", href: "/valuation-sample.pdf" },
   { label: "Contact", href: "/contact" },
   { label: "Certified Valuations", href: "https://executivebusinessvaluers.com.au/#quote" },

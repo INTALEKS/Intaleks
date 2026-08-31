@@ -38,7 +38,7 @@ const navLinks: NavItem[] = [
   //   ],
   // },
   { href: "/#pricing", label: "Pricing", isAnchor: true },
-  { href: "/#about", label: "About", isAnchor: true },
+  { href: "/about", label: "About" },
   { href: "/partner-program", label: "Partners" },
   { href: "/forum", label: "Forum" },
 ];
