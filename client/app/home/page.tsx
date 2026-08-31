@@ -246,7 +246,7 @@ function Hero() {
                   </p>
                   <BtnOutline
                     href="/valuation-sample.pdf"
-                    className="border-white/70 bg-transparent text-white hover:bg-white/10"
+                    className="!border-white/70 !bg-white/10 !text-white hover:!bg-white/20"
                   >
                     View Sample Report
                   </BtnOutline>

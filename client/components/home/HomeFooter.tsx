@@ -15,8 +15,8 @@ const footerLinks = [
 
 export function HomeFooter() {
   return (
-    <footer className="bg-[#0d1117] text-[#98A3B3] py-12 px-6 text-sm">
-      <div className="max-w-[1120px] mx-auto flex flex-wrap justify-between items-start gap-8">
+    <footer className="w-full bg-[#0d1117] text-[#98A3B3] py-12 text-sm">
+      <div className="w-full px-5 sm:px-8 lg:px-12 flex flex-wrap justify-between items-start gap-8">
         {/* Left: logo + tagline + address */}
         <div>
           <Link href="/" aria-label="Intaleks home" className="inline-block mb-3">
@@ -66,7 +66,7 @@ export function HomeFooter() {
       </div>
 
       {/* Bottom copyright */}
-      <div className="max-w-[1120px] mx-auto mt-10 pt-6 border-t border-white/10 text-xs text-[#98A3B3]">
+      <div className="w-full px-5 sm:px-8 lg:px-12 mt-10 pt-6 border-t border-white/10 text-xs text-[#98A3B3]">
         © 2026 Intaleks. All rights reserved.
       </div>
     </footer>

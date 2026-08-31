@@ -79,7 +79,7 @@ export function Navbar() {
 
   return (
     <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="w-full px-5 sm:px-8 lg:px-12 py-4 flex items-center justify-between">
         <Link href="/" className="font-bold text-xl">
           <Image src="/intaleks.png" alt="Intaleks logo" width={150} height={32} />
         </Link>

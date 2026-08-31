@@ -60,8 +60,8 @@ const officeLocations = [
 
 export function Footer() {
   return (
-    <footer className="pb-6 px-4 mt-20">
-      <div className="w-full md:w-[90%] p-6 md:p-10 rounded-3xl bg-[#0d1117] text-white mx-auto shadow-2xl">
+    <footer className="w-full mt-20 bg-[#0d1117] text-white">
+      <div className="w-full px-5 py-10 sm:px-8 lg:px-12 lg:py-12">
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 mb-8 md:mb-12">
           {/* Logo and Description */}
