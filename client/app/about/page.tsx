@@ -103,11 +103,14 @@ export default function AboutPage() {
               <Eyebrow>About the founder</Eyebrow>
               <SectionTitle>26 years of watching one number change everything.</SectionTitle>
               <div className="mt-9 grid grid-cols-1 items-start gap-8 lg:grid-cols-[170px_1fr] lg:gap-12">
-                <div className="flex aspect-square w-full max-w-[170px] items-center justify-center rounded-[16px] bg-[#E8EDF8] text-[#90A5CC]" aria-hidden="true">
-                  <svg viewBox="0 0 64 64" className="h-16 w-16 fill-none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="32" cy="21" r="9" />
-                    <path d="M17 52v-4c0-8.3 6.7-15 15-15s15 6.7 15 15v4" />
-                  </svg>
+                <div className="relative aspect-square w-full max-w-[170px] overflow-hidden rounded-[16px] bg-[#E8EDF8]">
+                  <Image
+                    src="/aleks-todorovic-founder.jpg"
+                    alt="Aleks Todorovic, founder of Intaleks"
+                    fill
+                    sizes="170px"
+                    className="object-cover object-center"
+                  />
                 </div>
                 <div className="max-w-[760px] space-y-5 text-[clamp(18px,2.1vw,24px)] leading-relaxed text-[#62666B]">
                   <p>I have spent 26 years in corporate Australia running finance and operations teams. I have sat in the rooms where the numbers get decided, and I have watched a single figure on a page change the direction of a company, and the lives of the people behind it.</p>
