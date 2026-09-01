@@ -99,8 +99,28 @@ export default function AboutPage() {
 
         <section className="px-6 py-20 sm:py-28">
           <div className="mx-auto max-w-[1120px]">
-            <Eyebrow>Why this exists</Eyebrow>
-            <SectionTitle>Finding out what a business is worth has never been accessible</SectionTitle>
+            <div className="rounded-[18px] border border-[#E1E8F4] bg-white p-7 sm:p-12">
+              <Eyebrow>About the founder</Eyebrow>
+              <SectionTitle>26 years of watching one number change everything.</SectionTitle>
+              <div className="mt-9 grid grid-cols-1 items-start gap-8 lg:grid-cols-[170px_1fr] lg:gap-12">
+                <div className="flex aspect-square w-full max-w-[170px] items-center justify-center rounded-[16px] bg-[#E8EDF8] text-[#90A5CC]" aria-hidden="true">
+                  <svg viewBox="0 0 64 64" className="h-16 w-16 fill-none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="32" cy="21" r="9" />
+                    <path d="M17 52v-4c0-8.3 6.7-15 15-15s15 6.7 15 15v4" />
+                  </svg>
+                </div>
+                <div className="max-w-[760px] space-y-5 text-[clamp(18px,2.1vw,24px)] leading-relaxed text-[#62666B]">
+                  <p>I have spent 26 years in corporate Australia running finance and operations teams. I have sat in the rooms where the numbers get decided, and I have watched a single figure on a page change the direction of a company, and the lives of the people behind it.</p>
+                  <p>I started Executive Business Valuers preparing formal valuations for shareholder disputes, family law matters and buy-outs. The kind of report that has to hold up when the other side&apos;s expert goes through it line by line.</p>
+                  <p>Then the phone started ringing with a different sort of call.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-12">
+              <Eyebrow>Why this exists</Eyebrow>
+              <SectionTitle>Finding out what a business is worth has never been accessible</SectionTitle>
+            </div>
             <div className="mt-10 space-y-5">
               <article className="rounded-[18px] border border-[#E1E8F4] bg-[#F5F7FB] p-7 sm:p-12">
                 <h2 className="text-[clamp(27px,3vw,36px)] font-bold tracking-[-0.03em]">The calls I could not help.</h2>
