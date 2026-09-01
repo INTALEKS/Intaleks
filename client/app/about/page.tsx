@@ -98,21 +98,25 @@ export default function AboutPage() {
         </section>
 
         <section className="px-6 py-20 sm:py-28">
-          <div className="mx-auto grid max-w-[1120px] grid-cols-1 gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
-            <div>
-              <Eyebrow>Why this exists</Eyebrow>
-              <SectionTitle>Finding out what a business is worth has never been accessible</SectionTitle>
-            </div>
-            <div className="space-y-5 text-[17px] leading-relaxed text-[#48576B]">
-              <p>I’ve spent 26 years in corporate Australia running finance and operations teams. I’ve sat in the rooms where the numbers get decided, and I’ve watched a single figure on a page change the direction of a company — and the lives of the people behind it.</p>
-              <p>I started Executive Business Valuers preparing formal valuations for shareholder disputes, family law matters and buy-outs. The kind of report that has to hold up when the other side’s expert goes through it line by line.</p>
-              <p>Then the phone started ringing with a different sort of call.</p>
-              <p>A builder, three years out from selling. A café owner whose landlord had just raised the rent. A couple facing a settlement with no idea what the business they’d spent a decade building would mean for the outcome.</p>
-              <p>None of them needed a court-ready report. They wanted to know what they were walking into.</p>
-              <p>But the only thing I could quote them was a price built for litigation. Most of them thanked me and hung up.</p>
-              <p>That never sat well with me. An answer that costs thousands and takes six weeks isn’t an answer most owners can get to.</p>
-              <p>Intaleks is the fix. The same rigour and the same 26 years, at a price a real business owner can say yes to.</p>
-              <p className="pt-2 font-semibold text-[#102947]">— Aleks Todorovic, Founder</p>
+          <div className="mx-auto max-w-[1120px]">
+            <Eyebrow>Why this exists</Eyebrow>
+            <SectionTitle>Finding out what a business is worth has never been accessible</SectionTitle>
+            <div className="mt-10 space-y-5">
+              <article className="rounded-[18px] border border-[#E1E8F4] bg-[#F5F7FB] p-7 sm:p-12">
+                <h2 className="text-[clamp(27px,3vw,36px)] font-bold tracking-[-0.03em]">The calls I could not help.</h2>
+                <div className="mt-5 max-w-[850px] space-y-5 text-[clamp(18px,2.1vw,24px)] leading-relaxed text-[#62666B]">
+                  <p>A builder, three years out from selling. A café owner whose landlord had just raised the rent. A couple facing a settlement with no idea what the business they had spent a decade building would mean for the outcome.</p>
+                  <p>None of them needed a court-ready report. They wanted to know what they were walking into. But the only thing I could quote them was a price built for litigation. Most of them thanked me and hung up.</p>
+                  <p>That never sat well with me. An answer that costs thousands and takes six weeks is not an answer most owners can get to.</p>
+                </div>
+              </article>
+              <article className="rounded-[18px] border border-[#E3E8F0] bg-white p-7 sm:p-12">
+                <h2 className="text-[clamp(27px,3vw,36px)] font-bold tracking-[-0.03em]">Intaleks is the fix.</h2>
+                <div className="mt-5 max-w-[850px] space-y-5 text-[clamp(18px,2.1vw,24px)] leading-relaxed text-[#62666B]">
+                  <p>The same rigour and the same 26 years, at a price a real business owner can say yes to. Every valuation runs on the methodology I built for reports that had to survive cross-examination. The difference is the delivery, not the standard.</p>
+                  <p className="pt-1 text-[18px] font-bold text-[#363A41]">Aleks Todorovic, Founder</p>
+                </div>
+              </article>
             </div>
           </div>
         </section>

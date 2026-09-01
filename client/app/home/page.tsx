@@ -233,20 +233,21 @@ function Hero() {
         <div className="mx-auto grid max-w-[1120px] grid-cols-1 gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-20">
           <div>
             <Eyebrow>Know where you stand</Eyebrow>
-            <SectionH2>Most Australians know what their home is worth.</SectionH2>
+            <SectionH2>You&apos;ve spent years building it. You deserve to know what it&apos;s worth.</SectionH2>
             <Lede>
-              They track property prices and watch the market. Yet ask a business owner what their
-              business is worth, and most have no idea.
+              The early starts, the payroll you covered before your own, the calls nobody else could
+              make. All of it went somewhere. One day it becomes a number on a page.
             </Lede>
           </div>
           <div className="rounded-[16px] border border-[#DCE6F5] bg-[#F7FAFF] p-7 sm:p-8">
             <h2 className="text-[22px] font-bold tracking-[-0.02em]">Welcome to Intaleks.</h2>
-            <ul className="mt-5 grid list-none grid-cols-1 gap-x-6 p-0 sm:grid-cols-2">
+            <ul className="mt-5 list-none space-y-3 p-0 text-[17px] leading-snug text-[#353C47]">
+              <TickItem>More than 10,000 valuations completed</TickItem>
               <TickItem>Professional business valuation</TickItem>
-              <TickItem>Australian market data &amp; benchmarks</TickItem>
-              <TickItem>No spreadsheets or complex financial models</TickItem>
+              <TickItem>Benchmarked against your industry</TickItem>
+              <TickItem>No spreadsheets or financial models</TickItem>
+              <TickItem>Detailed PDF report you can hand to an adviser</TickItem>
               <TickItem>Completed in minutes</TickItem>
-              <TickItem>Detailed PDF valuation report</TickItem>
             </ul>
           </div>
         </div>
@@ -627,51 +628,76 @@ function StepsSection() {
 ───────────────────────────────────────────── */
 
 const equityPoints = [
-  "Greater wealth",
-  "Better exit opportunities",
-  "More investor interest",
-  "Increased financial security",
-  "More options for the future",
+  {
+    title: "Wealth you can actually access",
+    body: "Value locked in the business is only wealth once you can release it.",
+  },
+  {
+    title: "A stronger position when you leave",
+    body: "Buyers pay more for businesses that do not depend on the owner.",
+  },
+  {
+    title: "Better funding and backing",
+    body: "Lenders and investors respond to a business with a documented value.",
+  },
+  {
+    title: "Security for the people behind you",
+    body: "Family, staff, and whatever comes next all sit on top of this number.",
+  },
+  {
+    title: "The freedom to choose your timing",
+    body: "Owners who know their number sell when they want to, not when they have to.",
+  },
 ];
 
 function EquitySection() {
   return (
     <section className="bg-[#F7F9FC] border-t border-[#E3E8F0] py-16 px-6">
-      <div className="max-w-[1120px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
-        {/* Copy */}
-        <div>
+      <div className="max-w-[720px] mx-auto">
           <Eyebrow>Focus on building equity</Eyebrow>
-          <SectionH2>The most successful owners know their business value</SectionH2>
+          <SectionH2>Successful owners know what their business is worth, and grow it.</SectionH2>
           <Lede>
-            Most owners focus on working in their business. Successful owners focus on increasing the
-            value of it. A more valuable business creates:
+            They treat value the same way they treat sales or cash. Something to be measured, watched,
+            and improved. Most owners never see the number at all. Every point you add turns into
+            something real:
           </Lede>
-          <ul className="list-none p-0 mt-2.5">
+          <ul className="list-none p-0 mt-7">
             {equityPoints.map((pt) => (
               <li
-                key={pt}
-                className="flex items-center gap-3 py-3.5 border-b border-[#E3E8F0] font-semibold text-[15px]"
+                key={pt.title}
+                className="flex items-start gap-3 border-b border-[#E3E8F0] py-3"
               >
-                <span className="w-[26px] h-[26px] rounded-full bg-[#3B82F6] text-white flex items-center justify-center text-[13px] font-bold flex-none">
+                <span className="mt-1 flex h-[18px] w-[18px] flex-none items-center justify-center rounded-full border-2 border-[#4E80F5] text-[11px] font-bold text-[#3B82F6]">
                   ✓
                 </span>
-                {pt}
+                <span>
+                  <strong className="block text-[15px] leading-snug text-[#20242B]">{pt.title}</strong>
+                  <span className="block text-[14px] leading-snug text-[#626975]">{pt.body}</span>
+                </span>
               </li>
             ))}
           </ul>
-          <Lede className="mt-5">
-            Understanding your current value is the first step towards improving it.
-          </Lede>
-        </div>
+          <p className="mt-5 text-[15px] font-semibold text-[#3F4550]">You cannot improve a number you have never measured.</p>
+      </div>
+    </section>
+  );
+}
 
-        {/* Photo */}
-        <div className="relative w-full aspect-[5/4] rounded-[12px] overflow-hidden shadow-[0_20px_50px_rgba(37,99,235,0.15)] bg-[#EAF1FE]">
-          <Image
-            src="https://images.unsplash.com/photo-1600880292089-90a7e086ee0c?auto=format&fit=crop&w=800&q=80"
-            alt="Restaurant owner behind the counter"
-            fill
-            className="object-cover"
-          />
+function MeetFounderSection() {
+  return (
+    <section className="border-t border-[#E3E8F0] bg-white px-6 py-16 sm:py-20">
+      <div className="mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-10 rounded-[20px] border border-[#E1E8F4] bg-[#F7F9FC] p-7 sm:p-10 lg:grid-cols-[260px_1fr] lg:gap-14 lg:p-12">
+        <div className="relative mx-auto aspect-square w-full max-w-[260px] overflow-hidden rounded-[16px] bg-[#DCEAFE]">
+          <Image src="/aleks-todorovic.jpg" alt="Aleks Todorovic, founder of Intaleks" fill sizes="260px" className="object-cover" />
+        </div>
+        <div>
+          <Eyebrow>Meet the founder</Eyebrow>
+          <SectionH2>Built by someone who has spent 26 years valuing businesses.</SectionH2>
+          <Lede>
+            Aleks Todorovic founded Intaleks to give business owners clear, credible guidance before a
+            sale, negotiation, funding decision or turning point makes the question urgent.
+          </Lede>
+          <BtnOutline href="/about" className="mt-6">Meet Aleks</BtnOutline>
         </div>
       </div>
     </section>
@@ -855,6 +881,7 @@ export default function HomeLandingPage() {
         <WhySection />
         <StepsSection />
         <EquitySection />
+        <MeetFounderSection />
         <PricingSection />
         <FinalCTA />
       </main>
