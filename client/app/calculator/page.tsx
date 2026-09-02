@@ -551,10 +551,27 @@ export default function CalculatorPage() {
         };
       });
 
-      const formattedAddbacks = addbacks.map((addback) => ({
+      const formattedGeneralAddbacks = addbacks.map((addback) => ({
         reason: addback.reason,
+        customReason: addback.customReason,
         values: Object.fromEntries(Object.entries(addback.values).map(([year, value]) => [year, parseFloat(value as string) || 0])),
       }));
+
+      const hasOwnerSalaryAdjustment = financialYears.some(
+        (year) => Math.abs(netOwnerSalaryAdjustmentByYear[year] || 0) > 0.001,
+      );
+      const formattedAddbacks = hasOwnerSalaryAdjustment
+        ? [
+            ...formattedGeneralAddbacks,
+            {
+              reason: "owner-salary-adjustment",
+              customReason: undefined,
+              values: Object.fromEntries(
+                financialYears.map((year) => [year, netOwnerSalaryAdjustmentByYear[year] || 0]),
+              ),
+            },
+          ]
+        : formattedGeneralAddbacks;
 
       // Call server with profit method (primary)
       const calculationData = {
@@ -748,11 +765,23 @@ export default function CalculatorPage() {
         financialYears,
         years: financialYears, // Server expects 'years' field
         financialData: calculatedMetrics,
-        addbacks: addbacks.map((a) => ({
-          id: a.id,
-          reason: a.reason,
-          values: Object.fromEntries(Object.entries(a.values).map(([year, value]) => [year, parseFloat(value) || 0])),
-        })),
+        addbacks: [
+          ...addbacks.map((a) => ({
+            id: a.id,
+            reason: a.reason,
+            customReason: a.customReason,
+            values: Object.fromEntries(Object.entries(a.values).map(([year, value]) => [year, parseFloat(value) || 0])),
+          })),
+          ...(financialYears.some((year) => Math.abs(netOwnerSalaryAdjustmentByYear[year] || 0) > 0.001)
+            ? [{
+                id: "owner-salary-adjustment",
+                reason: "owner-salary-adjustment",
+                values: Object.fromEntries(
+                  financialYears.map((year) => [year, netOwnerSalaryAdjustmentByYear[year] || 0]),
+                ),
+              }]
+            : []),
+        ],
         totalAddbacks: financialYears.reduce((sum, year) => sum + (totalAddbacksByYear[year] || 0), 0),
         averageEbit: financialYears.reduce((sum, year) => sum + (calculatedMetrics[year]?.ebit || 0), 0) / financialYears.length,
         adjustedEbit: averageAdjustedEbit,

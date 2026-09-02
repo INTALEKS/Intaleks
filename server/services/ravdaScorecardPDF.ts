@@ -314,14 +314,23 @@ function drawPlaceholderCompanyLogo(doc: PDFKit.PDFDocument): void {
   doc.restore();
 }
 
-function drawCompanyLogo(doc: PDFKit.PDFDocument, data: RAVDAData): boolean {
+function drawCompanyLogo(
+  doc: PDFKit.PDFDocument,
+  data: RAVDAData,
+  bounds: { x: number; y: number; width: number; height: number },
+): boolean {
   if (data.logoBase64) {
     try {
-      const logoBuffer = Buffer.from(data.logoBase64, "base64");
-      const width = 120;
-      const height = 90;
-      const x = (PAGE.width - width) / 2;
-      doc.image(logoBuffer, x, 300, { fit: [width, height], align: "center", valign: "center" });
+      const base64Payload = data.logoBase64.includes(",")
+        ? data.logoBase64.slice(data.logoBase64.indexOf(",") + 1)
+        : data.logoBase64;
+      const logoBuffer = Buffer.from(base64Payload, "base64");
+      if (logoBuffer.length === 0) return false;
+      doc.image(logoBuffer, bounds.x, bounds.y, {
+        fit: [bounds.width, bounds.height],
+        align: "center",
+        valign: "center",
+      });
       return true;
     } catch {
       // fallback handled below
@@ -413,18 +422,20 @@ function drawGuidanceCoverPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
       lineBreak: false,
     });
 
-  const bullPath = path.join(__dirname, "../assets/win.png");
-  const clientEBVLogoPath = path.join(__dirname, "../../client/public/Executive-Business-Valuers.png");
-  const eBVLogoPath = path.join(__dirname, "../assets/Executive-Business-Valuers.png");
-  let logoToUse = bullPath;
-  if (!fs.existsSync(logoToUse) && fs.existsSync(clientEBVLogoPath)) logoToUse = clientEBVLogoPath;
-  if (!fs.existsSync(logoToUse) && fs.existsSync(eBVLogoPath)) logoToUse = eBVLogoPath;
-
-  if (fs.existsSync(logoToUse)) {
-    doc.image(logoToUse, (PAGE.width - 80) / 2, 125, { width: 80, height: 80, fit: [80, 80] });
+  const uploadedLogoRendered = drawCompanyLogo(doc, data, {
+    x: (PAGE.width - 140) / 2,
+    y: 118,
+    width: 140,
+    height: 90,
+  });
+  if (!uploadedLogoRendered) {
+    const trophyPath = path.join(__dirname, "../assets/win.png");
+    if (fs.existsSync(trophyPath)) {
+      doc.image(trophyPath, (PAGE.width - 80) / 2, 125, { width: 80, height: 80, fit: [80, 80] });
+    }
   }
 
-  const companyName = data.companyName || "Your Company";
+  const companyName = data.companyName?.trim() || "Unnamed Company";
   const titleY = 225;
   doc
     .font(fonts.bold)

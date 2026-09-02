@@ -115,6 +115,12 @@ const generatePDF = async (req, res, next) => {
         if (!data.valuationMethod) {
             return res.status(400).json({ error: "Missing required field: valuationMethod" });
         }
+        // The server owns report identity metadata so saved browser state cannot
+        // produce a stale company name or generation date in a newly created PDF.
+        data.companyName = typeof data.companyName === "string" && data.companyName.trim()
+            ? data.companyName.trim()
+            : "Unnamed Company";
+        data.generatedDate = new Date().toISOString().slice(0, 10);
         const normalizedYears = Array.from(new Set([...(Array.isArray(data.years) ? data.years : []), ...(Array.isArray(data.financialYears) ? data.financialYears : [])]
             .map((year) => (typeof year === "string" ? year.trim() : ""))
             .filter((year) => year.length > 0)));
@@ -147,6 +153,7 @@ const generatePDF = async (req, res, next) => {
                 data.totalAssets = assetResult.totalAssets;
                 data.totalLiabilities = assetResult.totalLiabilities;
                 data.adjustedEbit = profitResult.averageAdjustedEbit;
+                data.totalAddbacks = profitResult.totalAddbacks;
                 data.financialData = profitResult.yearlyMetrics;
                 data.adjustedEbitPerYear = profitResult.adjustedEbitByYear;
                 data.totalAddbacksPerYear = profitResult.totalAddbacksByYear;
@@ -176,6 +183,7 @@ const generatePDF = async (req, res, next) => {
                 // Update the data object with server-calculated values
                 data.finalValuation = finalValuation;
                 data.adjustedEbit = recalculatedResult.averageAdjustedEbit;
+                data.totalAddbacks = recalculatedResult.totalAddbacks;
                 data.profitValuation = finalValuation;
                 // Use server-recalculated financial data for PDF
                 data.financialData = recalculatedResult.yearlyMetrics;
