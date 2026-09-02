@@ -787,6 +787,16 @@ export default function CalculatorPage() {
         adjustedEbit: averageAdjustedEbit,
         adjustedEbitPerYear: Object.fromEntries(financialYears.map((year) => [year, adjustedEbitByYear[year] || 0])),
         totalAddbacksPerYear: Object.fromEntries(financialYears.map((year) => [year, totalAddbacksByYear[year] || 0])),
+        ownerSalaryData: Object.fromEntries(
+          financialYears.map((year) => [
+            year,
+            {
+              paidSalary: parseFloat(ownerSalaryData[year]?.paidSalary || "0") || 0,
+              marketSalary: parseFloat(ownerSalaryData[year]?.marketSalary || "0") || 0,
+            },
+          ]),
+        ),
+        superRate,
         valuationMethod: "both",
         finalValuation: profitFinalValuation,
         profitValuation: profitFinalValuation,

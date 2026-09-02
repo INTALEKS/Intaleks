@@ -108,6 +108,15 @@ export interface RAVDAData {
    * totalAddbacksPerYear[yearLabel] = sum of all add-back items for that year.
    */
   totalAddbacksPerYear?: Record<string, number>;
+  ownerSalaryData?: Record<
+    string,
+    {
+      paidSalary: number;
+      marketSalary: number;
+    }
+  >;
+  /** Superannuation rate expressed as a decimal, e.g. 0.12 for 12%. */
+  superRate?: number;
   assets?: {
     cashAndBank_bv?: number;
     cashAndBank_fmv?: number;
@@ -860,7 +869,8 @@ function moneyComma(value: number | undefined, currencySymbol: string = "$", cur
 /** Currency format without ISO code suffix — for use in table cells */
 function moneyCell(value: number | undefined, currencySymbol: string = "$"): string {
   const safe = Number.isFinite(value) ? Number(value) : 0;
-  return formatMoneyNoCode(safe, currencySymbol);
+  const formatted = formatMoneyNoCode(Math.abs(safe), currencySymbol);
+  return safe < 0 ? `(${formatted})` : formatted;
 }
 
 function drawInputRow(doc: PDFKit.PDFDocument, fonts: PdfFonts, y: number, label: string, value: number | undefined): void {
@@ -1176,6 +1186,160 @@ function drawLegacyValuationPanel(
   return y + height;
 }
 
+function drawOwnerSalaryNormalisationTable(
+  doc: PDFKit.PDFDocument,
+  data: RAVDAData,
+  fonts: PdfFonts,
+  years: string[],
+  y: number,
+): number {
+  const tableX = PAGE.marginX;
+  const tableW = PAGE.width - PAGE.marginX * 2;
+  const labelW = 210;
+  const yearColW = (tableW - labelW) / years.length;
+  const headerHeight = 24;
+  const yearHeaderHeight = 32;
+  const rowHeight = 27;
+  const gridColor = "#D1D5DB";
+  const superRate = Number.isFinite(data.superRate) ? Math.max(0, Number(data.superRate)) : 0.12;
+  const superPercent = `${(superRate * 100).toLocaleString("en-AU", { maximumFractionDigits: 2 })}%`;
+
+  const getSalary = (year: string, key: "paidSalary" | "marketSalary"): number => {
+    const value = data.ownerSalaryData?.[year]?.[key];
+    return Number.isFinite(value) ? Number(value) : 0;
+  };
+
+  const rows = [
+    {
+      label: "Actual owner salary paid",
+      values: years.map((year) => getSalary(year, "paidSalary")),
+      kind: "standard" as const,
+    },
+    {
+      label: `Superannuation on actual salary (${superPercent})`,
+      values: years.map((year) => getSalary(year, "paidSalary") * superRate),
+      kind: "subtle" as const,
+    },
+    {
+      label: "Total actual owner remuneration",
+      values: years.map((year) => getSalary(year, "paidSalary") * (1 + superRate)),
+      kind: "actualTotal" as const,
+    },
+    {
+      label: "Market replacement salary",
+      values: years.map((year) => getSalary(year, "marketSalary")),
+      kind: "standard" as const,
+    },
+    {
+      label: `Superannuation on market salary (${superPercent})`,
+      values: years.map((year) => getSalary(year, "marketSalary") * superRate),
+      kind: "subtle" as const,
+    },
+    {
+      label: "Total market replacement remuneration",
+      values: years.map((year) => getSalary(year, "marketSalary") * (1 + superRate)),
+      kind: "marketTotal" as const,
+    },
+    {
+      label: "Net addback / (adjustment) to profit",
+      values: years.map(
+        (year) =>
+          (getSalary(year, "paidSalary") - getSalary(year, "marketSalary")) * (1 + superRate),
+      ),
+      kind: "net" as const,
+    },
+  ];
+
+  doc.rect(tableX, y, tableW, headerHeight).fill(REPORT_NAVY);
+  doc
+    .font(fonts.bold)
+    .fontSize(11)
+    .fillColor("#FFFFFF")
+    .text("OWNER SALARY NORMALISATION", tableX + 12, y + 7, { lineBreak: false });
+
+  const headerY = y + headerHeight;
+  doc.rect(tableX, headerY, tableW, yearHeaderHeight).fill(REPORT_NAVY_ALT);
+  doc.rect(tableX, headerY, labelW, yearHeaderHeight).stroke(gridColor);
+  doc
+    .font(fonts.bold)
+    .fontSize(9.5)
+    .fillColor("#FFFFFF")
+    .text("CALCULATION", tableX + 12, headerY + 12, { lineBreak: false });
+
+  years.forEach((year, index) => {
+    const colX = tableX + labelW + index * yearColW;
+    const { line1, line2 } = parseColumnHeader(year);
+    doc.rect(colX, headerY, yearColW, yearHeaderHeight).stroke(gridColor);
+    doc.font(fonts.bold).fontSize(8.5).fillColor("#FFFFFF");
+    if (line2) {
+      doc.text(line1, colX + 5, headerY + 6, { width: yearColW - 10, align: "center", lineBreak: false });
+      doc.text(line2, colX + 5, headerY + 18, { width: yearColW - 10, align: "center", lineBreak: false });
+    } else {
+      doc.text(line1, colX + 5, headerY + 12, { width: yearColW - 10, align: "center", lineBreak: false });
+    }
+  });
+
+  let rowY = headerY + yearHeaderHeight;
+  rows.forEach((row, rowIndex) => {
+    const fill =
+      row.kind === "net"
+        ? REPORT_TOTAL
+        : row.kind === "actualTotal"
+          ? "#ECFDF5"
+          : row.kind === "marketTotal"
+            ? "#FFF1F2"
+            : rowIndex % 2 === 0
+              ? "#FFFFFF"
+              : "#F9FAFB";
+    const isEmphasis = row.kind === "actualTotal" || row.kind === "marketTotal" || row.kind === "net";
+
+    doc.rect(tableX, rowY, tableW, rowHeight).fill(fill);
+    doc.rect(tableX, rowY, labelW, rowHeight).stroke(gridColor);
+    doc
+      .font(isEmphasis ? fonts.bold : fonts.regular)
+      .fontSize(row.label.length > 38 ? 8.2 : 9)
+      .fillColor(row.kind === "actualTotal" ? "#047857" : row.kind === "marketTotal" ? "#BE123C" : "#1F2937")
+      .text(row.label, tableX + 12, rowY + 9, { width: labelW - 24, lineBreak: false, ellipsis: true });
+
+    row.values.forEach((value, yearIndex) => {
+      const colX = tableX + labelW + yearIndex * yearColW;
+      const text = row.kind === "net" && value > 0 ? `+${moneyCell(value, data.currencySymbol)}` : moneyCell(value, data.currencySymbol);
+      doc.rect(colX, rowY, yearColW, rowHeight).stroke(gridColor);
+      doc
+        .font(isEmphasis ? fonts.bold : fonts.regular)
+        .fontSize(9)
+        .fillColor(
+          row.kind === "actualTotal"
+            ? "#047857"
+            : row.kind === "marketTotal"
+              ? "#BE123C"
+              : row.kind === "net" && value > 0
+                ? "#047857"
+                : row.kind === "net" && value < 0
+                  ? "#BE123C"
+                  : "#1F2937",
+        )
+        .text(text, colX + 5, rowY + 9, { width: yearColW - 10, align: "center", lineBreak: false });
+    });
+
+    rowY += rowHeight;
+  });
+
+  const noteY = rowY + 12;
+  doc
+    .font(fonts.regular)
+    .fontSize(8)
+    .fillColor(REPORT_MUTED)
+    .text(
+      "Normalisation adds back the actual owner remuneration paid, then deducts the market cost of replacing the owner. The resulting net adjustment is included in adjusted EBIT and the Profit Method valuation.",
+      tableX,
+      noteY,
+      { width: tableW, lineGap: 1.5, align: "left" },
+    );
+
+  return noteY + 34;
+}
+
 function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: PdfFonts): number {
   doc.addPage();
   doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
@@ -1374,8 +1538,30 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
       .text(moneyCell(ebitValue, data.currencySymbol), colX + 8, rowY + 11, { width: colW - 16, align: "center", lineBreak: false });
   });
 
+  const hasOwnerSalaryInputs = years.some(
+    (year) => data.ownerSalaryData && Object.prototype.hasOwnProperty.call(data.ownerSalaryData, year),
+  );
+
+  // Owner salary is a distinct valuation input. Give it a dedicated continuation
+  // page so the normalisation is legible and its link to adjusted EBIT is explicit.
+  let addbacksY = rowY + 60;
+  if (hasOwnerSalaryInputs) {
+    drawPageFooter(doc, fonts, currentPageNumber);
+    doc.addPage();
+    doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
+    currentPageNumber++;
+    drawPageHeader(doc, data, fonts);
+    const ownerTableY = drawReportSectionTitle(
+      doc,
+      fonts,
+      "Supporting data",
+      "Owner Salary Normalisation",
+      "The owner remuneration paid is compared with a market replacement cost to determine the adjustment applied to profit.",
+    );
+    addbacksY = drawOwnerSalaryNormalisationTable(doc, data, fonts, years, ownerTableY) + 24;
+  }
+
   // Addbacks section - check if we have enough space BEFORE rendering
-  const addbacksY = rowY + 60;
 
   // Calculate space needed for addbacks section
   const allAddbacks = data.addbacks || [];
@@ -1397,22 +1583,19 @@ function drawFinancialDataPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   let actualAddbacksY = addbacksY;
   if (spaceNeededForAddbacks > PAGE.height - PAGE.marginX) {
     // Not enough space, move entire addbacks section to new page
-    const footerY = PAGE.height - PAGE.marginX - 20;
-    doc.font(fonts.regular).fontSize(8).fillColor("#111827").text(currentPageNumber.toString(), 0, footerY, {
-      width: PAGE.width,
-      align: "center",
-      lineBreak: false,
-    });
+    drawPageFooter(doc, fonts, currentPageNumber);
 
     doc.addPage();
     doc.rect(0, 0, PAGE.width, PAGE.height).fill("#FFFFFF");
-    drawIntaleksLogo(doc);
     currentPageNumber++;
-
-    // Add continuation title
-    doc.font(fonts.bold).fontSize(16).fillColor("#111827").text("Valuation (continued)", PAGE.marginX, 76, { lineBreak: false });
-
-    actualAddbacksY = 110; // Reset Y position for new page
+    drawPageHeader(doc, data, fonts);
+    actualAddbacksY = drawReportSectionTitle(
+      doc,
+      fonts,
+      "Supporting data",
+      "Addbacks and Adjustments",
+      "These items reconcile accounting EBIT to the adjusted EBIT used in the Profit Method valuation.",
+    );
   }
 
   // Now render addbacks section

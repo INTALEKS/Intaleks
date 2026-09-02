@@ -31,6 +31,17 @@ export interface ValuationReportData {
   // totalAddbacksPerYear[yearLabel] = sum of all add-backs for that year
   totalAddbacksPerYear?: Record<string, number>;
 
+  // Owner salary normalisation inputs used to explain the salary add-back
+  ownerSalaryData?: Record<
+    string,
+    {
+      paidSalary: number;
+      marketSalary: number;
+    }
+  >;
+  /** Superannuation rate expressed as a decimal, e.g. 0.12 for 12%. */
+  superRate?: number;
+
   // Valuation Method
   valuationMethod: "asset" | "profit" | "both";
 

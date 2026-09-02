@@ -46,6 +46,15 @@ export interface ValuationPDFData {
    * totalAddbacksPerYear[yearLabel] = sum of all add-back items for that year.
    */
   totalAddbacksPerYear?: Record<string, number>;
+  ownerSalaryData?: Record<
+    string,
+    {
+      paidSalary: number;
+      marketSalary: number;
+    }
+  >;
+  /** Superannuation rate expressed as a decimal, e.g. 0.12 for 12%. */
+  superRate?: number;
   valuationMethod: "profit" | "asset" | "both" | "dcf";
   finalValuation: number;
 
@@ -232,6 +241,8 @@ export async function generateValuationPDF(data: ValuationPDFData): Promise<Buff
     adjustedEbit: data.adjustedEbit,
     adjustedEbitPerYear: data.adjustedEbitPerYear,
     totalAddbacksPerYear: data.totalAddbacksPerYear,
+    ownerSalaryData: data.ownerSalaryData,
+    superRate: data.superRate,
     valuationMethod: data.valuationMethod,
     finalValuation: data.finalValuation,
     assetValuation: data.assetValuation,

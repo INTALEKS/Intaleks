@@ -101,6 +101,8 @@ async function generateValuationPDF(data) {
         adjustedEbit: data.adjustedEbit,
         adjustedEbitPerYear: data.adjustedEbitPerYear,
         totalAddbacksPerYear: data.totalAddbacksPerYear,
+        ownerSalaryData: data.ownerSalaryData,
+        superRate: data.superRate,
         valuationMethod: data.valuationMethod,
         finalValuation: data.finalValuation,
         assetValuation: data.assetValuation,
