@@ -108,7 +108,13 @@ const heroIndustryImages = [
   },
 ];
 
-function IndustryCollage({ className = "" }: { className?: string }) {
+function IndustryCollage({
+  className = "",
+  backdrop = false,
+}: {
+  className?: string;
+  backdrop?: boolean;
+}) {
   const [featuredImageIndex, setFeaturedImageIndex] = useState(0);
   const collageRef = useRef<HTMLDivElement>(null);
 
@@ -148,7 +154,11 @@ function IndustryCollage({ className = "" }: { className?: string }) {
   return (
     <div
       ref={collageRef}
-      className={`hero-industry-collage relative w-full aspect-[4/5] max-h-[540px] overflow-hidden rounded-[16px] bg-[#DCEAFE] p-2 shadow-[0_24px_60px_rgba(37,99,235,0.18)] ${className}`}
+      className={`hero-industry-collage ${
+        backdrop
+          ? "absolute inset-0 h-full w-full overflow-hidden bg-[#102947]"
+          : "relative aspect-[4/5] max-h-[540px] w-full overflow-hidden rounded-[16px] bg-[#DCEAFE] p-2 shadow-[0_24px_60px_rgba(37,99,235,0.18)]"
+      } ${className}`}
       aria-label="A selection of the industries Intaleks supports"
     >
       {orderedImages.map((image, index) => (
@@ -211,21 +221,50 @@ function IndustryCollage({ className = "" }: { className?: string }) {
 function Hero() {
   return (
     <>
-      <section className="w-full bg-[#102947]" id="top">
-        <div className="relative w-full overflow-hidden aspect-[12/5]">
-          <Image
-            src="/intaleks-hero-salon-bright.jpg"
-            alt="A salon owner alongside the industries Intaleks supports"
-            fill
-            priority
-            sizes="100vw"
-            className="object-contain"
-          />
-          <Link
-            href="/calculator"
-            aria-label="Start my business valuation"
-            className="absolute left-[49%] top-[59%] h-[12%] w-[28%] rounded-[10px] focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-4"
-          />
+      <section className="w-full overflow-hidden bg-[#102947]" id="top" aria-labelledby="home-hero-heading">
+        <div className="grid min-h-[620px] w-full grid-cols-1 lg:grid-cols-[44%_56%]">
+          <div className="relative h-[300px] overflow-hidden sm:h-[400px] lg:h-auto lg:min-h-[620px]">
+            <Image
+              src="/intaleks-hero-salon-bright.jpg"
+              alt="A salon owner representing Australian small business owners"
+              fill
+              priority
+              sizes="(min-width: 1024px) 44vw, 100vw"
+              className="object-cover object-left"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#102947]/30 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-[#102947]/15" aria-hidden="true" />
+          </div>
+
+          <div className="relative isolate flex min-h-[500px] items-center overflow-hidden px-6 py-14 sm:px-10 sm:py-16 lg:min-h-[620px] lg:px-[clamp(3rem,6vw,7rem)]">
+            <IndustryCollage backdrop className="-z-20 opacity-65" />
+            <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(11,31,55,0.96)_0%,rgba(16,41,71,0.88)_52%,rgba(16,41,71,0.78)_100%)]" aria-hidden="true" />
+
+            <div className="w-full max-w-[760px] text-white">
+              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#9CC4FF] sm:text-sm">
+                Professional business valuation
+              </p>
+              <h1
+                id="home-hero-heading"
+                className="max-w-[15ch] text-[clamp(40px,6vw,76px)] font-extrabold leading-[0.98] tracking-[-0.045em] text-white"
+              >
+                You know what your house is worth. What about your <span className="font-serif font-normal italic">business?</span>
+              </h1>
+              <p className="mt-6 max-w-[52ch] text-base leading-relaxed text-[#D8E5F5] sm:text-lg">
+                Get clear, professional-grade guidance on what your business is worth—in minutes, not weeks.
+              </p>
+              <div className="mt-8 flex flex-col items-start gap-4 sm:mt-9">
+                <Link
+                  href="/calculator"
+                  className="inline-flex w-full max-w-[360px] items-center justify-center rounded-[10px] bg-[#2F78E6] px-7 py-4 text-center text-base font-bold text-white shadow-[0_14px_30px_rgba(0,0,0,0.24)] transition hover:-translate-y-0.5 hover:bg-[#1D66D2] focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-4 sm:w-auto sm:max-w-none sm:px-10 sm:text-lg"
+                >
+                  Start My Business Valuation
+                </Link>
+                <p className="text-sm font-medium leading-relaxed text-[#D8E5F5] sm:text-base">
+                  From $495 AUD <span aria-hidden="true">·</span> one payment <span aria-hidden="true">·</span> includes 2 months access
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

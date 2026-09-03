@@ -103,7 +103,7 @@ export default function AboutPage() {
               <Eyebrow>About the founder</Eyebrow>
               <SectionTitle>26 years of watching one number change everything.</SectionTitle>
               <div className="mt-9 grid grid-cols-1 items-start gap-8 lg:grid-cols-[170px_1fr] lg:gap-12">
-                <div className="relative aspect-square w-full max-w-[170px] overflow-hidden rounded-[16px] bg-[#E8EDF8]">
+                <div className="relative hidden aspect-square w-full max-w-[170px] overflow-hidden rounded-[16px] bg-[#E8EDF8] lg:block">
                   <Image
                     src="/aleks-todorovic-founder.jpg"
                     alt="Aleks Todorovic, founder of Intaleks"
