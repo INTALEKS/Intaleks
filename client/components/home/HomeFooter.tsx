@@ -21,11 +21,12 @@ export function HomeFooter() {
         <div>
           <Link href="/" aria-label="Intaleks home" className="inline-block mb-3">
             <Image
-              src="/intaleks.png"
-              alt="Intaleks"
-              width={140}
-              height={30}
-              className="brightness-0 invert"
+              src="/intaleks-footer-logo.png"
+              alt="Intaleks logo"
+              width={2172}
+              height={724}
+              sizes="(min-width: 640px) 180px, 160px"
+              className="h-auto w-[160px] sm:w-[180px]"
             />
           </Link>
           <p className="text-[#3B82F6] font-semibold mt-1 text-sm">
