@@ -223,9 +223,9 @@ function Hero() {
     <>
       <section className="w-full overflow-hidden bg-[#102947]" id="top" aria-labelledby="home-hero-heading">
         <div className="grid min-h-[620px] w-full grid-cols-1 lg:grid-cols-[44%_56%]">
-          <div className="relative h-[300px] overflow-hidden sm:h-[400px] lg:h-auto lg:min-h-[620px]">
+          <div className="relative left-1/2 h-[clamp(320px,92vw,430px)] w-screen -translate-x-1/2 overflow-hidden sm:h-[430px] lg:left-auto lg:h-auto lg:min-h-[620px] lg:w-auto lg:translate-x-0">
             <Image
-              src="/intaleks-hero-salon-bright.jpg"
+              src="/intaleks-business-valuator.jpg"
               alt="A salon owner representing Australian small business owners"
               fill
               priority
