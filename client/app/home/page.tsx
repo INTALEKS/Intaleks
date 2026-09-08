@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Navbar } from "@/components/home/Navbar";
 import { HomeFooter } from "@/components/home/HomeFooter";
+import { SampleReportPreview } from "@/components/home/SampleReportPreview";
 import { ApiClient, type SubscriptionPlan } from "@/app/services/api";
 import { useAuthState } from "@/app/hooks/useAuthState";
 import { useCreateCheckout } from "@/app/hooks/usePayments";
@@ -252,14 +253,14 @@ function Hero() {
               <p className="mt-6 max-w-[52ch] text-base leading-relaxed text-[#D8E5F5] sm:text-lg">
                 Get clear, professional-grade guidance on what your business is worth—in minutes, not weeks.
               </p>
-              <div className="mt-8 flex flex-col items-start gap-4 sm:mt-9">
+              <div className="mt-8 sm:mt-9">
                 <Link
                   href="/calculator"
-                  className="inline-flex w-full max-w-[360px] items-center justify-center rounded-[10px] bg-[#2F78E6] px-7 py-4 text-center text-base font-bold text-white shadow-[0_14px_30px_rgba(0,0,0,0.24)] transition hover:-translate-y-0.5 hover:bg-[#1D66D2] focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-4 sm:w-auto sm:max-w-none sm:px-10 sm:text-lg"
+                  className="inline-flex min-h-14 w-full max-w-[360px] items-center justify-center rounded-[10px] bg-[#2F78E6] px-7 py-4 text-center text-base font-bold text-white shadow-[0_14px_30px_rgba(0,0,0,0.24)] transition hover:-translate-y-0.5 hover:bg-[#1D66D2] focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-4 sm:w-auto sm:max-w-none sm:px-10 sm:text-lg"
                 >
                   Start My Business Valuation
                 </Link>
-                <p className="text-sm font-medium leading-relaxed text-[#D8E5F5] sm:text-base">
+                <p className="mt-4 text-sm font-medium leading-relaxed text-[#D8E5F5] sm:text-base">
                   From $495 AUD <span aria-hidden="true">·</span> one payment <span aria-hidden="true">·</span> includes 2 months access
                 </p>
               </div>
@@ -310,53 +311,58 @@ function AssetSection() {
 
   return (
     <section className="py-16 px-6">
-      <div className="max-w-[1120px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
-        {/* Copy */}
-        <div>
-          <Eyebrow>Your business isn't just a job</Eyebrow>
-          <SectionH2>It's one of your most valuable assets</SectionH2>
-          <Lede>
-            Your business represents years of hard work, sacrifice, risk and investment. It isn't just
-            something you work in — it's an asset you're building. And like any asset, understanding its
-            value helps you make smarter financial decisions and create more opportunities for the future.
-          </Lede>
-          <Lede>
-            Whether you're growing, buying, selling, raising capital or planning retirement, it all starts
-            with understanding your value.
-          </Lede>
-        </div>
+      <div className="mx-auto max-w-[1120px]">
+        <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-2">
+          {/* Copy */}
+          <div>
+            <Eyebrow>Your business isn't just a job</Eyebrow>
+            <SectionH2>It's one of your most valuable assets</SectionH2>
+            <Lede>
+              Your business represents years of hard work, sacrifice, risk and investment. It isn't just
+              something you work in — it's an asset you're building. And like any asset, understanding its
+              value helps you make smarter financial decisions and create more opportunities for the future.
+            </Lede>
+            <Lede>
+              Whether you're growing, buying, selling, raising capital or planning retirement, it all starts
+              with understanding your value.
+            </Lede>
+          </div>
 
-        {/* Tracking card */}
-        <div className="bg-[#F7F9FC] border border-[#E3E8F0] rounded-[12px] px-7 py-7">
-          <h3 className="text-[13px] font-semibold uppercase tracking-[1.4px] text-[#5A6472] mb-4">
-            What you check every year
-          </h3>
-          <ul className="list-none p-0 m-0">
-            {items.map((item, i) => {
-              const isLast = i === items.length - 1;
-              return (
-                <li
-                  key={item.label}
-                  className={`flex justify-between items-center gap-3 py-3 font-medium text-[15px] ${
-                    isLast
-                      ? "bg-[#0d1117] text-white -mx-7 -mb-7 px-7 pb-7 pt-5 rounded-b-[12px] mt-3.5"
-                      : "border-b border-[#E3E8F0]"
-                  }`}
-                >
-                  <span className="min-w-0">{item.label}</span>
-                  {item.known ? (
-                    <span className="shrink-0 whitespace-nowrap text-[13px] font-semibold text-[#3B82F6] bg-[#EAF1FE] rounded-full px-3 py-0.5">
-                      You know
-                    </span>
-                  ) : (
-                    <span className="shrink-0 whitespace-nowrap text-[13px] font-semibold text-white bg-[#2563EB] rounded-full px-4 py-1">
-                      No idea
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+          {/* Tracking card */}
+          <div className="rounded-[12px] border border-[#E3E8F0] bg-[#F7F9FC] px-7 py-7">
+            <h3 className="mb-4 text-[13px] font-semibold uppercase tracking-[1.4px] text-[#5A6472]">
+              What you check every year
+            </h3>
+            <ul className="m-0 list-none p-0">
+              {items.map((item, i) => {
+                const isLast = i === items.length - 1;
+                return (
+                  <li
+                    key={item.label}
+                    className={`flex items-center justify-between gap-3 py-3 text-[15px] font-medium ${
+                      isLast
+                        ? "-mx-7 -mb-7 mt-3.5 rounded-b-[12px] bg-[#0d1117] px-7 pb-7 pt-5 text-white"
+                        : "border-b border-[#E3E8F0]"
+                    }`}
+                  >
+                    <span className="min-w-0">{item.label}</span>
+                    {item.known ? (
+                      <span className="shrink-0 whitespace-nowrap rounded-full bg-[#EAF1FE] px-3 py-0.5 text-[13px] font-semibold text-[#3B82F6]">
+                        You know
+                      </span>
+                    ) : (
+                      <span className="shrink-0 whitespace-nowrap rounded-full bg-[#2563EB] px-4 py-1 text-[13px] font-semibold text-white">
+                        No idea
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+        <div className="mt-10 flex justify-center sm:mt-12">
+          <SampleReportPreview className="inline-flex min-h-12 w-full items-center justify-center rounded-[10px] border border-[#2F78E6] bg-white px-7 py-3 text-center text-base font-semibold text-[#2563EB] transition-colors hover:bg-[#EEF5FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B82F6] sm:w-auto" />
         </div>
       </div>
     </section>

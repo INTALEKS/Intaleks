@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Navbar } from "@/components/home/Navbar";
 import { HomeFooter } from "@/components/home/HomeFooter";
+import { SampleReportPreview } from "@/components/home/SampleReportPreview";
 
 export const metadata: Metadata = {
   title: "About Intaleks | Business Valuation Australia",
@@ -80,8 +81,9 @@ export default function AboutPage() {
               <blockquote className="max-w-[16ch] font-serif text-[clamp(30px,3.5vw,48px)] leading-[1.1] text-[#F4F8FF]">
                 “You built it. You deserve to know what it’s worth.”
               </blockquote>
-              <div className="mt-9">
+              <div className="mt-9 flex w-full max-w-[430px] flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap">
                 <PrimaryLink>Start My Business Valuation</PrimaryLink>
+                <SampleReportPreview className="inline-flex min-h-12 items-center justify-center rounded-[10px] border border-white/60 bg-white/10 px-7 py-3.5 text-base font-semibold text-white backdrop-blur-sm transition-colors hover:border-white hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" />
               </div>
             </div>
             <div className="relative min-h-[430px] lg:min-h-[650px]">
@@ -217,7 +219,7 @@ export default function AboutPage() {
             <p className="mt-5 text-[17px] text-[#5A6472]">Your business may be the most valuable asset you’ll ever own. Find out where you stand.</p>
             <div className="mt-8 flex flex-wrap justify-center gap-5">
               <PrimaryLink>Start My Business Valuation</PrimaryLink>
-              <Link href="/valuation-sample.pdf" className="self-center font-semibold text-[#2563EB] underline underline-offset-4 hover:text-[#174EA6]">View Sample Report</Link>
+              <SampleReportPreview className="self-center font-semibold text-[#2563EB] underline underline-offset-4 hover:text-[#174EA6] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#3B82F6]" />
             </div>
             <p className="mt-5 text-sm text-[#5A6472]">$495 AUD, one payment — includes 2 months access.</p>
           </div>

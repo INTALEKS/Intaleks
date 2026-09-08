@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { SampleReportPreview } from "./SampleReportPreview";
 
 const navigateLinks = [
   { label: "Home", href: "/" },
@@ -20,7 +21,7 @@ const premiumLinks = [
 const startLinks = [
   { label: "Sign in", href: "/login" },
   { label: "Create Account", href: "/signup" },
-  { label: "Valuation Sample", href: "/valuation-sample.pdf" },
+  { label: "View Sample Report", href: "/valuation-sample.pdf" },
 ];
 
 const socialLinks: Array<{ icon: string; href: string; label: string }> = [
@@ -160,9 +161,15 @@ export function Footer() {
             <ul className="space-y-2">
               {startLinks.map((link) => (
                 <li key={link.href}>
-                  <Link target="_blank" href={link.href} className="text-gray-300 hover:text-white text-sm transition-colors flex items-center gap-1">
-                    {link.label}
-                  </Link>
+                  {link.href === "/valuation-sample.pdf" ? (
+                    <SampleReportPreview className="flex items-center gap-1 text-sm text-gray-300 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
+                      {link.label}
+                    </SampleReportPreview>
+                  ) : (
+                    <Link target="_blank" href={link.href} className="flex items-center gap-1 text-sm text-gray-300 transition-colors hover:text-white">
+                      {link.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

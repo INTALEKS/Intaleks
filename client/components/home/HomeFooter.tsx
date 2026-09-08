@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { SampleReportPreview } from "./SampleReportPreview";
 
 const footerLinks = [
   { label: "Get a Valuation", href: "/calculator" },
   { label: "About", href: "/about" },
-  { label: "Sample Report", href: "/valuation-sample.pdf" },
+  { label: "View Sample Report", href: "/valuation-sample.pdf" },
   { label: "Contact", href: "/contact" },
   { label: "Certified Valuations", href: "https://executivebusinessvaluers.com.au/#quote" },
   { label: "Privacy", href: "/privacy" },
@@ -43,6 +44,16 @@ export function HomeFooter() {
         <nav className="flex flex-wrap gap-x-6 gap-y-3 items-start pt-1">
           {footerLinks.map((link) => {
             const isExternal = link.href.startsWith("http");
+            if (link.href === "/valuation-sample.pdf") {
+              return (
+                <SampleReportPreview
+                  key={link.href}
+                  className="text-[#C4CEDC] transition-colors hover:text-[#3B82F6] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#3B82F6]"
+                >
+                  {link.label}
+                </SampleReportPreview>
+              );
+            }
             return isExternal ? (
               <a
                 key={link.href}
