@@ -32,3 +32,5 @@ redis_data/
 .pnpm-store/
 server/.pnpm-store/
 server/pnpm-workspace.yaml
+.vercel
+.env*
