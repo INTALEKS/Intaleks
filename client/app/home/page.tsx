@@ -362,7 +362,7 @@ function AssetSection() {
           </div>
         </div>
         <div className="mt-10 flex justify-center sm:mt-12">
-          <SampleReportPreview className="inline-flex min-h-12 w-full items-center justify-center rounded-[10px] border border-[#2F78E6] bg-white px-7 py-3 text-center text-base font-semibold text-[#2563EB] transition-colors hover:bg-[#EEF5FF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3B82F6] sm:w-auto" />
+          <SampleReportPreview className="inline-flex min-h-14 w-full items-center justify-center rounded-[12px] border-2 border-[#2F78E6] bg-white px-10 py-4 text-center text-lg font-bold text-[#2563EB] shadow-[0_10px_24px_rgba(37,99,235,0.12)] transition-all hover:-translate-y-0.5 hover:bg-[#EEF5FF] hover:shadow-[0_14px_30px_rgba(37,99,235,0.18)] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#3B82F6] sm:w-auto" />
         </div>
       </div>
     </section>

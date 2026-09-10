@@ -71,7 +71,7 @@ export function SampleReportPreview({
               href="/valuation-sample.pdf"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-6 inline-flex min-h-13 w-full max-w-[400px] items-center justify-center rounded-[11px] bg-[#216FE0] px-6 py-3.5 text-center text-base font-bold text-white shadow-[0_12px_28px_rgba(33,111,224,0.3)] transition-all hover:-translate-y-0.5 hover:bg-[#145FC9] hover:shadow-[0_16px_34px_rgba(33,111,224,0.36)] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#216FE0]"
+              className="mt-6 inline-flex min-h-14 w-full max-w-[400px] items-center justify-center rounded-[12px] bg-[#216FE0] px-8 py-4 text-center text-lg font-bold text-white shadow-[0_14px_32px_rgba(33,111,224,0.32)] transition-all hover:-translate-y-0.5 hover:bg-[#145FC9] hover:shadow-[0_18px_38px_rgba(33,111,224,0.4)] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#216FE0]"
             >
               View Our Sample Report
             </a>
