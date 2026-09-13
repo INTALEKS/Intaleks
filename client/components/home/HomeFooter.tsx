@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { SampleReportPreview } from "./SampleReportPreview";
 
 const footerLinks = [
   { label: "Get a Valuation", href: "/calculator" },
@@ -46,12 +45,15 @@ export function HomeFooter() {
             const isExternal = link.href.startsWith("http");
             if (link.href === "/valuation-sample.pdf") {
               return (
-                <SampleReportPreview
+                <a
                   key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-[#C4CEDC] transition-colors hover:text-[#3B82F6] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#3B82F6]"
                 >
                   {link.label}
-                </SampleReportPreview>
+                </a>
               );
             }
             return isExternal ? (

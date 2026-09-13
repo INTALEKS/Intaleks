@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Navbar } from "@/components/home/Navbar";
 import { HomeFooter } from "@/components/home/HomeFooter";
-import { SampleReportPreview } from "@/components/home/SampleReportPreview";
 
 export const metadata: Metadata = {
   title: "About Intaleks | Business Valuation Australia",
@@ -83,7 +82,9 @@ export default function AboutPage() {
               </blockquote>
               <div className="mt-9 flex w-full max-w-[430px] flex-col gap-3 sm:max-w-none sm:flex-row sm:flex-wrap">
                 <PrimaryLink>Start My Business Valuation</PrimaryLink>
-                <SampleReportPreview className="inline-flex min-h-14 items-center justify-center rounded-[12px] border-2 border-white/70 bg-white/10 px-9 py-4 text-lg font-bold text-white shadow-[0_12px_28px_rgba(0,0,0,0.18)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-white hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-white" />
+                <a href="/valuation-sample.pdf" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-14 items-center justify-center rounded-[12px] border-2 border-white/70 bg-white/10 px-9 py-4 text-lg font-bold text-white shadow-[0_12px_28px_rgba(0,0,0,0.18)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-white hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-white">
+                  View Sample Report
+                </a>
               </div>
             </div>
             <div className="relative min-h-[430px] lg:min-h-[650px]">
@@ -219,7 +220,9 @@ export default function AboutPage() {
             <p className="mt-5 text-[17px] text-[#5A6472]">Your business may be the most valuable asset you’ll ever own. Find out where you stand.</p>
             <div className="mt-8 flex flex-wrap justify-center gap-5">
               <PrimaryLink>Start My Business Valuation</PrimaryLink>
-              <SampleReportPreview className="inline-flex min-h-14 items-center justify-center rounded-[12px] border-2 border-[#2F78E6] bg-white px-9 py-4 text-lg font-bold text-[#2563EB] shadow-[0_10px_24px_rgba(37,99,235,0.12)] transition-all hover:-translate-y-0.5 hover:bg-[#EEF5FF] hover:shadow-[0_14px_30px_rgba(37,99,235,0.18)] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#3B82F6]" />
+              <a href="/valuation-sample.pdf" target="_blank" rel="noopener noreferrer" className="inline-flex min-h-14 items-center justify-center rounded-[12px] border-2 border-[#2F78E6] bg-white px-9 py-4 text-lg font-bold text-[#2563EB] shadow-[0_10px_24px_rgba(37,99,235,0.12)] transition-all hover:-translate-y-0.5 hover:bg-[#EEF5FF] hover:shadow-[0_14px_30px_rgba(37,99,235,0.18)] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#3B82F6]">
+                View Sample Report
+              </a>
             </div>
             <p className="mt-5 text-sm text-[#5A6472]">$495 AUD, one payment — includes 2 months access.</p>
           </div>

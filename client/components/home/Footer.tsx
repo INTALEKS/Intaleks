@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { SampleReportPreview } from "./SampleReportPreview";
 
 const navigateLinks = [
   { label: "Home", href: "/" },
@@ -162,9 +161,9 @@ export function Footer() {
               {startLinks.map((link) => (
                 <li key={link.href}>
                   {link.href === "/valuation-sample.pdf" ? (
-                    <SampleReportPreview className="flex items-center gap-1 text-sm text-gray-300 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
+                    <a href={link.href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-sm text-gray-300 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
                       {link.label}
-                    </SampleReportPreview>
+                    </a>
                   ) : (
                     <Link target="_blank" href={link.href} className="flex items-center gap-1 text-sm text-gray-300 transition-colors hover:text-white">
                       {link.label}
