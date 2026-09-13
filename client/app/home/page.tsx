@@ -310,26 +310,24 @@ function AssetSection() {
   ];
 
   return (
-    <section className="py-16 px-6">
-      <div className="mx-auto max-w-[1120px]">
-        <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-2">
-          {/* Copy */}
-          <div>
+    <section className="px-6 py-16 sm:py-20">
+      <div className="mx-auto max-w-[860px]">
+        <div className="flex flex-col items-center">
+          <div className="max-w-[760px] text-center">
             <Eyebrow>Your business isn't just a job</Eyebrow>
             <SectionH2>It's one of your most valuable assets</SectionH2>
-            <Lede>
+            <Lede className="mx-auto">
               Your business represents years of hard work, sacrifice, risk and investment. It isn't just
               something you work in — it's an asset you're building. And like any asset, understanding its
               value helps you make smarter financial decisions and create more opportunities for the future.
             </Lede>
-            <Lede>
+            <Lede className="mx-auto">
               Whether you're growing, buying, selling, raising capital or planning retirement, it all starts
               with understanding your value.
             </Lede>
           </div>
 
-          {/* Tracking card */}
-          <div className="rounded-[12px] border border-[#E3E8F0] bg-[#F7F9FC] px-7 py-7">
+          <div className="mt-10 w-full max-w-[660px] rounded-[16px] border border-[#DCE4EF] bg-[#F7F9FC] px-6 py-7 shadow-[0_18px_45px_rgba(30,64,106,0.08)] sm:mt-12 sm:px-8 sm:py-8">
             <h3 className="mb-4 text-[13px] font-semibold uppercase tracking-[1.4px] text-[#5A6472]">
               What you check every year
             </h3>
@@ -341,7 +339,7 @@ function AssetSection() {
                     key={item.label}
                     className={`flex items-center justify-between gap-3 py-3 text-[15px] font-medium ${
                       isLast
-                        ? "-mx-7 -mb-7 mt-3.5 rounded-b-[12px] bg-[#0d1117] px-7 pb-7 pt-5 text-white"
+                        ? "-mx-6 -mb-7 mt-3.5 rounded-b-[16px] bg-[#0d1117] px-6 pb-7 pt-5 text-white sm:-mx-8 sm:-mb-8 sm:px-8 sm:pb-8"
                         : "border-b border-[#E3E8F0]"
                     }`}
                   >
