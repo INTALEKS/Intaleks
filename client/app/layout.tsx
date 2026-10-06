@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "./globals.css";
 import { QueryProvider } from "./providers/QueryProvider";
 import { Toaster } from "@/components/ui/sonner";
@@ -39,6 +40,9 @@ export const metadata: Metadata = {
     description: "Calculate your business value in minutes. Get professional valuation reports using Asset, Profit, and DCF methods.",
     images: ["/og-image.png"],
     creator: "@intaleks",
+  },
+  verification: {
+    google: "wqjz8ylaUI7409XbB9xXX-sfUHFmYnwLJEFAJRk3eow",
   },
   robots: {
     index: true,
@@ -104,6 +108,8 @@ export default function RootLayout({
       <head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessSchema) }} />
       </head>
+      <Script src="https://www.googletagmanager.com/gtag/js?id=G-HJL49ST9QR" strategy="afterInteractive" />
+      <Script id="ga4-init" strategy="afterInteractive">{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-HJL49ST9QR');`}</Script>
       <body className="font-inter antialiased" suppressHydrationWarning>
         <QueryProvider>{children}</QueryProvider>
         <Toaster position="top-right" />
