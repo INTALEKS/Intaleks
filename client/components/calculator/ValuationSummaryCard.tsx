@@ -168,6 +168,13 @@ export function ValuationSummaryCard({ companyName, country, industry, averageSa
               </div>
             </div>
             </div>
+
+            <section aria-labelledby="conclusion-of-value-title" className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-4 sm:p-5">
+              <h4 id="conclusion-of-value-title" className="text-sm font-bold text-blue-900">Conclusion of Value</h4>
+              <p className="mt-1.5 text-sm leading-relaxed text-blue-900">
+                Based on the two compared methods we suggest the higher of the two should be adopted as the valuation guidance for your business.
+              </p>
+            </section>
           </>
         )}
 

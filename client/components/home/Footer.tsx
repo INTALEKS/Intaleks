@@ -24,9 +24,9 @@ const startLinks = [
 ];
 
 const socialLinks: Array<{ icon: string; href: string; label: string }> = [
-  // { icon: "facebook", href: "https://facebook.com", label: "Facebook" },
+  { icon: "facebook", href: "https://facebook.com/people/Intaleks/61595527049062/", label: "Facebook" },
   { icon: "linkedin", href: "https://www.linkedin.com/company/intaleks", label: "LinkedIn" },
-  // { icon: "instagram", href: "https://instagram.com", label: "Instagram" },
+  { icon: "instagram", href: "https://instagram.com/valuation_queen", label: "Instagram" },
   // { icon: "x", href: "https://x.com", label: "X" },
 ];
 
@@ -99,9 +99,8 @@ export function Footer() {
             {/* Social Icons */}
             <div className="flex gap-4">
               {socialLinks.map(({ icon, href, label }) => (
-                <a key={icon} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-md text-white transition-colors flex items-center gap-x-1.5 text-sm border border-white/10">
+                <a key={icon} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} title={label} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors flex items-center justify-center border border-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
                   <SocialIcon name={icon} />
-                  {label}
                 </a>
               ))}
             </div>

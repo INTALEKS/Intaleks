@@ -501,7 +501,7 @@ function drawGuidanceCoverPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
   const boxY = metaY + 16;
   const boxW = PAGE.width - PAGE.marginX * 2;
   const isCombined = data.valuationMethod === "both";
-  const boxH = isCombined ? 132 : 95;
+  const boxH = isCombined ? 190 : 95;
 
   doc.rect(PAGE.marginX, boxY, boxW, 4).fill("#D97706");
   doc.rect(PAGE.marginX, boxY + 4, boxW, boxH - 4).fill("#0F172A");
@@ -552,10 +552,31 @@ function drawGuidanceCoverPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     drawMethodValue(rightX, "PROFIT METHOD", profitValue, "Adjusted EBIT x selected earnings multiple");
 
     doc
+      .font(fonts.bold)
+      .fontSize(8)
+      .fillColor("#FCD34D")
+      .text("CONCLUSION OF VALUE", innerX, boxY + 109, {
+        width: innerW,
+        align: "center",
+        lineBreak: false,
+      });
+
+    doc
       .font(fonts.regular)
-      .fontSize(8.5)
+      .fontSize(8)
+      .fillColor("#FFFFFF")
+      .text(
+        "Based on the two compared methods we suggest the higher of the two should be adopted as the valuation guidance for your business.",
+        innerX + 8,
+        boxY + 123,
+        { width: innerW - 16, align: "center", lineGap: 1.5, height: 26 },
+      );
+
+    doc
+      .font(fonts.regular)
+      .fontSize(8)
       .fillColor("#DBEAFE")
-      .text(`Business Strength Assessment ${score} / 50 (${strengthRating.label})`, innerX, boxY + 109, {
+      .text(`Business Strength Assessment ${score} / 50 (${strengthRating.label})`, innerX, boxY + 166, {
         width: innerW,
         align: "center",
         lineBreak: false,

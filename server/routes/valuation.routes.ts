@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticateToken, requireEmailVerified, requireActiveSubscription } from "../middleware/authMiddleware";
+import { authenticateToken, requireEmailVerified, requireActiveSubscription, requirePaidSubscription } from "../middleware/authMiddleware";
 import { createValuationDocument, getUserValuationDocuments, getValuationDocumentById, deleteValuationDocument, generatePDF } from "../controllers/valuation.controller";
 import { rateLimitPDF } from "../middleware/rateLimiter";
 
@@ -16,12 +16,12 @@ router.post("/generate-pdf", requireActiveSubscription, rateLimitPDF, generatePD
 router.post("/", requireActiveSubscription, rateLimitPDF, createValuationDocument);
 
 // Get all valuation documents for the current user
-router.get("/", getUserValuationDocuments);
+router.get("/", requirePaidSubscription, getUserValuationDocuments);
 
 // Get a single valuation document by ID
-router.get("/:id", getValuationDocumentById);
+router.get("/:id", requirePaidSubscription, getValuationDocumentById);
 
 // Delete a valuation document
-router.delete("/:id", deleteValuationDocument);
+router.delete("/:id", requirePaidSubscription, deleteValuationDocument);
 
 export default router;

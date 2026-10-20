@@ -1611,36 +1611,39 @@ export default function CalculatorPage() {
               )}
             </div>
 
-            {/* Previous Documents */}
-            {isAuthenticated && (
-              <div className="border-t pt-6">
-                <h4 className="font-semibold text-gray-700 mb-4">Your Previous Documents</h4>
-                <ValuationDocumentList
-                  onViewDocument={(doc) => {
-                    // Open the Cloudflare URL directly in a new tab
-                    if (doc.fileUrl) {
-                      window.open(doc.fileUrl, "_blank");
-                    } else {
-                      toast.error("Document URL not available");
-                    }
-                  }}
-                  onDownloadDocument={(doc) => {
-                    // Download from the Cloudflare URL directly
-                    if (doc.fileUrl) {
-                      const link = document.createElement("a");
-                      link.href = doc.fileUrl;
-                      link.download = `${doc.companyName}-valuation.pdf`;
-                      link.click();
-                      toast.success("Document downloaded successfully");
-                    } else {
-                      toast.error("Document URL not available");
-                    }
-                  }}
-                />
-              </div>
-            )}
           </div>
         </AccordionSection>}
+
+        {/* Subscribers can revisit saved reports without completing the calculator again. */}
+        {isAuthenticated && hasActiveSubscription && (
+          <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="previous-valuations-title">
+            <div className="mb-4">
+              <h2 id="previous-valuations-title" className="text-lg font-semibold text-gray-900">My previous valuations</h2>
+              <p className="mt-1 text-sm text-gray-600">View or download reports you have created before.</p>
+            </div>
+            <ValuationDocumentList
+              onViewDocument={(doc) => {
+                if (doc.fileUrl) {
+                  window.open(doc.fileUrl, "_blank", "noopener,noreferrer");
+                } else {
+                  toast.error("Document URL not available");
+                }
+              }}
+              onDownloadDocument={(doc) => {
+                if (doc.fileUrl) {
+                  const link = document.createElement("a");
+                  link.href = doc.fileUrl;
+                  link.download = `${doc.companyName}-valuation.pdf`;
+                  link.rel = "noopener noreferrer";
+                  link.click();
+                  toast.success("Document downloaded successfully");
+                } else {
+                  toast.error("Document URL not available");
+                }
+              }}
+            />
+          </section>
+        )}
       </main>
 
       {/* Footer */}

@@ -218,3 +218,42 @@ export const requireActiveSubscription = async (req: Request, res: Response, nex
 
   next();
 };
+
+/**
+ * Require a paid subscription for saved valuation history. Coupon and partner
+ * access can create reports, but do not grant ongoing access to report history.
+ */
+export const requirePaidSubscription = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  if (!req.user) {
+    res.status(401).json({ error: "Unauthorized", message: "Authentication required" });
+    return;
+  }
+
+  if (req.user.role === UserRole.ADMIN || req.user.role === UserRole.SUPER_ADMIN) {
+    next();
+    return;
+  }
+
+  if (req.user.subscriptionStatus !== SubscriptionStatus.ACTIVE) {
+    res.status(403).json({
+      error: "Active subscription required",
+      message: "Saved valuation history is available to subscribers. Please subscribe to access your previous reports.",
+      subscriptionStatus: req.user.subscriptionStatus,
+    });
+    return;
+  }
+
+  if (req.user.currentPeriodEnd && req.user.currentPeriodEnd <= new Date()) {
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { subscriptionStatus: SubscriptionStatus.CANCELED, currentPeriodEnd: null, cancelAtPeriodEnd: false },
+    });
+    res.status(403).json({
+      error: "Access period expired",
+      message: "Your Valuator access period has ended. Renew to access your previous reports.",
+    });
+    return;
+  }
+
+  next();
+};

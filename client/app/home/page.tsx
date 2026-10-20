@@ -745,7 +745,7 @@ function MeetFounderSection() {
 }
 
 /* ─────────────────────────────────────────────
-   8. PRICING
+   8. SINGLE RETAIL PRICE
 ───────────────────────────────────────────── */
 
 const pricingFeatures = [
@@ -757,17 +757,12 @@ const pricingFeatures = [
   "No hidden costs, no engagement fees",
 ];
 
-const tiers = [
-  { planName: "2 Months Access", term: "2 months", price: "$495", desc: "Included as standard", best: false },
-  { planName: "6 Months Access", term: "6 months", price: "$695", desc: "Track a full half-year of trading", best: true },
-  { planName: "12 Months Access", term: "12 months", price: "$79/mo", desc: "$948 paid once · value across the full financial year", best: false },
-];
-
 function PricingSection() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
-  const [processingPlanName, setProcessingPlanName] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { isAuthenticated, isAuthentiating } = useAuthState();
   const createCheckout = useCreateCheckout();
+  const retailPlan = plans.find((plan) => plan.name === "2 Months Access");
 
   useEffect(() => {
     ApiClient.getPublicPlans()
@@ -777,38 +772,44 @@ function PricingSection() {
       .catch(() => setPlans([]));
   }, []);
 
-  const beginCheckout = (planName: string) => {
-    const plan = plans.find((item) => item.name === planName);
-    if (!plan) return;
+  const beginCheckout = () => {
+    if (!retailPlan) return;
 
     if (!isAuthenticated) {
-      const returnUrl = `/?checkout=${encodeURIComponent(planName)}#pricing`;
+      const returnUrl = `/?checkout=${encodeURIComponent(retailPlan.name)}#pricing`;
       window.location.assign(`/login?returnUrl=${encodeURIComponent(returnUrl)}`);
       return;
     }
 
-    setProcessingPlanName(planName);
+    setIsProcessing(true);
     createCheckout.mutate(
       {
-        planId: plan.id,
+        planId: retailPlan.id,
         successUrl: `${window.location.origin}/?checkout=success#pricing`,
         cancelUrl: `${window.location.origin}/?checkout=cancelled#pricing`,
       },
-      { onSettled: () => setProcessingPlanName(null) },
+      { onSettled: () => setIsProcessing(false) },
     );
   };
 
   useEffect(() => {
-    if (!isAuthenticated || isAuthentiating || plans.length === 0) return;
-
+    if (!isAuthenticated || isAuthentiating || !retailPlan) return;
     const checkoutPlanName = new URLSearchParams(window.location.search).get("checkout");
-    if (!checkoutPlanName || !plans.some((plan) => plan.name === checkoutPlanName)) return;
+    if (checkoutPlanName !== retailPlan.name) return;
 
     window.history.replaceState(null, "", `${window.location.pathname}#pricing`);
-    beginCheckout(checkoutPlanName);
-    // The checkout query is removed before the request so this runs once after sign-in.
+    setIsProcessing(true);
+    createCheckout.mutate(
+      {
+        planId: retailPlan.id,
+        successUrl: `${window.location.origin}/?checkout=success#pricing`,
+        cancelUrl: `${window.location.origin}/?checkout=cancelled#pricing`,
+      },
+      { onSettled: () => setIsProcessing(false) },
+    );
+    // This effect consumes the post-login checkout URL once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, isAuthentiating, plans]);
+  }, [isAuthenticated, isAuthentiating, retailPlan]);
 
   return (
     <section className="py-[68px] px-6 text-center" id="pricing">
@@ -816,70 +817,25 @@ function PricingSection() {
         <Eyebrow>Simple, affordable, professional</Eyebrow>
         <SectionH2>One price. Everything you need.</SectionH2>
 
-        {/* Main price card */}
         <div className="max-w-[560px] mx-auto mt-7 border border-[#E3E8F0] rounded-[16px] overflow-hidden shadow-[0_20px_50px_rgba(13,17,23,0.07)]">
           <div className="bg-[#0d1117] text-white px-7 py-[34px]">
             <h3 className="text-[19px] font-semibold text-[#C4CEDC]">Professional Business Valuation</h3>
-            <div className="text-[clamp(48px,7vw,64px)] font-extrabold tracking-[-0.04em] leading-[1.05] mt-1.5 mb-0.5">
-              $495
-            </div>
+            <div className="text-[clamp(48px,7vw,64px)] font-extrabold tracking-[-0.04em] leading-[1.05] mt-1.5 mb-0.5">$495</div>
             <p className="text-[15px] text-[#aab4c2]">AUD · one payment · includes 2 months access</p>
           </div>
           <div className="bg-white px-7 py-[30px] text-left">
             <ul className="list-none p-0 mb-6">
-              {pricingFeatures.map((f) => (
-                <TickItem key={f}>{f}</TickItem>
-              ))}
+              {pricingFeatures.map((feature) => <TickItem key={feature}>{feature}</TickItem>)}
             </ul>
             <button
               type="button"
-              onClick={() => beginCheckout("2 Months Access")}
-              disabled={isAuthentiating || plans.length === 0 || processingPlanName === "2 Months Access"}
+              onClick={beginCheckout}
+              disabled={isAuthentiating || !retailPlan || isProcessing}
               className="block w-full rounded-[10px] bg-[#0d1117] px-7 py-3.5 text-center text-base font-semibold text-white transition-all hover:-translate-y-px hover:bg-[#1c2530] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {processingPlanName === "2 Months Access" ? "Opening secure checkout…" : "Choose 2-month access"}
+              {isProcessing ? "Opening secure checkout…" : "Value your business now"}
             </button>
           </div>
-        </div>
-
-        {/* Tier comparison */}
-        <div className="max-w-[900px] mx-auto mt-10">
-          <p className="text-[#5A6472] mb-6">
-            Tracking your value over time? Extend your access and watch the number move.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {tiers.map((t) => (
-              <button
-                type="button"
-                key={t.term}
-                onClick={() => beginCheckout(t.planName)}
-                disabled={isAuthentiating || plans.length === 0 || processingPlanName !== null}
-                className={`relative rounded-[12px] border px-[22px] py-[26px] text-center ${
-                  t.best
-                    ? "border-[#3B82F6] bg-[#F2F7FF] shadow-[0_10px_28px_rgba(37,99,235,0.12)]"
-                    : "border-[#E3E8F0] bg-white"
-                } cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-[#3B82F6] focus-visible:outline-offset-4 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none disabled:opacity-60`}
-              >
-                {t.best && (
-                  <span className="absolute -top-[11px] left-1/2 -translate-x-1/2 bg-[#3B82F6] text-white text-[11.5px] font-bold uppercase tracking-[1px] rounded-full px-3 py-1 whitespace-nowrap">
-                    Most popular
-                  </span>
-                )}
-                <span className="block text-[14px] font-semibold uppercase tracking-[1.3px] text-[#5A6472]">
-                  {t.term}
-                </span>
-                <b
-                  className={`block text-[34px] font-extrabold tracking-[-0.03em] my-2 ${t.best ? "text-[#2563EB]" : ""}`}
-                >
-                  {t.price}
-                </b>
-                <span className="block text-[14px] text-[#5A6472] leading-snug">{t.desc}</span>
-              </button>
-            ))}
-          </div>
-          <p className="text-[15px] text-[#5A6472] mt-5">
-            Extended access can be added at checkout or any time before your 2 months are up.
-          </p>
         </div>
       </div>
     </section>
