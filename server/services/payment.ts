@@ -208,6 +208,14 @@ export class PaymentService {
       throw new NotFoundError(`Subscription plan with ID ${planId} not found`);
     }
 
+    if (!plan.active) {
+      throw new StripeError(
+        "This subscription plan is no longer available for purchase.",
+        STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED,
+        400,
+      );
+    }
+
     // Ensure plan has Stripe price ID
     if (!plan.stripePriceId) {
       throw new StripeError(`This subscription plan (${plan.name}) is not yet configured with Stripe. Please contact support or link the plan to a Stripe product.`, STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED, 400);

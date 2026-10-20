@@ -366,7 +366,8 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
   const currentPlan = user?.subscription;
   const hasActiveSubscription = user?.subscriptionStatus === "ACTIVE";
   const allPlans = (plans as SubscriptionPlan[] | undefined) || [];
-  const otherPlans = allPlans.filter((p) => p.id !== currentPlan?.id);
+  const retailPlan = allPlans.find((plan) => plan.name === "2 Months Access");
+  const availablePlans = retailPlan ? [retailPlan] : [];
 
   const formatPrice = (price: number) => {
     if (price === 0) return "FREE";
@@ -462,11 +463,11 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
       )}
 
       {/* Available Plans */}
-      {!hasActiveSubscription && allPlans.length > 0 && (
+      {!hasActiveSubscription && availablePlans.length > 0 && (
         <>
           <h2 className="text-lg lg:text-xl font-semibold mb-4">Available Plans</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
-            {allPlans.map((plan) => (
+            {availablePlans.map((plan) => (
               <div key={plan.id} className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6">
                 <span className="inline-block bg-yellow-400 text-black text-xs font-semibold px-2 py-1 rounded mb-4">{getBillingLabel(plan.billingPeriod)}</span>
                 <h3 className="font-semibold mb-2">{plan.name}</h3>
@@ -496,7 +497,7 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
       )}
 
       {/* No subscription message */}
-      {!hasActiveSubscription && allPlans.length === 0 && (
+      {!hasActiveSubscription && availablePlans.length === 0 && (
         <div className="text-center py-12">
           <p className="text-gray-500">No subscription plans available at the moment.</p>
         </div>

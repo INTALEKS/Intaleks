@@ -7,6 +7,7 @@
 import { PrismaClient, UserRole, BillingPeriod } from "@prisma/client";
 import bcrypt from "bcrypt";
 import Stripe from "stripe";
+import { StripeSyncService } from "../services/stripe-sync";
 
 const prisma = new PrismaClient();
 
@@ -83,7 +84,7 @@ async function startupSeed() {
       console.log(`✅ Valuation multiples already seeded (${multiplesCount} records) - skipping`);
     }
 
-    // Migrate the legacy one-off plan, then seed the three one-time access plans.
+    // Migrate the legacy one-off plan and keep only the $495 retail plan active.
     let plan = await prisma.subscriptionPlan.findUnique({ where: { name: "2 Months Access" } });
 
     const planFeatures = ["Worldwide Industry Multiples (US, Canada, UK, Australia, China, Indonesia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking", "Unlimited Valuations", "Export to PDF"];
@@ -131,16 +132,27 @@ async function startupSeed() {
     // Keep Stripe aligned with the plan details; this is safe to run at startup.
     await ensureStripePlan(plan);
 
-    for (const accessPlan of [
-      { name: "6 Months Access", price: 69500 },
-      { name: "12 Months Access", price: 94800 },
-    ]) {
-      const existing = await prisma.subscriptionPlan.upsert({
-        where: { name: accessPlan.name },
-        create: { ...accessPlan, billingPeriod: BillingPeriod.ONE_TIME, features: planFeatures, active: true },
-        update: { price: accessPlan.price, billingPeriod: BillingPeriod.ONE_TIME, features: planFeatures, active: true },
-      });
-      await ensureStripePlan(existing);
+    for (const planName of ["6 Months Access", "12 Months Access"]) {
+      const retiredPlan = await prisma.subscriptionPlan.findUnique({ where: { name: planName } });
+      if (!retiredPlan) continue;
+
+      if (retiredPlan.active) {
+        await prisma.subscriptionPlan.update({
+          where: { id: retiredPlan.id },
+          data: { active: false },
+        });
+
+        if (process.env.STRIPE_SECRET_KEY && retiredPlan.stripeProductId) {
+          try {
+            await StripeSyncService.archiveProduct(retiredPlan.stripeProductId, retiredPlan.stripePriceId ?? undefined);
+          } catch (error) {
+            // The inactive DB flag and checkout guard still prevent new purchases.
+            console.error(`⚠️  Failed to archive retired Stripe plan "${planName}":`, error);
+          }
+        }
+      }
+
+      console.log(`✅ Retired subscription plan: ${planName}`);
     }
 
     // Check and seed super admin user
