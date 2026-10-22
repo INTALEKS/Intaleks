@@ -261,7 +261,7 @@ function Hero() {
                   Start My Business Valuation
                 </Link>
                 <p className="mt-4 text-sm font-medium leading-relaxed text-[#D8E5F5] sm:text-base">
-                  From $495 AUD <span aria-hidden="true">·</span> one payment <span aria-hidden="true">·</span> includes 2 months access
+                  $495 AUD once <span aria-hidden="true">·</span> one valuation, with corrections included
                 </p>
               </div>
             </div>
@@ -599,16 +599,11 @@ function WhySection() {
           </div>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 overflow-hidden rounded-[14px] border border-[#DDE5F0] bg-white md:grid-cols-2">
-          <div className="border-b border-[#DDE5F0] p-6 md:border-b-0 md:border-r">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#4267E9]">One-off valuation</p>
-            <p className="mt-1 text-[22px] font-extrabold tracking-[-0.025em]">From $495 once</p>
-            <p className="mt-2 text-[13px] leading-relaxed text-[#5A6472]">Get your valuation and keep access for 2 months.</p>
-          </div>
+        <div className="mt-10 grid grid-cols-1 overflow-hidden rounded-[14px] border border-[#DDE5F0] bg-white">
           <div className="p-6">
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#4267E9]">12 months</p>
-            <p className="mt-1 text-[22px] font-extrabold tracking-[-0.025em]">$79 per month</p>
-            <p className="mt-2 text-[13px] leading-relaxed text-[#5A6472]">12-month access, paid once upfront ($948 total). No automatic renewal.</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#4267E9]">One-off valuation</p>
+            <p className="mt-1 text-[22px] font-extrabold tracking-[-0.025em]">$495 once</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-[#5A6472]">One complete business valuation. Corrections to that valuation are included. Purchase again for each additional valuation.</p>
           </div>
         </div>
       </div>
@@ -753,7 +748,9 @@ const pricingFeatures = [
   "Australian & international industry benchmarks",
   "Multiple valuation methodologies",
   "Business assessment framework",
-  "Adjust your figures and rerun as often as you like",
+  "One complete business valuation",
+  "Corrections to that valuation are included",
+  "Each additional valuation requires another purchase",
   "No hidden costs, no engagement fees",
 ];
 
@@ -821,7 +818,7 @@ function PricingSection() {
           <div className="bg-[#0d1117] text-white px-7 py-[34px]">
             <h3 className="text-[19px] font-semibold text-[#C4CEDC]">Professional Business Valuation</h3>
             <div className="text-[clamp(48px,7vw,64px)] font-extrabold tracking-[-0.04em] leading-[1.05] mt-1.5 mb-0.5">$495</div>
-            <p className="text-[15px] text-[#aab4c2]">AUD · one payment · includes 2 months access</p>
+            <p className="text-[15px] text-[#aab4c2]">AUD · one-off payment · one valuation</p>
           </div>
           <div className="bg-white px-7 py-[30px] text-left">
             <ul className="list-none p-0 mb-6">

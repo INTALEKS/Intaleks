@@ -169,7 +169,7 @@ export const ForumApi = {
    * Add a reply to a forum post
    */
   async addReply(postId: string, message: string): Promise<ForumReply> {
-    const response = await fetch(`${API_BASE}/api/admin/forum/${postId}/replies`, {
+    const response = await fetch(`${API_BASE}/api/forum/${postId}/replies`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

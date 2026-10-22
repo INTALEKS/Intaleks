@@ -47,6 +47,8 @@ const financialMetrics = [
 // Type for persisted calculator state
 interface CalculatorState {
   companyName: string;
+  acn?: string;
+  abn?: string;
   startedYear: string;
   employees: string;
   stage: string;
@@ -198,6 +200,8 @@ export default function CalculatorPage() {
   // STEP 1: Company Information State
   // ============================================
   const [companyName, setCompanyName] = useState(initialState?.companyName || "");
+  const [acn, setAcn] = useState(initialState?.acn || "");
+  const [abn, setAbn] = useState(initialState?.abn || "");
   const [startedYear, setStartedYear] = useState(initialState?.startedYear || "");
   const [employees, setEmployees] = useState(initialState?.employees || "");
   const [stage, setStage] = useState(initialState?.stage || "");
@@ -759,6 +763,10 @@ export default function CalculatorPage() {
       // Prepare data for PDF generation with extended fields (Requirements: 6.1)
       const reportData: ValuationReportData = {
         companyName: companyName || "Company Name",
+        acn: acn || undefined,
+        abn: abn || undefined,
+        valuationDocumentId: typeof window !== "undefined" ? window.localStorage.getItem("intaleks_retail_valuation_document_id") || undefined : undefined,
+        calculatorState: { companyName, acn, abn, startedYear, employees, stage, country, industry, valuationReason, customMultiple, questionnaireScores, calculatedMultiple, multipleCategory, totalScore, useQuestionnaireMultiple, selectedYears, financialData, addbacks, assets, liabilities, ...(() => { try { return { companyLogoData: JSON.parse(localStorage.getItem("companyLogo") || "null")?.base64 }; } catch { return {}; } })() },
         country,
         industry,
         customMultiple,
@@ -839,7 +847,7 @@ export default function CalculatorPage() {
       queryClient.invalidateQueries({ queryKey: ["valuations"] });
 
       // Clear saved data after successful download
-      clearSavedData();
+      // Keep the calculator draft so a customer can correct the same valuation.
 
       toast.success("Valuation report downloaded successfully!");
     } catch (error) {
@@ -1029,6 +1037,8 @@ export default function CalculatorPage() {
 
       const stateToSave: CalculatorState = {
         companyName,
+        acn,
+        abn,
         startedYear,
         employees,
         stage,
@@ -1061,7 +1071,7 @@ export default function CalculatorPage() {
     };
 
     saveState();
-  }, [isInitialMount, companyName, startedYear, employees, stage, country, industry, customMultiple, questionnaireScores, calculatedMultiple, multipleCategory, totalScore, useQuestionnaireMultiple, selectedYears, financialData, addbacks, assets, liabilities, companyLogo]);
+  }, [isInitialMount, companyName, acn, abn, startedYear, employees, stage, country, industry, customMultiple, questionnaireScores, calculatedMultiple, multipleCategory, totalScore, useQuestionnaireMultiple, selectedYears, financialData, addbacks, assets, liabilities, companyLogo]);
 
   // Restore logo and check terms on mount
   useEffect(() => {
@@ -1176,6 +1186,8 @@ export default function CalculatorPage() {
               const parsed: CalculatorState = JSON.parse(savedState);
 
               setCompanyName(parsed.companyName || "");
+              setAcn(parsed.acn || "");
+              setAbn(parsed.abn || "");
               setStartedYear(parsed.startedYear || "");
               setEmployees(parsed.employees || "");
               setStage(parsed.stage || "startup");
@@ -1300,7 +1312,7 @@ export default function CalculatorPage() {
       <main className="max-w-5xl mx-auto px-4 pb-16 space-y-4">
         {/* Only the active step is shown. Continue controls the progression. */}
         {openSections[1] && <AccordionSection title="Company Questionaire" stepNumber={1} isOpen>
-          <CompanyQuestionnaire companyName={companyName} onCompanyNameChange={setCompanyName} startedYear={startedYear} onStartedYearChange={setStartedYear} employees={employees} onEmployeesChange={setEmployees} stage={stage} onStageChange={setStage} valuationReason={valuationReason} onValuationReasonChange={setValuationReason} logo={companyLogo} onLogoChange={setCompanyLogo} />
+          <CompanyQuestionnaire companyName={companyName} onCompanyNameChange={setCompanyName} acn={acn} onAcnChange={setAcn} abn={abn} onAbnChange={setAbn} startedYear={startedYear} onStartedYearChange={setStartedYear} employees={employees} onEmployeesChange={setEmployees} stage={stage} onStageChange={setStage} valuationReason={valuationReason} onValuationReasonChange={setValuationReason} logo={companyLogo} onLogoChange={setCompanyLogo} />
           <div className="mt-6">
             <CountryIndustrySelector country={country} industry={industry} customMultiple={customMultiple} onCountryChange={setCountry} onIndustryChange={setIndustry} onCustomMultipleChange={setCustomMultiple} />
             <div className="bg-blue-50 p-4 rounded-lg mt-4">
@@ -1620,8 +1632,25 @@ export default function CalculatorPage() {
             <div className="mb-4">
               <h2 id="previous-valuations-title" className="text-lg font-semibold text-gray-900">My previous valuations</h2>
               <p className="mt-1 text-sm text-gray-600">View or download reports you have created before.</p>
+              {user?.retailValuationEnabled && Number((user as { retailValuationCredits?: number }).retailValuationCredits || 0) > 0 && (
+                <Button className="mt-3" variant="outline" onClick={() => {
+                  localStorage.removeItem("intaleks_retail_valuation_document_id");
+                  localStorage.removeItem(CALCULATOR_STORAGE_KEY);
+                  localStorage.removeItem(CALCULATOR_TIMESTAMP_KEY);
+                  window.location.reload();
+                }}>Start another purchased valuation</Button>
+              )}
             </div>
             <ValuationDocumentList
+              retailValuationEnabled={user?.retailValuationEnabled}
+              retailValuationDocumentId={user?.retailValuationDocumentId}
+              onEditDocument={(doc) => {
+                if (!doc.inputData || typeof doc.inputData !== "object") return;
+                localStorage.setItem(CALCULATOR_STORAGE_KEY, JSON.stringify(doc.inputData));
+                localStorage.setItem(CALCULATOR_TIMESTAMP_KEY, Date.now().toString());
+                localStorage.setItem("intaleks_retail_valuation_document_id", doc.id);
+                window.location.reload();
+              }}
               onViewDocument={(doc) => {
                 if (doc.fileUrl) {
                   window.open(doc.fileUrl, "_blank", "noopener,noreferrer");

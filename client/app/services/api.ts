@@ -28,6 +28,9 @@ export interface User {
   currentPeriodEnd?: string | null;
   couponAccess?: boolean;
   couponUsed?: boolean;
+  retailValuationEnabled?: boolean;
+  retailValuationCredits?: number;
+  retailValuationDocumentId?: string | null;
   termsAccepted?: boolean;
   termsAcceptedAt?: string | null;
   subscription?: {

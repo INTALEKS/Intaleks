@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { ForumService, NotFoundError, ValidationError } from "../services/forum";
 import { createForumPostSchema, createForumReplySchema, forumFiltersSchema } from "../validation/forumValidation";
+import { isAdminOrHigher } from "../utils/roleHierarchy";
 
 /**
  * Forum Controller
@@ -150,6 +151,7 @@ export class ForumController {
       const post = await ForumService.create({
         ...value,
         authorId: req.user.id,
+        isAnnouncement: isAdminOrHigher(req.user.role) ? value.isAnnouncement : false,
       });
 
       res.status(201).json({

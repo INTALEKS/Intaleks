@@ -29,6 +29,9 @@ model User {
   subscriptionStatus   SubscriptionStatus @default(NONE) @map("subscription_status")
   currentPeriodEnd     DateTime?          @map("current_period_end")
   cancelAtPeriodEnd    Boolean            @default(false) @map("cancel_at_period_end")
+  retailValuationEnabled Boolean          @default(false) @map("retail_valuation_enabled")
+  retailValuationCredits Int              @default(0) @map("retail_valuation_credits")
+  retailValuationDocumentId String?        @map("retail_valuation_document_id")
 
   // Terms and conditions acceptance
   termsAccepted        Boolean            @default(false) @map("terms_accepted")
@@ -179,6 +182,7 @@ model SubscriptionPlan {
   billingPeriod BillingPeriod @default(MONTHLY) @map("billing_period")
   features      String[]
   active        Boolean       @default(true)
+  valuationLimit Int?         @map("valuation_limit")
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
@@ -444,6 +448,7 @@ model ValuationDocument {
   valuation       Float    // Final valuation amount
   fileUrl         String?  @map("file_url")
   fileSize        Int?     @map("file_size") // Size in bytes
+  inputData       Json?    @map("input_data")
   valuationReason String?  @map("valuation_reason")
   partnerFirmId   String?  @map("partner_firm_id")
   createdAt       DateTime @default(now()) @map("created_at")

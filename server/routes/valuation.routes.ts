@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticateToken, requireEmailVerified, requireActiveSubscription, requirePaidSubscription } from "../middleware/authMiddleware";
-import { createValuationDocument, getUserValuationDocuments, getValuationDocumentById, deleteValuationDocument, generatePDF } from "../controllers/valuation.controller";
+import { getUserValuationDocuments, getValuationDocumentById, deleteValuationDocument, generatePDF } from "../controllers/valuation.controller";
 import { rateLimitPDF } from "../middleware/rateLimiter";
 
 const router = Router();
@@ -11,9 +11,6 @@ router.use(requireEmailVerified);
 
 // Generate PDF report - requires active subscription and rate limited
 router.post("/generate-pdf", requireActiveSubscription, rateLimitPDF, generatePDF);
-
-// Create a new valuation document - requires active subscription and rate limited
-router.post("/", requireActiveSubscription, rateLimitPDF, createValuationDocument);
 
 // Get all valuation documents for the current user
 router.get("/", requirePaidSubscription, getUserValuationDocuments);

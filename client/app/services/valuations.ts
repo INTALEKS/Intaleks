@@ -13,6 +13,7 @@ export interface ValuationDocument {
   fileUrl: string | null;
   fileSize: number | null;
   createdAt: string;
+  inputData?: Record<string, unknown> | null;
 }
 
 /**

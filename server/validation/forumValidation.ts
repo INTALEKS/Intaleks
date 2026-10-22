@@ -10,7 +10,7 @@ const attachmentSchema = Joi.object({
     .required()
     .max(50 * 1024 * 1024), // Max 50MB
   type: Joi.string().required(),
-  url: Joi.string().uri().required(),
+  url: Joi.string().uri({ scheme: ["http", "https"] }).required(),
 });
 
 /**
@@ -27,10 +27,11 @@ export const createForumPostSchema = Joi.object({
     "string.max": "Title must not exceed 500 characters",
     "any.required": "Title is required",
   }),
-  content: Joi.string().required().min(1).messages({
+  content: Joi.string().required().min(1).max(100000).messages({
     "string.empty": "Content is required",
     "string.min": "Content must be at least 1 character",
     "any.required": "Content is required",
+    "string.max": "Post content must not exceed 100,000 characters",
   }),
   attachments: Joi.array().items(attachmentSchema).max(10).default([]).messages({
     "array.max": "Maximum 10 attachments allowed",

@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { ForumController } from "../controllers/forum.controller";
 import { authenticateToken, requireEmailVerified } from "../middleware/authMiddleware";
-import { UserRole, SubscriptionStatus } from "@prisma/client";
+import { SubscriptionStatus } from "@prisma/client";
 import { isAdminOrHigher } from "../utils/roleHierarchy";
 
 const router = Router();
@@ -53,13 +53,13 @@ const requireSubscriptionOrAdmin = (req: Request, res: Response, next: NextFunct
   }
 
   // Admins can always access
-  if (req.user.role === UserRole.ADMIN) {
+  if (isAdminOrHigher(req.user.role)) {
     next();
     return;
   }
 
   // Check for active subscription
-  if (req.user.subscriptionStatus !== SubscriptionStatus.ACTIVE) {
+  if (req.user.subscriptionStatus !== SubscriptionStatus.ACTIVE || (req.user.currentPeriodEnd && req.user.currentPeriodEnd <= new Date())) {
     res.status(403).json({
       success: false,
       error: {

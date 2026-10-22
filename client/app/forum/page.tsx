@@ -18,6 +18,7 @@ import { useDebounce } from "@/app/hooks/useDebounce";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RichTextEditor, type Attachment } from "@/components/general-ui/admin-components/forum-components/RichTextEditor";
+import { ForumPostContent } from "@/components/general-ui/admin-components/forum-components/ForumPostContent";
 
 // UI Types
 interface Author {
@@ -117,7 +118,7 @@ function transformApiPostToUIPost(apiPost: APIForumPost): Post {
     content: apiPost.content,
     author: {
       name: apiPost.author.name || "Anonymous",
-      email: apiPost.author.email,
+      email: "",
       avatar: apiPost.author.avatar || "/founder.png",
     },
     createdAt: createdAtStr,
@@ -159,7 +160,7 @@ function transformApiReplyToUIReply(apiReply: APIForumReply): Reply {
     id: apiReply.id,
     author: {
       name: apiReply.author?.name || "User",
-      email: apiReply.author?.email || "",
+      email: "",
       avatar: "/founder.png",
     },
     content: apiReply.message,
@@ -710,7 +711,7 @@ function PostCard({ post, onClick }: { post: Post; onClick: () => void }) {
           <p className="text-gray-600 text-sm mb-2 line-clamp-2">{stripHtmlTags(post.content)}</p>
           <div className="flex items-center justify-between">
             <div className="text-xs text-gray-500">
-              {post.author.name} • {post.author.email}
+              {post.author.name}
             </div>
             <div className="flex items-center gap-4">
               <div className="flex -space-x-2">
@@ -805,7 +806,6 @@ function PostDetail({ post, onBack, onToggleBookmark, onTogglePostLike, onToggle
               {post.isAdmin && <span className="bg-green-500 text-white text-xs px-2 py-0.5 rounded">Admin</span>}
               <span className="text-gray-500 text-sm">• {post.createdAt}</span>
             </div>
-            <p className="text-gray-500 text-sm">{post.author.email}</p>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={onToggleBookmark} className={cn("p-2 rounded-lg transition-colors", post.isBookmarked ? "text-blue-500 bg-blue-50" : "text-gray-400 hover:text-gray-600 hover:bg-gray-200")}>
@@ -815,7 +815,7 @@ function PostDetail({ post, onBack, onToggleBookmark, onTogglePostLike, onToggle
         </div>
 
         <h2 className="text-xl font-bold mb-4">{post.title}</h2>
-        <div className="rich-text-content text-gray-700" dangerouslySetInnerHTML={{ __html: post.content }} />
+        <ForumPostContent content={post.content} className="text-gray-700" />
 
         {/* Post Reactions */}
         <div className="flex items-center gap-4 mt-4 pt-4 border-t border-gray-200">

@@ -118,6 +118,10 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
       calculatedMultiple?: number;
       country?: string;
       industry?: string;
+      acn?: string;
+      abn?: string;
+      valuationDocumentId?: string;
+      calculatorState?: Record<string, unknown>;
     };
 
     // Debug logging
@@ -132,6 +136,30 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
 
     if (!data.valuationMethod) {
       return res.status(400).json({ error: "Missing required field: valuationMethod" });
+    }
+
+    if (data.acn && !/^\d{9}$/.test(data.acn)) {
+      return res.status(400).json({ error: "ACN must contain exactly 9 digits" });
+    }
+    if (data.abn && !/^\d{11}$/.test(data.abn)) {
+      return res.status(400).json({ error: "ABN must contain exactly 11 digits" });
+    }
+
+    const entitlement = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { retailValuationEnabled: true, retailValuationCredits: true, retailValuationDocumentId: true },
+    });
+    const correctionDocumentId = typeof data.valuationDocumentId === "string" ? data.valuationDocumentId : null;
+    if (entitlement?.retailValuationEnabled) {
+      if (correctionDocumentId) {
+        const canCorrect = correctionDocumentId === entitlement.retailValuationDocumentId &&
+          Boolean(await prisma.valuationDocument.findFirst({ where: { id: correctionDocumentId, userId }, select: { id: true } }));
+        if (!canCorrect) {
+          return res.status(403).json({ error: "This report is not eligible for correction. Start a new valuation after purchasing access." });
+        }
+      } else if (entitlement.retailValuationCredits < 1) {
+        return res.status(403).json({ error: "This purchase includes one valuation. Purchase another valuation to create a new report; corrections to your existing report are included." });
+      }
     }
 
     // The server owns report identity metadata so saved browser state cannot
@@ -313,23 +341,48 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
       return next(partnerError);
     }
 
-    // Save document record to database (with or without R2 URL)
+    // Save new reports against one purchased valuation credit. Corrections update
+    // the same owned document and never consume another credit.
     try {
-      await ValuationService.createDocument({
-        userId,
+      const documentData = {
         companyName: data.companyName || "Unnamed Company",
         country: data.country || "Unknown",
         industry: data.industry || "Unknown",
         method: "ravda",
-        valuation: finalValuation, // Use server-calculated value
-        fileUrl: fileUrl, // Will be undefined if R2 upload failed
-        fileSize: fileSize,
-        valuationReason: data.valuationReason,
-        partnerFirmId,
-      });
+        valuation: finalValuation,
+        fileUrl: fileUrl || null,
+        fileSize,
+        valuationReason: data.valuationReason || null,
+          inputData: JSON.parse(JSON.stringify(data.calculatorState || data)) as object,
+      };
+      let documentId: string;
+      if (correctionDocumentId) {
+        const existing = await prisma.valuationDocument.findFirst({ where: { id: correctionDocumentId, userId }, select: { id: true } });
+        if (!existing) return res.status(404).json({ error: "Valuation report not found" });
+        const updated = await prisma.valuationDocument.update({ where: { id: correctionDocumentId }, data: documentData });
+        documentId = updated.id;
+      } else if (entitlement?.retailValuationEnabled) {
+        documentId = await prisma.$transaction(async (tx) => {
+          const consumed = await tx.user.updateMany({
+            where: { id: userId, retailValuationEnabled: true, retailValuationCredits: { gt: 0 } },
+            data: { retailValuationCredits: { decrement: 1 } },
+          });
+          if (consumed.count !== 1) throw new Error("VALUATION_CREDIT_REQUIRED");
+          const created = await tx.valuationDocument.create({ data: { userId, ...documentData, partnerFirmId } });
+          await tx.user.update({ where: { id: userId }, data: { retailValuationDocumentId: created.id } });
+          return created.id;
+        });
+      } else {
+        const created = await prisma.valuationDocument.create({ data: { userId, ...documentData, partnerFirmId } });
+        documentId = created.id;
+      }
+      res.setHeader("X-Valuation-Document-Id", documentId);
     } catch (dbError) {
       console.error("Failed to save valuation document to database:", dbError);
-      // Continue - user can still download the PDF
+      if (dbError instanceof Error && dbError.message === "VALUATION_CREDIT_REQUIRED") {
+        return res.status(403).json({ error: "This purchase includes one valuation. Purchase another valuation to create a new report; corrections to your existing report are included." });
+      }
+      return res.status(500).json({ error: "The valuation report could not be saved. Please retry." });
     }
 
     // Coupon users get exactly one download — mark as used after successful PDF generation

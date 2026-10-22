@@ -10,9 +10,12 @@ import { formatFileSize, formatDocumentDate, type ValuationDocument } from "@/ap
 interface ValuationDocumentListProps {
   onViewDocument?: (doc: ValuationDocument) => void;
   onDownloadDocument?: (doc: ValuationDocument) => void;
+  onEditDocument?: (doc: ValuationDocument) => void;
+  retailValuationEnabled?: boolean;
+  retailValuationDocumentId?: string | null;
 }
 
-export function ValuationDocumentList({ onViewDocument, onDownloadDocument }: ValuationDocumentListProps) {
+export function ValuationDocumentList({ onViewDocument, onDownloadDocument, onEditDocument, retailValuationEnabled, retailValuationDocumentId }: ValuationDocumentListProps) {
   const pageSize = 10;
   const { data: documents, isLoading, error } = useValuationDocuments();
   const deleteDocument = useDeleteValuationDocument();
@@ -85,6 +88,7 @@ export function ValuationDocumentList({ onViewDocument, onDownloadDocument }: Va
             </div>
 
             <div className="flex items-center gap-2 ml-4">
+              {doc.inputData && onEditDocument && (!retailValuationEnabled || doc.id === retailValuationDocumentId) && <Button variant="outline" size="sm" onClick={() => onEditDocument(doc)}>Correct valuation</Button>}
               <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(doc)} disabled={deletingId === doc.id} className="text-gray-400 hover:text-red-500">
                 {deletingId === doc.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
               </Button>

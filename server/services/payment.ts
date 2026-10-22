@@ -249,12 +249,12 @@ export class PaymentService {
       customer: customerId,
       mode,
       line_items: [{ price: plan.stripePriceId, quantity: 1 }],
-      metadata: { userId, planId },
+      metadata: { userId, planId, ...(plan.valuationLimit === 1 ? { retailValuationLimit: "1" } : {}) },
       success_url: finalSuccessUrl,
       cancel_url: finalCancelUrl,
       ...(applyDiscounts && applyDiscounts.length > 0 ? { discounts: applyDiscounts } : { allow_promotion_codes: allowPromos }),
       ...(mode === "subscription" && { subscription_data: { metadata: { userId, planId } } }),
-      ...(mode === "payment" && { payment_intent_data: { metadata: { userId, planId } } }),
+      ...(mode === "payment" && { payment_intent_data: { metadata: { userId, planId, ...(plan.valuationLimit === 1 ? { retailValuationLimit: "1" } : {}) } } }),
     });
 
     try {

@@ -15,6 +15,7 @@ export async function seedSubscriptionPlan(): Promise<void> {
     const planData = {
       price: 49500, // AUD $495.00 in cents
       billingPeriod: BillingPeriod.ONE_TIME,
+      valuationLimit: 1,
       features: ["Worldwide Industry Multiples (US, Canada, UK, Australia, China, Indonesia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking"],
       active: true,
     };

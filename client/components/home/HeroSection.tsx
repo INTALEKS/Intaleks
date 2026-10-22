@@ -41,7 +41,7 @@ export function HeroSection({ title, subtitle, ctaText, ctaHref, secondaryCtaTex
         )}
       </div>
       <p className="text-sm text-gray-500 font-medium">
-        <span className="font-bold text-gray-900">$495 AUD</span>, one payment — includes 2 months access. Extended plans available.
+        <span className="font-bold text-gray-900">$495 AUD once</span> for one business valuation. Corrections to that valuation are included; purchase again for another valuation.
       </p>
     </section>
   );

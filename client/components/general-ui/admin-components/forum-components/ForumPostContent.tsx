@@ -2,6 +2,8 @@
 
 import { FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { sanitizeForumHtml } from "@/lib/sanitize-forum-html";
 
 interface ForumAttachment {
   id: string;
@@ -28,10 +30,18 @@ function formatFileSize(bytes: number): string {
  * Safely renders HTML content and displays attachments in a Gmail-style section.
  */
 export function ForumPostContent({ content, attachments = [], className }: ForumPostContentProps) {
+  const [safeContent, setSafeContent] = useState("");
+  useEffect(() => setSafeContent(sanitizeForumHtml(content)), [content]);
+  const safeAttachmentUrl = (value: string) => {
+    try {
+      const url = new URL(value);
+      return ["http:", "https:"].includes(url.protocol) ? url.href : null;
+    } catch { return null; }
+  };
   return (
     <div className={cn("space-y-4", className)}>
       {/* Rich text content */}
-      <div className="rich-text-content prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: content }} />
+      <div className="rich-text-content prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: safeContent }} />
 
       {/* Attachments section */}
       {attachments.length > 0 && (
@@ -39,7 +49,7 @@ export function ForumPostContent({ content, attachments = [], className }: Forum
           <h4 className="text-sm font-medium text-muted-foreground mb-3">Attachments ({attachments.length})</h4>
           <div className="flex flex-wrap gap-2">
             {attachments.map((attachment) => (
-              <a key={attachment.id} href={attachment.url} download={attachment.name} className="flex items-center gap-2 px-3 py-2 bg-muted/50 border rounded-lg text-sm hover:bg-muted transition-colors group">
+              <a key={attachment.id} href={safeAttachmentUrl(attachment.url) || undefined} download={attachment.name} aria-disabled={!safeAttachmentUrl(attachment.url)} className="flex items-center gap-2 px-3 py-2 bg-muted/50 border rounded-lg text-sm hover:bg-muted transition-colors group">
                 <FileText className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0" />
                 <div className="flex flex-col min-w-0">
                   <span className="font-medium truncate max-w-[200px]" title={attachment.name}>

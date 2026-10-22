@@ -12,6 +12,10 @@ export interface Addback {
 export interface ValuationReportData {
   // Company Info
   companyName?: string;
+  acn?: string;
+  abn?: string;
+  valuationDocumentId?: string;
+  calculatorState?: Record<string, unknown>;
   country: string;
   industry: string;
   valuationReason?: string;
@@ -98,7 +102,7 @@ export interface ValuationReportData {
   };
 }
 
-export async function generateValuationPDF(data: ValuationReportData): Promise<Blob> {
+export async function generateValuationPDF(data: ValuationReportData): Promise<{ blob: Blob; documentId: string | null }> {
   const response = await fetch(`${API_BASE_URL}/valuation/generate-pdf`, {
     method: "POST",
     headers: {
@@ -122,12 +126,12 @@ export async function generateValuationPDF(data: ValuationReportData): Promise<B
     throw new Error(message);
   }
 
-  return response.blob();
+  return { blob: await response.blob(), documentId: response.headers.get("X-Valuation-Document-Id") };
 }
 
-export async function downloadValuationPDF(data: ValuationReportData): Promise<void> {
+export async function downloadValuationPDF(data: ValuationReportData): Promise<string | null> {
   try {
-    const blob = await generateValuationPDF(data);
+    const { blob, documentId } = await generateValuationPDF(data);
 
     // Create a professional filename with company name and Intaleks branding
     const companyName = data.companyName || "Company";
@@ -140,10 +144,12 @@ export async function downloadValuationPDF(data: ValuationReportData): Promise<v
     link.download = filename;
     document.body.appendChild(link);
     link.click();
+    if (documentId) window.localStorage.setItem("intaleks_retail_valuation_document_id", documentId);
 
     // Cleanup
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
+    return documentId;
   } catch (error) {
     console.error("Download failed:", error);
     throw error;

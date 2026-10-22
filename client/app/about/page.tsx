@@ -224,7 +224,7 @@ export default function AboutPage() {
                 View Sample Report
               </a>
             </div>
-            <p className="mt-5 text-sm text-[#5A6472]">$495 AUD, one payment — includes 2 months access.</p>
+            <p className="mt-5 text-sm text-[#5A6472]">$495 AUD once for one business valuation. Corrections to that valuation are included.</p>
           </div>
         </section>
       </main>

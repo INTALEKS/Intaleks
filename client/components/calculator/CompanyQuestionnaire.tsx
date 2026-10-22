@@ -11,6 +11,10 @@ import { toast } from "sonner";
 interface CompanyQuestionnaireProps {
   companyName: string;
   onCompanyNameChange: (value: string) => void;
+  acn: string;
+  onAcnChange: (value: string) => void;
+  abn: string;
+  onAbnChange: (value: string) => void;
   startedYear: string;
   onStartedYearChange: (value: string) => void;
   employees: string;
@@ -40,7 +44,7 @@ const valuationReasons = [
   { value: "other", label: "Other" },
 ];
 
-export function CompanyQuestionnaire({ companyName, onCompanyNameChange, startedYear, onStartedYearChange, employees, onEmployeesChange, stage, onStageChange, valuationReason, onValuationReasonChange, onLogoChange }: CompanyQuestionnaireProps) {
+export function CompanyQuestionnaire({ companyName, onCompanyNameChange, acn, onAcnChange, abn, onAbnChange, startedYear, onStartedYearChange, employees, onEmployeesChange, stage, onStageChange, valuationReason, onValuationReasonChange, onLogoChange }: CompanyQuestionnaireProps) {
   // Initialize logoPreview with saved data from localStorage
   const [logoPreview, setLogoPreview] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
@@ -117,6 +121,17 @@ export function CompanyQuestionnaire({ companyName, onCompanyNameChange, started
         <div>
           <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Company Name (optional)</label>
           <Input type="text" value={companyName} onChange={(e) => onCompanyNameChange(e.target.value)} placeholder="Enter your company name" className="w-full bg-gray-100 border-gray-200 text-sm" />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="company-acn" className="mb-1 block text-xs font-medium text-gray-700 sm:text-sm">Australian Company Number (ACN)</label>
+            <Input id="company-acn" type="text" inputMode="numeric" autoComplete="off" maxLength={9} value={acn} onChange={(e) => onAcnChange(e.target.value.replace(/\D/g, "").slice(0, 9))} placeholder="Enter 9-digit ACN" className="w-full bg-gray-100 border-gray-200 text-sm" />
+          </div>
+          <div>
+            <label htmlFor="company-abn" className="mb-1 block text-xs font-medium text-gray-700 sm:text-sm">Australian Business Number (ABN)</label>
+            <Input id="company-abn" type="text" inputMode="numeric" autoComplete="off" maxLength={11} value={abn} onChange={(e) => onAbnChange(e.target.value.replace(/\D/g, "").slice(0, 11))} placeholder="Enter 11-digit ABN" className="w-full bg-gray-100 border-gray-200 text-sm" />
+          </div>
         </div>
 
         <div>

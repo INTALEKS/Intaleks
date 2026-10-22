@@ -29,6 +29,8 @@ interface UserData {
   role: string;
   avatar?: string | null;
   subscriptionStatus?: string;
+  retailValuationEnabled?: boolean;
+  retailValuationCredits?: number;
   subscription?: {
     id: string;
     name: string;
@@ -443,12 +445,12 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
           <h2 className="text-xl font-semibold mb-4">Current Plan</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8 max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <span className="inline-block bg-yellow-400 text-black text-xs font-semibold px-2 py-1 rounded">{currentPlan?.name?.toUpperCase() || "VISITOR"}</span>
+              <span className="inline-block bg-yellow-400 text-black text-xs font-semibold px-2 py-1 rounded">{user?.retailValuationEnabled ? "ONE BUSINESS VALUATION" : currentPlan?.name?.toUpperCase() || "VISITOR"}</span>
               <span className="text-xs text-green-600 font-medium">Active</span>
             </div>
             <div className="text-4xl font-bold mb-4">${formatPrice(currentPlan?.price || 0)}</div>
             <ul className="space-y-2 mb-6">
-              {(currentPlan?.features || ["Basic charts visualization", "Preview company visualization"]).map((feature: string, i: number) => (
+              {(user?.retailValuationEnabled ? ["One complete business valuation", "Corrections to that valuation are included", "Purchase again for each additional valuation"] : currentPlan?.features || ["Basic charts visualization", "Preview company visualization"]).map((feature: string, i: number) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
                   <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                   <span>{feature}</span>
@@ -463,17 +465,17 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
       )}
 
       {/* Available Plans */}
-      {!hasActiveSubscription && availablePlans.length > 0 && (
+      {(!hasActiveSubscription || user?.retailValuationEnabled) && availablePlans.length > 0 && (
         <>
-          <h2 className="text-lg lg:text-xl font-semibold mb-4">Available Plans</h2>
+          <h2 className="text-lg lg:text-xl font-semibold mb-4">{hasActiveSubscription ? "Purchase another valuation" : "Available Plans"}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-6">
             {availablePlans.map((plan) => (
               <div key={plan.id} className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6">
                 <span className="inline-block bg-yellow-400 text-black text-xs font-semibold px-2 py-1 rounded mb-4">{getBillingLabel(plan.billingPeriod)}</span>
-                <h3 className="font-semibold mb-2">{plan.name}</h3>
+                <h3 className="font-semibold mb-2">One business valuation</h3>
                 <div className="text-3xl lg:text-4xl font-bold mb-4">${formatPrice(plan.price)}</div>
                 <ul className="space-y-2 mb-6">
-                  {(plan.features || []).map((feature: string, i: number) => (
+                  {["One complete business valuation", "Corrections to that valuation are included", "Purchase again for each additional valuation"].map((feature: string, i: number) => (
                     <li key={i} className="flex items-start gap-2 text-sm">
                       <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                       <span>{feature}</span>

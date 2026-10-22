@@ -241,6 +241,16 @@ export class WebhookService {
     }
 
     try {
+      const paymentIntentId = session.payment_intent as string | null;
+      const idempotencyPaymentId = paymentIntentId || session.id;
+      const existingCheckoutPayment = await prisma.payment.findUnique({
+        where: { stripePaymentId: idempotencyPaymentId },
+        select: { id: true },
+      });
+      if (existingCheckoutPayment) {
+        return { success: true, eventType: event.type, message: "Checkout already processed" };
+      }
+
       // Get the subscription ID if this was a subscription checkout
       const stripeSubscriptionId = session.subscription as string | null;
       // Extract Stripe customer ID from checkout session (critical for subsequent webhooks)
@@ -296,35 +306,38 @@ export class WebhookService {
         currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + months);
       }
 
-      // Update user subscription status to active (Requirement 4.2)
-      // Include stripeCustomerId so subsequent webhooks can find the user
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          subscriptionStatus: SubscriptionStatusValues.ACTIVE,
-          stripeSubscriptionId: stripeSubscriptionId,
-          stripeCustomerId: stripeCustomerId,
-          subscriptionId: planId,
-          currentPeriodEnd: currentPeriodEnd,
-          cancelAtPeriodEnd: false,
-          ...(referredById ? { referredById } : {}),
-        },
-      });
-
-      // Create payment record (Requirement 3.2)
       const amountTotal = session.amount_total || 0;
-      const paymentIntentId = session.payment_intent as string | null;
-
-      const payment = await prisma.payment.create({
-        data: {
-          userId,
-          planId: planId || null,
-          amount: amountTotal,
-          currency: session.currency || "usd",
-          status: PaymentStatusValues.SUCCEEDED,
-          stripePaymentId: paymentIntentId || session.id, // Use session ID as fallback
-          description: `Subscription payment for plan`,
-        },
+      // Record payment and grant any retail valuation credit atomically. The
+      // unique Stripe payment ID prevents concurrent duplicate webhooks adding
+      // extra credits before the payment idempotency check can observe the row.
+      const payment = await prisma.$transaction(async (tx) => {
+        const createdPayment = await tx.payment.create({
+          data: {
+            userId,
+            planId: planId || null,
+            amount: amountTotal,
+            currency: session.currency || "usd",
+            status: PaymentStatusValues.SUCCEEDED,
+            stripePaymentId: idempotencyPaymentId,
+            description: `Subscription payment for plan`,
+          },
+        });
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            subscriptionStatus: SubscriptionStatusValues.ACTIVE,
+            stripeSubscriptionId,
+            stripeCustomerId,
+            subscriptionId: planId,
+            currentPeriodEnd,
+            cancelAtPeriodEnd: false,
+            ...(referredById ? { referredById } : {}),
+            ...(session.metadata?.retailValuationLimit === "1"
+              ? { retailValuationEnabled: true, retailValuationCredits: { increment: 1 } }
+              : {}),
+          },
+        });
+        return createdPayment;
       });
 
       // Generate and send invoice
