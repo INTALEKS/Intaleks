@@ -3,7 +3,9 @@
  * API client for forum-related operations
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL?.replace("/api", "") || process.env.NEXT_PUBLIC_API_URL || "http://localhost:4545";
+const configuredApiBase = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:4545/api";
+const normalizedApiBase = configuredApiBase.replace(/\/+$/, "");
+const API_BASE = /\/api$/i.test(normalizedApiBase) ? normalizedApiBase : `${normalizedApiBase}/api`;
 
 // Interfaces
 export interface ForumFilters {
@@ -113,7 +115,7 @@ export const ForumApi = {
     if (filters?.authorId) searchParams.set("authorId", filters.authorId);
 
     // Use admin endpoint for admin operations
-    const endpoint = filters?.isAdmin ? `${API_BASE}/api/admin/forum` : `${API_BASE}/api/forum`;
+    const endpoint = filters?.isAdmin ? `${API_BASE}/admin/forum` : `${API_BASE}/forum`;
     const response = await fetch(`${endpoint}?${searchParams}`, {
       credentials: "include",
     });
@@ -131,7 +133,7 @@ export const ForumApi = {
    * Get a single forum post by ID
    */
   async getForumPostById(id: string, isAdmin?: boolean): Promise<ForumPost> {
-    const endpoint = isAdmin ? `${API_BASE}/api/admin/forum/${id}` : `${API_BASE}/api/forum/${id}`;
+    const endpoint = isAdmin ? `${API_BASE}/admin/forum/${id}` : `${API_BASE}/forum/${id}`;
     const response = await fetch(endpoint, {
       credentials: "include",
     });
@@ -149,7 +151,7 @@ export const ForumApi = {
    * Create a new forum post
    */
   async createForumPost(input: CreateForumPostInput): Promise<ForumPost> {
-    const response = await fetch(`${API_BASE}/api/forum`, {
+    const response = await fetch(`${API_BASE}/forum`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -169,7 +171,7 @@ export const ForumApi = {
    * Add a reply to a forum post
    */
   async addReply(postId: string, message: string): Promise<ForumReply> {
-    const response = await fetch(`${API_BASE}/api/forum/${postId}/replies`, {
+    const response = await fetch(`${API_BASE}/forum/${postId}/replies`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -189,7 +191,7 @@ export const ForumApi = {
    * Toggle star status on a forum post (admin only)
    */
   async toggleStar(id: string): Promise<ForumPost> {
-    const response = await fetch(`${API_BASE}/api/admin/forum/${id}/star`, {
+    const response = await fetch(`${API_BASE}/admin/forum/${id}/star`, {
       method: "PATCH",
       credentials: "include",
     });
@@ -207,7 +209,7 @@ export const ForumApi = {
    * Delete a forum post (admin only)
    */
   async deleteForumPost(id: string): Promise<void> {
-    const response = await fetch(`${API_BASE}/api/admin/forum/${id}`, {
+    const response = await fetch(`${API_BASE}/admin/forum/${id}`, {
       method: "DELETE",
       credentials: "include",
     });
@@ -222,7 +224,7 @@ export const ForumApi = {
    * Toggle reaction on a forum post
    */
   async togglePostReaction(postId: string, type: "LIKE" | "DISLIKE"): Promise<ReactionResponse> {
-    const response = await fetch(`${API_BASE}/api/forum/${postId}/react`, {
+    const response = await fetch(`${API_BASE}/forum/${postId}/react`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -242,7 +244,7 @@ export const ForumApi = {
    * Toggle reaction on a forum reply
    */
   async toggleReplyReaction(replyId: string, type: "LIKE" | "DISLIKE"): Promise<ReactionResponse> {
-    const response = await fetch(`${API_BASE}/api/forum/replies/${replyId}/react`, {
+    const response = await fetch(`${API_BASE}/forum/replies/${replyId}/react`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",

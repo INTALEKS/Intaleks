@@ -493,10 +493,10 @@ function ForumPageContent() {
 
       {/* Create Post Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={handleDialogClose}>
-        <DialogContent className="sm:max-w-[700px] max-h-[85vh] p-0 overflow-hidden" aria-describedby={undefined}>
+        <DialogContent className="flex max-h-[85dvh] flex-col overflow-hidden p-0 sm:max-w-[700px]" aria-describedby={undefined}>
           <DialogTitle className="sr-only">Start New Discussion</DialogTitle>
           {/* Header with user info and close button */}
-          <div className="p-4 border-b">
+          <div className="shrink-0 border-b p-4">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12">
@@ -512,7 +512,7 @@ function ForumPageContent() {
           </div>
 
           {/* Form content */}
-          <div className="flex-1 overflow-y-auto p-4 pb-0">
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 pb-0">
             {/* Title input */}
             <div className="mb-3">
               <Input
@@ -529,7 +529,7 @@ function ForumPageContent() {
             </div>
 
             {/* Rich text editor for content */}
-            <div className="h-[350px]">
+            <div className="h-[min(350px,45vh)] min-h-[220px]">
               <RichTextEditor
                 value={newPostContent}
                 onChange={(value) => {
@@ -547,7 +547,7 @@ function ForumPageContent() {
           </div>
 
           {/* Footer with submit button */}
-          <div className="p-4 flex justify-end border-t">
+          <div className="flex shrink-0 justify-end border-t p-4">
             <Button onClick={handleCreatePost} disabled={createPostMutation.isPending} className="bg-blue-500 hover:bg-blue-600">
               {createPostMutation.isPending ? (
                 <>
