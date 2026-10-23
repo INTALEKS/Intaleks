@@ -96,7 +96,7 @@ export function CompanyQuestionnaire({ companyName, onCompanyNameChange, acn, on
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 py-3 sm:py-6">
+    <div className="grid grid-cols-1 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] gap-4 sm:gap-8 py-3 sm:py-6">
       {/* Left Column - Logo Upload */}
       <div className="flex flex-col items-center justify-center">
         <div className="w-full max-w-sm h-48 sm:h-64 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center bg-white p-4">
@@ -125,11 +125,11 @@ export function CompanyQuestionnaire({ companyName, onCompanyNameChange, acn, on
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label htmlFor="company-acn" className="mb-1 block text-xs font-medium text-gray-700 sm:text-sm">Australian Company Number (ACN)</label>
+            <label htmlFor="company-acn" className="mb-1 block whitespace-nowrap text-xs font-medium text-gray-700 lg:text-sm">Australian Company Number (ACN)</label>
             <Input id="company-acn" type="text" inputMode="numeric" autoComplete="off" maxLength={9} value={acn} onChange={(e) => onAcnChange(e.target.value.replace(/\D/g, "").slice(0, 9))} placeholder="Enter 9-digit ACN" className="w-full bg-gray-100 border-gray-200 text-sm" />
           </div>
           <div>
-            <label htmlFor="company-abn" className="mb-1 block text-xs font-medium text-gray-700 sm:text-sm">Australian Business Number (ABN)</label>
+            <label htmlFor="company-abn" className="mb-1 block whitespace-nowrap text-xs font-medium text-gray-700 lg:text-sm">Australian Business Number (ABN)</label>
             <Input id="company-abn" type="text" inputMode="numeric" autoComplete="off" maxLength={11} value={abn} onChange={(e) => onAbnChange(e.target.value.replace(/\D/g, "").slice(0, 11))} placeholder="Enter 11-digit ABN" className="w-full bg-gray-100 border-gray-200 text-sm" />
           </div>
         </div>

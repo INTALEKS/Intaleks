@@ -52,14 +52,14 @@ export function CountryIndustrySelector({ country, industry, customMultiple, onC
 
   return (
     <div className="mb-4">
-      <div className="flex justify-between items-center my-2">
-        <Filter size={15} />
+      <div className="relative my-2">
+        <Filter size={15} className="absolute left-0 top-1" />
 
-        <div className="flex gap-2">
+        <div className="ml-[27px] grid w-[calc(100%-27px)] grid-cols-1 gap-3 sm:grid-cols-2 md:ml-[calc(35%+1.3rem)] md:w-[calc(65%-1.3rem)]">
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium">Country</label>
             <Select value={country} onValueChange={onCountryChange}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Country" />
               </SelectTrigger>
               <SelectContent>
@@ -74,7 +74,7 @@ export function CountryIndustrySelector({ country, industry, customMultiple, onC
           <div className="flex flex-col gap-1">
             <label className="text-sm font-medium">Industry</label>
             <Select value={industry} onValueChange={onIndustryChange} disabled={isLoading}>
-              <SelectTrigger className="w-[280px]">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select Industry" />
               </SelectTrigger>
               <SelectContent>
