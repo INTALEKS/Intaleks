@@ -87,7 +87,6 @@ export class ForumService {
               firstName: true,
               lastName: true,
               role: true,
-              subscriptionStatus: true,
             },
           },
           replies: {
@@ -112,23 +111,25 @@ export class ForumService {
 
     // Parse attachments and calculate reaction counts for each post
     const parsedItems = items.map((post: (typeof items)[number]) => {
-      const likes = post.reactions.filter((r: { type: string }) => r.type === "LIKE").length;
-      const dislikes = post.reactions.filter((r: { type: string }) => r.type === "DISLIKE").length;
-      const userReaction = userId ? post.reactions.find((r: { userId: string }) => r.userId === userId) : null;
+      const { reactions: postReactions, ...safePost } = post;
+      const likes = postReactions.filter((r: { type: string }) => r.type === "LIKE").length;
+      const dislikes = postReactions.filter((r: { type: string }) => r.type === "DISLIKE").length;
+      const userReaction = userId ? postReactions.find((r: { userId: string }) => r.userId === userId) : null;
 
       return {
-        ...post,
+        ...safePost,
         attachments: post.attachments ? (typeof post.attachments === "string" ? JSON.parse(post.attachments) : post.attachments) : [],
         likes,
         dislikes,
         userLiked: userReaction?.type === "LIKE",
         userDisliked: userReaction?.type === "DISLIKE",
         replies: post.replies.map((reply: (typeof post.replies)[number]) => {
-          const replyLikes = reply.reactions.filter((r: { type: string }) => r.type === "LIKE").length;
-          const replyDislikes = reply.reactions.filter((r: { type: string }) => r.type === "DISLIKE").length;
-          const userReplyReaction = userId ? reply.reactions.find((r: { userId: string }) => r.userId === userId) : null;
+          const { reactions: replyReactions, ...safeReply } = reply;
+          const replyLikes = replyReactions.filter((r: { type: string }) => r.type === "LIKE").length;
+          const replyDislikes = replyReactions.filter((r: { type: string }) => r.type === "DISLIKE").length;
+          const userReplyReaction = userId ? replyReactions.find((r: { userId: string }) => r.userId === userId) : null;
           return {
-            ...reply,
+            ...safeReply,
             likes: replyLikes,
             dislikes: replyDislikes,
             userLiked: userReplyReaction?.type === "LIKE",
@@ -161,7 +162,6 @@ export class ForumService {
             firstName: true,
             lastName: true,
             role: true,
-            subscriptionStatus: true,
           },
         },
         replies: {
@@ -187,24 +187,26 @@ export class ForumService {
     }
 
     // Calculate reaction counts
-    const likes = post.reactions.filter((r: ReactionRecord) => r.type === "LIKE").length;
-    const dislikes = post.reactions.filter((r: ReactionRecord) => r.type === "DISLIKE").length;
-    const userReaction = userId ? post.reactions.find((r: ReactionRecord) => r.userId === userId) : null;
+    const { reactions: postReactions, ...safePost } = post;
+    const likes = postReactions.filter((r: ReactionRecord) => r.type === "LIKE").length;
+    const dislikes = postReactions.filter((r: ReactionRecord) => r.type === "DISLIKE").length;
+    const userReaction = userId ? postReactions.find((r: ReactionRecord) => r.userId === userId) : null;
 
     // Parse attachments and add reaction data
     return {
-      ...post,
+      ...safePost,
       attachments: post.attachments ? (typeof post.attachments === "string" ? JSON.parse(post.attachments) : post.attachments) : [],
       likes,
       dislikes,
       userLiked: userReaction?.type === "LIKE",
       userDisliked: userReaction?.type === "DISLIKE",
       replies: post.replies.map((reply: (typeof post.replies)[number]) => {
-        const replyLikes = reply.reactions.filter((r: ReactionRecord) => r.type === "LIKE").length;
-        const replyDislikes = reply.reactions.filter((r: ReactionRecord) => r.type === "DISLIKE").length;
-        const userReplyReaction = userId ? reply.reactions.find((r: ReactionRecord) => r.userId === userId) : null;
+        const { reactions: replyReactions, ...safeReply } = reply;
+        const replyLikes = replyReactions.filter((r: ReactionRecord) => r.type === "LIKE").length;
+        const replyDislikes = replyReactions.filter((r: ReactionRecord) => r.type === "DISLIKE").length;
+        const userReplyReaction = userId ? replyReactions.find((r: ReactionRecord) => r.userId === userId) : null;
         return {
-          ...reply,
+          ...safeReply,
           likes: replyLikes,
           dislikes: replyDislikes,
           userLiked: userReplyReaction?.type === "LIKE",
@@ -244,7 +246,6 @@ export class ForumService {
             firstName: true,
             lastName: true,
             role: true,
-            subscriptionStatus: true,
           },
         },
         replies: true,
@@ -334,7 +335,6 @@ export class ForumService {
             firstName: true,
             lastName: true,
             role: true,
-            subscriptionStatus: true,
           },
         },
         replies: {

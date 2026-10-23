@@ -1,8 +1,8 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { ForumController } from "../controllers/forum.controller";
 import { authenticateToken, requireEmailVerified } from "../middleware/authMiddleware";
-import { SubscriptionStatus } from "@prisma/client";
 import { isAdminOrHigher } from "../utils/roleHierarchy";
+import { hasUnexpiredSubscription } from "../utils/subscriptionAccess";
 
 const router = Router();
 
@@ -59,7 +59,7 @@ const requireSubscriptionOrAdmin = (req: Request, res: Response, next: NextFunct
   }
 
   // Check for active subscription
-  if (req.user.subscriptionStatus !== SubscriptionStatus.ACTIVE || (req.user.currentPeriodEnd && req.user.currentPeriodEnd <= new Date())) {
+  if (!hasUnexpiredSubscription(req.user.subscriptionStatus, req.user.currentPeriodEnd)) {
     res.status(403).json({
       success: false,
       error: {

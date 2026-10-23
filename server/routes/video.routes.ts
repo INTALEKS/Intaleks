@@ -2,9 +2,10 @@ import { Router, Request, Response, NextFunction } from "express";
 import multer from "multer";
 import { VideoController } from "../controllers/video.controller";
 import { authenticateToken, requireEmailVerified } from "../middleware/authMiddleware";
-import { UserRole, SubscriptionStatus } from "@prisma/client";
+import { UserRole } from "@prisma/client";
 import { VIDEO_UPLOAD_MAX_SIZE, THUMBNAIL_UPLOAD_MAX_SIZE } from "../services/storage";
 import { isAdminOrHigher } from "../utils/roleHierarchy";
+import { hasUnexpiredSubscription } from "../utils/subscriptionAccess";
 
 const router = Router();
 
@@ -31,7 +32,7 @@ const requireSubscriptionOrAdmin = (req: Request, res: Response, next: NextFunct
   }
 
   // Check for active subscription (only ACTIVE status allows access)
-  if (req.user.subscriptionStatus !== SubscriptionStatus.ACTIVE) {
+  if (!hasUnexpiredSubscription(req.user.subscriptionStatus, req.user.currentPeriodEnd)) {
     res.status(403).json({
       success: false,
       error: {

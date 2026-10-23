@@ -4,6 +4,7 @@ import { AuthService } from "../services/auth";
 import { prisma } from "../config/db";
 import { PartnerService } from "../services/partner.service";
 import { UserRole, SubscriptionStatus } from "@prisma/client";
+import { hasUnexpiredSubscription } from "../utils/subscriptionAccess";
 
 // Define user type without password
 export interface AuthenticatedUser {
@@ -179,7 +180,18 @@ export const requireActiveSubscription = async (req: Request, res: Response, nex
     return;
   }
 
-  const hasSubscription = req.user.subscriptionStatus === SubscriptionStatus.ACTIVE;
+  const now = new Date();
+  const subscriptionIsMarkedActive = req.user.subscriptionStatus === SubscriptionStatus.ACTIVE;
+  const hasSubscription = hasUnexpiredSubscription(req.user.subscriptionStatus, req.user.currentPeriodEnd, now);
+
+  // Fail closed when an active entitlement has no expiry. All supported paid
+  // plans have a bounded access period; a missing date must not grant forever.
+  if (subscriptionIsMarkedActive && !hasSubscription) {
+    await prisma.user.update({
+      where: { id: req.user.id },
+      data: { subscriptionStatus: SubscriptionStatus.CANCELED, currentPeriodEnd: null, cancelAtPeriodEnd: false },
+    });
+  }
   const partnerFirm = await PartnerService.getActiveFirmForUser(req.user.id);
   const hasPartnerAccess = Boolean(partnerFirm);
   const hasCouponAccess = req.user.couponAccess === true;
@@ -200,18 +212,6 @@ export const requireActiveSubscription = async (req: Request, res: Response, nex
       error: "Coupon access expired",
       message: "Your one-time coupon access has already been used. Please subscribe to continue.",
       couponUsed: true,
-    });
-    return;
-  }
-
-  if (hasSubscription && req.user.currentPeriodEnd && req.user.currentPeriodEnd <= new Date()) {
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: { subscriptionStatus: SubscriptionStatus.CANCELED, currentPeriodEnd: null, cancelAtPeriodEnd: false },
-    });
-    res.status(403).json({
-      error: "Access period expired",
-      message: "Your Valuator access period has ended. Choose a new access plan to continue.",
     });
     return;
   }
@@ -243,14 +243,14 @@ export const requirePaidSubscription = async (req: Request, res: Response, next:
     return;
   }
 
-  if (req.user.currentPeriodEnd && req.user.currentPeriodEnd <= new Date()) {
+  if (!hasUnexpiredSubscription(req.user.subscriptionStatus, req.user.currentPeriodEnd)) {
     await prisma.user.update({
       where: { id: req.user.id },
       data: { subscriptionStatus: SubscriptionStatus.CANCELED, currentPeriodEnd: null, cancelAtPeriodEnd: false },
     });
     res.status(403).json({
       error: "Access period expired",
-      message: "Your Valuator access period has ended. Renew to access your previous reports.",
+      message: "Your Valuator access period has ended or is not configured. Renew to access your previous reports.",
     });
     return;
   }
