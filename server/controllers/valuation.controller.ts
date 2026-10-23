@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { Prisma } from "@prisma/client";
 import { ValuationService } from "../services/valuation";
 import { valuationDocumentSchema, ValuationDocumentInput } from "../validation/valuationValidation";
 import { generateValuationPDF, ValuationPDFData } from "../services/pdf.service";
@@ -362,7 +363,7 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
         const updated = await prisma.valuationDocument.update({ where: { id: correctionDocumentId }, data: documentData });
         documentId = updated.id;
       } else if (entitlement?.retailValuationEnabled) {
-        documentId = await prisma.$transaction(async (tx) => {
+        documentId = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
           const consumed = await tx.user.updateMany({
             where: { id: userId, retailValuationEnabled: true, retailValuationCredits: { gt: 0 } },
             data: { retailValuationCredits: { decrement: 1 } },

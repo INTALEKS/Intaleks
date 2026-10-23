@@ -1,4 +1,5 @@
 import { prisma } from "../config/db";
+import { Prisma } from "@prisma/client";
 import { getStripe, stripeConfig } from "../config/stripe";
 import { StripeError, STRIPE_ERROR_CODES } from "../errors";
 import { WebhookErrorLogger } from "./webhook-logger";
@@ -310,7 +311,7 @@ export class WebhookService {
       // Record payment and grant any retail valuation credit atomically. The
       // unique Stripe payment ID prevents concurrent duplicate webhooks adding
       // extra credits before the payment idempotency check can observe the row.
-      const payment = await prisma.$transaction(async (tx) => {
+      const payment = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const createdPayment = await tx.payment.create({
           data: {
             userId,
