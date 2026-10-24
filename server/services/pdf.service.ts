@@ -2,6 +2,8 @@ import { generateRAVDAScorecardPDF } from "./ravdaScorecardPDF";
 
 export interface ValuationPDFData {
   companyName?: string;
+  acn?: string;
+  abn?: string;
   country: string;
   industry: string;
   customMultiple: string;
@@ -210,6 +212,8 @@ export async function generateValuationPDF(data: ValuationPDFData): Promise<Buff
 
   const ravdaData = {
     companyName: data.companyName,
+    acn: data.acn,
+    abn: data.abn,
     score: ravdaScore,
     rating,
     industry: data.industry,

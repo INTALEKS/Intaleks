@@ -62,6 +62,8 @@ function getCurrencyCodeForCountry(country?: string): string {
 
 export interface RAVDAData {
   companyName?: string;
+  acn?: string;
+  abn?: string;
   country?: string;
   currencySymbol?: string;
   /** ISO 4217 currency code, e.g. "AUD", "USD", "CAD" */
@@ -421,16 +423,6 @@ function drawGuidanceCoverPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     doc.image(pngPath, PAGE.marginX, 55, { width: 110 });
   }
 
-  doc
-    .font(fonts.bold)
-    .fontSize(8)
-    .fillColor("#B45309")
-    .text("BUSINESS VALUATION GUIDANCE REPORT", PAGE.width - PAGE.marginX - 220, 90, {
-      align: "right",
-      width: 220,
-      lineBreak: false,
-    });
-
   const uploadedLogoRendered = drawCompanyLogo(doc, data, {
     x: (PAGE.width - 140) / 2,
     y: 118,
@@ -456,9 +448,31 @@ function drawGuidanceCoverPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
       ellipsis: true,
     });
 
+  const companyIdentifiers = [
+    data.acn?.trim() ? `ACN:  ${data.acn.trim()}` : null,
+    data.abn?.trim() ? `ABN:  ${data.abn.trim()}` : null,
+  ].filter((value): value is string => Boolean(value));
+  if (companyIdentifiers.length > 0) {
+    const identifierText = companyIdentifiers.join("     •     ");
+    const identifierY = titleY + 37;
+    doc.font(fonts.semibold).fontSize(7.5);
+    const identifierWidth = Math.min(doc.widthOfString(identifierText) + 22, PAGE.width - PAGE.marginX * 2);
+    doc.roundedRect(PAGE.marginX + 2, identifierY - 3, identifierWidth, 20, 10).fill(REPORT_NAVY);
+    doc
+      .font(fonts.semibold)
+      .fontSize(7.5)
+      .fillColor("#FFFFFF")
+      .text(identifierText, PAGE.marginX + 13, identifierY + 3, {
+        width: identifierWidth - 22,
+        lineBreak: false,
+        ellipsis: true,
+      });
+  }
+
+  const titleBottomY = titleY + (companyIdentifiers.length > 0 ? 60 : 45);
   doc
-    .moveTo(PAGE.marginX, titleY + 45)
-    .lineTo(PAGE.width - PAGE.marginX, titleY + 45)
+    .moveTo(PAGE.marginX, titleBottomY)
+    .lineTo(PAGE.width - PAGE.marginX, titleBottomY)
     .lineWidth(2)
     .strokeColor("#D97706")
     .stroke();
@@ -473,7 +487,7 @@ function drawGuidanceCoverPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
     { label: "Valuation approach", value: approachVal },
   ];
 
-  let metaY = titleY + 60;
+  let metaY = titleBottomY + 15;
   const rowHeight = 24;
   metadata.forEach((item) => {
     doc
