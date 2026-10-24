@@ -190,6 +190,22 @@ export default function CalculatorPage() {
   // Track if we've restored data from localStorage
   const [hasRestoredData, setHasRestoredData] = useState(false);
   const [isInitialMount, setIsInitialMount] = useState(true);
+  const [activeRetailCorrectionDocumentId, setActiveRetailCorrectionDocumentId] = useState<string | null>(null);
+  const [retailCompanyIdentifiersLocked, setRetailCompanyIdentifiersLocked] = useState(false);
+
+  useEffect(() => {
+    setActiveRetailCorrectionDocumentId(localStorage.getItem("intaleks_retail_valuation_document_id"));
+  }, []);
+
+  useEffect(() => {
+    if (
+      user?.retailValuationEnabled &&
+      activeRetailCorrectionDocumentId &&
+      activeRetailCorrectionDocumentId === user.retailValuationDocumentId
+    ) {
+      setRetailCompanyIdentifiersLocked(true);
+    }
+  }, [activeRetailCorrectionDocumentId, user?.retailValuationDocumentId, user?.retailValuationEnabled]);
 
   // Terms and Conditions acceptance state
   const [showTermsDialog, setShowTermsDialog] = useState(false);
@@ -841,7 +857,11 @@ export default function CalculatorPage() {
       };
 
       // Download PDF - server will also save to database and R2
-      await downloadValuationPDF(reportData);
+      const generatedDocumentId = await downloadValuationPDF(reportData);
+      if (user?.retailValuationEnabled && generatedDocumentId) {
+        setActiveRetailCorrectionDocumentId(generatedDocumentId);
+        setRetailCompanyIdentifiersLocked(true);
+      }
 
       // Invalidate documents query to refresh the list
       queryClient.invalidateQueries({ queryKey: ["valuations"] });
@@ -1312,7 +1332,7 @@ export default function CalculatorPage() {
       <main className="max-w-5xl mx-auto px-4 pb-16 space-y-4">
         {/* Only the active step is shown. Continue controls the progression. */}
         {openSections[1] && <AccordionSection title="Company Questionaire" stepNumber={1} isOpen>
-          <CompanyQuestionnaire companyName={companyName} onCompanyNameChange={setCompanyName} acn={acn} onAcnChange={setAcn} abn={abn} onAbnChange={setAbn} startedYear={startedYear} onStartedYearChange={setStartedYear} employees={employees} onEmployeesChange={setEmployees} stage={stage} onStageChange={setStage} valuationReason={valuationReason} onValuationReasonChange={setValuationReason} logo={companyLogo} onLogoChange={setCompanyLogo} />
+          <CompanyQuestionnaire companyName={companyName} onCompanyNameChange={setCompanyName} acn={acn} onAcnChange={setAcn} abn={abn} onAbnChange={setAbn} companyIdentifiersLocked={retailCompanyIdentifiersLocked} startedYear={startedYear} onStartedYearChange={setStartedYear} employees={employees} onEmployeesChange={setEmployees} stage={stage} onStageChange={setStage} valuationReason={valuationReason} onValuationReasonChange={setValuationReason} logo={companyLogo} onLogoChange={setCompanyLogo} />
           <div className="mt-6">
             <CountryIndustrySelector country={country} industry={industry} customMultiple={customMultiple} onCountryChange={setCountry} onIndustryChange={setIndustry} onCustomMultipleChange={setCustomMultiple} />
             <div className="bg-blue-50 p-4 rounded-lg mt-4">

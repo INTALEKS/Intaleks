@@ -8,6 +8,16 @@ import { CalculatorService } from "../services/calculator";
 import { prisma } from "../config/db";
 import { PartnerService } from "../services/partner.service";
 
+function normalizeCompanyIdentifier(value: unknown): string {
+  return typeof value === "string" ? value.replace(/\D/g, "") : "";
+}
+
+function getStoredCompanyIdentifier(inputData: Prisma.JsonValue | null, key: "acn" | "abn"): string {
+  if (!inputData || typeof inputData !== "object" || Array.isArray(inputData)) return "";
+  const value = (inputData as Prisma.JsonObject)[key];
+  return typeof value === "string" || typeof value === "number" ? String(value) : "";
+}
+
 /**
  * Create a new valuation document record
  * POST /api/valuations
@@ -153,10 +163,19 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
     const correctionDocumentId = typeof data.valuationDocumentId === "string" ? data.valuationDocumentId : null;
     if (entitlement?.retailValuationEnabled) {
       if (correctionDocumentId) {
-        const canCorrect = correctionDocumentId === entitlement.retailValuationDocumentId &&
-          Boolean(await prisma.valuationDocument.findFirst({ where: { id: correctionDocumentId, userId }, select: { id: true } }));
-        if (!canCorrect) {
+        const correctionDocument = correctionDocumentId === entitlement.retailValuationDocumentId
+          ? await prisma.valuationDocument.findFirst({ where: { id: correctionDocumentId, userId }, select: { id: true, inputData: true } })
+          : null;
+        if (!correctionDocument) {
           return res.status(403).json({ error: "This report is not eligible for correction. Start a new valuation after purchasing access." });
+        }
+        const savedAcn = getStoredCompanyIdentifier(correctionDocument.inputData, "acn");
+        const savedAbn = getStoredCompanyIdentifier(correctionDocument.inputData, "abn");
+        if (
+          normalizeCompanyIdentifier(data.acn) !== normalizeCompanyIdentifier(savedAcn) ||
+          normalizeCompanyIdentifier(data.abn) !== normalizeCompanyIdentifier(savedAbn)
+        ) {
+          return res.status(403).json({ error: "ACN and ABN are locked for this paid valuation. Purchase another $495 valuation to use different company identifiers." });
         }
       } else if (entitlement.retailValuationCredits < 1) {
         return res.status(403).json({ error: "This purchase includes one valuation. Purchase another valuation to create a new report; corrections to your existing report are included." });
