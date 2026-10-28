@@ -64,6 +64,7 @@ export interface RAVDAData {
   companyName?: string;
   acn?: string;
   abn?: string;
+  valuationReason?: string;
   country?: string;
   currencySymbol?: string;
   /** ISO 4217 currency code, e.g. "AUD", "USD", "CAD" */
@@ -482,8 +483,8 @@ function drawGuidanceCoverPage(doc: PDFKit.PDFDocument, data: RAVDAData, fonts: 
 
   const metadata = [
     { label: "Report date", value: formatGeneratedDate(data.generatedDate) },
-    { label: "Jurisdiction", value: sanitizeCountry(data.country || "Australia") },
     { label: "Industry", value: `${toDisplayLabel(data.industry)} (base multiple ${baseMultiple}x)` },
+    { label: "Valuation purpose", value: data.valuationReason?.trim() || "Not specified" },
     { label: "Valuation approach", value: approachVal },
   ];
 

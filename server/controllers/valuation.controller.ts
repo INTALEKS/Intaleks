@@ -8,6 +8,21 @@ import { CalculatorService } from "../services/calculator";
 import { prisma } from "../config/db";
 import { PartnerService } from "../services/partner.service";
 
+const VALUATION_PURPOSES = new Set([
+  "Purchase of a Business",
+  "Sale of a Business",
+  "Family Law Proceedings",
+  "Shareholder Dispute",
+  "Succession Planning",
+  "Mergers and Acquisitions",
+  "Taxation Purposes",
+  "Estate and Probate",
+  "Financing or Funding",
+  "Strategic Planning",
+  "Partner Entry or Exit",
+  "Litigation Support",
+]);
+
 function normalizeCompanyIdentifier(value: unknown): string {
   return typeof value === "string" ? value.replace(/\D/g, "") : "";
 }
@@ -147,6 +162,10 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
 
     if (!data.valuationMethod) {
       return res.status(400).json({ error: "Missing required field: valuationMethod" });
+    }
+
+    if (data.valuationReason && !VALUATION_PURPOSES.has(data.valuationReason)) {
+      return res.status(400).json({ error: "Select a valid valuation purpose." });
     }
 
     if (data.acn && !/^\d{9}$/.test(data.acn)) {

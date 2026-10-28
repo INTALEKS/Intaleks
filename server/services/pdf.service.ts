@@ -214,6 +214,7 @@ export async function generateValuationPDF(data: ValuationPDFData): Promise<Buff
     companyName: data.companyName,
     acn: data.acn,
     abn: data.abn,
+    valuationReason: data.valuationReason,
     score: ravdaScore,
     rating,
     industry: data.industry,

@@ -30,6 +30,33 @@ import Link from "next/link";
 const CALCULATOR_STORAGE_KEY = "intaleks_calculator_data";
 const CALCULATOR_TIMESTAMP_KEY = "intaleks_calculator_timestamp";
 const CACHE_EXPIRY_MS = 1 * 60 * 60 * 1000; // 1 hour in milliseconds
+const VALUATION_PURPOSES = [
+  "Purchase of a Business",
+  "Sale of a Business",
+  "Family Law Proceedings",
+  "Shareholder Dispute",
+  "Succession Planning",
+  "Mergers and Acquisitions",
+  "Taxation Purposes",
+  "Estate and Probate",
+  "Financing or Funding",
+  "Strategic Planning",
+  "Partner Entry or Exit",
+  "Litigation Support",
+];
+
+function normalizeValuationPurpose(value?: string): string {
+  if (!value) return "";
+  if (VALUATION_PURPOSES.includes(value)) return value;
+  const legacyPurposes: Record<string, string> = {
+    selling: "Sale of a Business",
+    buyout: "Shareholder Dispute",
+    funding: "Financing or Funding",
+    planning: "Strategic Planning",
+    tax: "Taxation Purposes",
+  };
+  return legacyPurposes[value] || "";
+}
 
 // Financial metrics following standard P&L structure with sample placeholders
 // Only input fields - calculated fields are handled separately
@@ -221,7 +248,7 @@ export default function CalculatorPage() {
   const [startedYear, setStartedYear] = useState(initialState?.startedYear || "");
   const [employees, setEmployees] = useState(initialState?.employees || "");
   const [stage, setStage] = useState(initialState?.stage || "");
-  const [valuationReason, setValuationReason] = useState(initialState?.valuationReason || "");
+  const [valuationReason, setValuationReason] = useState(normalizeValuationPurpose(initialState?.valuationReason));
   const [companyLogo, setCompanyLogo] = useState<File | null>(null);
   const [country, setCountry] = useState(initialState?.country || "");
   const [industry, setIndustry] = useState(initialState?.industry || "");
@@ -959,7 +986,7 @@ export default function CalculatorPage() {
       if (!stage) missing.push("Company stage");
       if (!country) missing.push("Country");
       if (!industry) missing.push("Industry");
-      if (!valuationReason.trim()) missing.push("Valuation reason");
+      if (!valuationReason.trim()) missing.push("Valuation purpose");
     }
 
     if (isStep1Complete && !isStep2Complete) {
@@ -1211,7 +1238,7 @@ export default function CalculatorPage() {
               setStartedYear(parsed.startedYear || "");
               setEmployees(parsed.employees || "");
               setStage(parsed.stage || "startup");
-              setValuationReason(parsed.valuationReason || "");
+              setValuationReason(normalizeValuationPurpose(parsed.valuationReason));
               setCountry(parsed.country || "australia");
               setIndustry(parsed.industry || "retail");
               setCustomMultiple(parsed.customMultiple || "3");

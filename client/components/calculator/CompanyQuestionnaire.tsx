@@ -37,12 +37,18 @@ const stages = [
 ];
 
 const valuationReasons = [
-  { value: "selling", label: "Selling the business" },
-  { value: "buyout", label: "Partnership buyout / Shareholder dispute" },
-  { value: "funding", label: "Raising capital / Funding / Investment" },
-  { value: "planning", label: "Internal strategic planning" },
-  { value: "tax", label: "Tax / Legal / Compliance purposes" },
-  { value: "other", label: "Other" },
+  "Purchase of a Business",
+  "Sale of a Business",
+  "Family Law Proceedings",
+  "Shareholder Dispute",
+  "Succession Planning",
+  "Mergers and Acquisitions",
+  "Taxation Purposes",
+  "Estate and Probate",
+  "Financing or Funding",
+  "Strategic Planning",
+  "Partner Entry or Exit",
+  "Litigation Support",
 ];
 
 export function CompanyQuestionnaire({ companyName, onCompanyNameChange, acn, onAcnChange, abn, onAbnChange, companyIdentifiersLocked = false, startedYear, onStartedYearChange, employees, onEmployeesChange, stage, onStageChange, valuationReason, onValuationReasonChange, onLogoChange }: CompanyQuestionnaireProps) {
@@ -167,15 +173,15 @@ export function CompanyQuestionnaire({ companyName, onCompanyNameChange, acn, on
         </div>
 
         <div>
-          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Why do you need a business valuation?</label>
+          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Valuation Purpose</label>
           <Select value={valuationReason} onValueChange={onValuationReasonChange}>
             <SelectTrigger className="w-full bg-gray-100 border-gray-200 text-sm">
-              <SelectValue placeholder="Select a reason" />
+              <SelectValue placeholder="Select a valuation purpose" />
             </SelectTrigger>
             <SelectContent>
-              {valuationReasons.map((r) => (
-                <SelectItem key={r.value} value={r.value}>
-                  {r.label}
+              {valuationReasons.map((reason) => (
+                <SelectItem key={reason} value={reason}>
+                  {reason}
                 </SelectItem>
               ))}
             </SelectContent>
