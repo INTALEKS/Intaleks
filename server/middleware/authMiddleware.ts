@@ -17,6 +17,9 @@ export interface AuthenticatedUser {
   currentPeriodEnd: Date | null;
   couponAccess: boolean;
   couponUsed: boolean;
+  retailValuationEnabled: boolean;
+  retailValuationCredits: number;
+  retailValuationDocumentId: string | null;
   termsAccepted: boolean;
   termsAcceptedAt: Date | null;
   emailVerified: boolean;
@@ -77,6 +80,9 @@ export const authenticateToken = async (req: Request, res: Response, next: NextF
         currentPeriodEnd: true,
         couponAccess: true,
         couponUsed: true,
+        retailValuationEnabled: true,
+        retailValuationCredits: true,
+        retailValuationDocumentId: true,
         emailVerified: true,
         termsAccepted: true,
         termsAcceptedAt: true,
@@ -196,18 +202,20 @@ export const requireActiveSubscription = async (req: Request, res: Response, nex
   const hasPartnerAccess = Boolean(partnerFirm);
   const hasCouponAccess = req.user.couponAccess === true;
   const couponAlreadyUsed = req.user.couponUsed === true;
+  const hasRetailValuationAccess = req.user.retailValuationEnabled &&
+    (req.user.retailValuationCredits > 0 || Boolean(req.user.retailValuationDocumentId));
 
-  if (!hasSubscription && !hasCouponAccess && !hasPartnerAccess) {
+  if (!hasSubscription && !hasCouponAccess && !hasPartnerAccess && !hasRetailValuationAccess) {
     res.status(403).json({
       error: "Active subscription required",
-      message: "This feature requires an active subscription. Please subscribe or redeem a coupon code to continue.",
+      message: "A paid valuation, active subscription, or unused coupon is required to continue.",
       subscriptionStatus: req.user.subscriptionStatus,
     });
     return;
   }
 
   // Coupon users get exactly one use — block if already consumed
-  if (!hasSubscription && !hasPartnerAccess && hasCouponAccess && couponAlreadyUsed) {
+  if (!hasSubscription && !hasPartnerAccess && !hasRetailValuationAccess && hasCouponAccess && couponAlreadyUsed) {
     res.status(403).json({
       error: "Coupon access expired",
       message: "Your one-time coupon access has already been used. Please subscribe to continue.",
@@ -251,6 +259,40 @@ export const requirePaidSubscription = async (req: Request, res: Response, next:
     res.status(403).json({
       error: "Access period expired",
       message: "Your Valuator access period has ended or is not configured. Renew to access your previous reports.",
+    });
+    return;
+  }
+
+  next();
+};
+
+/**
+ * Allow active subscribers to browse their report history and retail buyers
+ * to access only reports created from their paid valuation credits.
+ */
+export const requireValuationHistoryAccess = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  if (!req.user) {
+    res.status(401).json({ error: "Unauthorized", message: "Authentication required" });
+    return;
+  }
+
+  if (req.user.role === UserRole.ADMIN || req.user.role === UserRole.SUPER_ADMIN) {
+    next();
+    return;
+  }
+
+  const hasSubscriptionAccess = hasUnexpiredSubscription(
+    req.user.subscriptionStatus,
+    req.user.currentPeriodEnd,
+  );
+  const hasRetailReportAccess = req.user.retailValuationEnabled &&
+    (req.user.retailValuationCredits > 0 || Boolean(req.user.retailValuationDocumentId));
+
+  if (!hasSubscriptionAccess && !hasRetailReportAccess) {
+    res.status(403).json({
+      error: "Paid valuation access required",
+      message: "Your previous valuation reports are available to the account that purchased them.",
+      subscriptionStatus: req.user.subscriptionStatus,
     });
     return;
   }

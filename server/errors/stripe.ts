@@ -122,7 +122,9 @@ export class StripeError extends Error {
       case STRIPE_ERROR_CODES.EXPIRED_CARD:
         return USER_ERROR_MESSAGES.expired_card;
       case STRIPE_ERROR_CODES.PROCESSING_ERROR:
-        return USER_ERROR_MESSAGES.processing_error;
+        return this.stripeError?.type === "StripeConnectionError"
+          ? "Checkout is temporarily unavailable because we couldn't connect to Stripe. No payment was processed; please try again shortly."
+          : USER_ERROR_MESSAGES.processing_error;
       case STRIPE_ERROR_CODES.WEBHOOK_SIGNATURE_INVALID:
         return "Payment verification failed. Please try again.";
       case STRIPE_ERROR_CODES.CHECKOUT_SESSION_FAILED:

@@ -450,6 +450,7 @@ model ValuationDocument {
   fileSize        Int?     @map("file_size") // Size in bytes
   inputData       Json?    @map("input_data")
   valuationReason String?  @map("valuation_reason")
+  retailPaid      Boolean  @default(false) @map("retail_paid")
   partnerFirmId   String?  @map("partner_firm_id")
   createdAt       DateTime @default(now()) @map("created_at")
 

@@ -35,8 +35,9 @@ dotenv.config();
 const app = express();
 const PORT = Number(process.env.PORT) || 4545;
 
-// Trust proxy for Railway deployment (enables proper IP detection behind reverse proxy)
-app.set("trust proxy", true);
+// Trust the single Railway edge proxy hop. Trusting every forwarded hop lets
+// clients spoof X-Forwarded-For and evade the IP-based rate limits below.
+app.set("trust proxy", 1);
 
 // Health check - BEFORE CORS and Helmet middleware so health check probes work cleanly
 app.get("/health", (req, res) => {

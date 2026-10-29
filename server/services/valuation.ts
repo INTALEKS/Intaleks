@@ -30,6 +30,7 @@ export interface ValuationDocumentResponse {
   fileUrl: string | null;
   fileSize: number | null;
   valuationReason: string | null;
+  retailPaid: boolean;
   createdAt: Date;
 }
 

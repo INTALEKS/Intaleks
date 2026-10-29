@@ -74,8 +74,13 @@ export const getUserValuationDocuments = async (req: Request, res: Response, nex
     }
 
     const documents = await ValuationService.getUserDocuments(userId);
+    const isActiveSubscriber = req.user?.subscriptionStatus === "ACTIVE" &&
+      req.user.currentPeriodEnd !== null && req.user.currentPeriodEnd > new Date();
+    const visibleDocuments = isActiveSubscriber || !req.user?.retailValuationEnabled
+      ? documents
+      : documents.filter((document) => document.retailPaid);
 
-    res.json(documents);
+    res.json(visibleDocuments);
   } catch (error) {
     next(error);
   }
@@ -93,6 +98,15 @@ export const getValuationDocumentById = async (req: Request, res: Response, next
     }
 
     const { id } = req.params;
+    const isActiveSubscriber = req.user.subscriptionStatus === "ACTIVE" &&
+      req.user.currentPeriodEnd !== null && req.user.currentPeriodEnd > new Date();
+    if (!isActiveSubscriber && req.user.retailValuationEnabled) {
+      const retailDocument = await prisma.valuationDocument.findFirst({
+        where: { id, userId, retailPaid: true },
+        select: { id: true },
+      });
+      if (!retailDocument) return res.status(404).json({ error: "Valuation document not found" });
+    }
     const document = await ValuationService.getDocumentById(id, userId);
 
     res.json(document);
@@ -182,9 +196,10 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
     const correctionDocumentId = typeof data.valuationDocumentId === "string" ? data.valuationDocumentId : null;
     if (entitlement?.retailValuationEnabled) {
       if (correctionDocumentId) {
-        const correctionDocument = correctionDocumentId === entitlement.retailValuationDocumentId
-          ? await prisma.valuationDocument.findFirst({ where: { id: correctionDocumentId, userId }, select: { id: true, inputData: true } })
-          : null;
+        const correctionDocument = await prisma.valuationDocument.findFirst({
+          where: { id: correctionDocumentId, userId, retailPaid: true },
+          select: { id: true, inputData: true },
+        });
         if (!correctionDocument) {
           return res.status(403).json({ error: "This report is not eligible for correction. Start a new valuation after purchasing access." });
         }
@@ -407,12 +422,12 @@ export const generatePDF = async (req: Request, res: Response, next: NextFunctio
             data: { retailValuationCredits: { decrement: 1 } },
           });
           if (consumed.count !== 1) throw new Error("VALUATION_CREDIT_REQUIRED");
-          const created = await tx.valuationDocument.create({ data: { userId, ...documentData, partnerFirmId } });
+          const created = await tx.valuationDocument.create({ data: { userId, ...documentData, partnerFirmId, retailPaid: true } });
           await tx.user.update({ where: { id: userId }, data: { retailValuationDocumentId: created.id } });
           return created.id;
         });
       } else {
-        const created = await prisma.valuationDocument.create({ data: { userId, ...documentData, partnerFirmId } });
+        const created = await prisma.valuationDocument.create({ data: { userId, ...documentData, partnerFirmId, retailPaid: false } });
         documentId = created.id;
       }
       res.setHeader("X-Valuation-Document-Id", documentId);

@@ -87,7 +87,7 @@ async function startupSeed() {
     // Migrate the legacy one-off plan and keep only the $495 retail plan active.
     let plan = await prisma.subscriptionPlan.findUnique({ where: { name: "2 Months Access" } });
 
-    const planFeatures = ["Worldwide Industry Multiples (US, Canada, UK, Australia, China, Indonesia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking", "Unlimited Valuations", "Export to PDF"];
+    const planFeatures = ["Worldwide Industry Multiples (US, Canada, UK, Australia, China, Indonesia)", "Professional PDF Report", "Company Logo Integration", "Business Assessment Survey", "Asset & Liability Tracking", "One complete business valuation", "Corrections to that valuation are included", "Purchase again for each additional valuation"];
 
     const legacyPlan = await prisma.subscriptionPlan.findUnique({ where: { name: "One-Off" } });
     if (!plan) {
@@ -100,6 +100,7 @@ async function startupSeed() {
             price: 49500,
             billingPeriod: BillingPeriod.ONE_TIME,
             features: planFeatures,
+            valuationLimit: 1,
             active: true,
           },
         });
@@ -111,6 +112,7 @@ async function startupSeed() {
             price: 49500,
             billingPeriod: BillingPeriod.ONE_TIME,
             features: planFeatures,
+            valuationLimit: 1,
             active: true,
           },
         });
@@ -120,11 +122,15 @@ async function startupSeed() {
       // checkout once the current two-month plan exists.
       await prisma.subscriptionPlan.update({ where: { id: legacyPlan.id }, data: { active: false } });
       console.log("✅ Retired legacy One-Off subscription plan");
+      plan = await prisma.subscriptionPlan.update({
+        where: { id: plan.id },
+        data: { features: planFeatures, valuationLimit: 1 },
+      });
     } else {
       // Always keep features in sync
       plan = await prisma.subscriptionPlan.update({
         where: { name: "2 Months Access" },
-        data: { features: planFeatures },
+        data: { features: planFeatures, valuationLimit: 1 },
       });
       console.log("✅ Subscription plan already exists - updated features");
     }

@@ -31,6 +31,7 @@ interface UserData {
   subscriptionStatus?: string;
   retailValuationEnabled?: boolean;
   retailValuationCredits?: number;
+  retailValuationDocumentId?: string | null;
   subscription?: {
     id: string;
     name: string;
@@ -367,6 +368,7 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
 
   const currentPlan = user?.subscription;
   const hasActiveSubscription = user?.subscriptionStatus === "ACTIVE";
+  const hasRetailValuation = user?.retailValuationEnabled === true;
   const allPlans = (plans as SubscriptionPlan[] | undefined) || [];
   const retailPlan = allPlans.find((plan) => plan.name === "2 Months Access");
   const availablePlans = retailPlan ? [retailPlan] : [];
@@ -440,26 +442,26 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
   return (
     <div>
       {/* Current Plan */}
-      {hasActiveSubscription && currentPlan && (
+      {((hasActiveSubscription && currentPlan) || hasRetailValuation) && (
         <>
-          <h2 className="text-xl font-semibold mb-4">Current Plan</h2>
+          <h2 className="text-xl font-semibold mb-4">{hasRetailValuation ? "Valuation access" : "Current Plan"}</h2>
           <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8 max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <span className="inline-block bg-yellow-400 text-black text-xs font-semibold px-2 py-1 rounded">{user?.retailValuationEnabled ? "ONE BUSINESS VALUATION" : currentPlan?.name?.toUpperCase() || "VISITOR"}</span>
-              <span className="text-xs text-green-600 font-medium">Active</span>
+              <span className="inline-block bg-yellow-400 text-black text-xs font-semibold px-2 py-1 rounded">{hasRetailValuation ? "ONE BUSINESS VALUATION" : currentPlan?.name?.toUpperCase() || "VISITOR"}</span>
+              <span className="text-xs text-green-600 font-medium">{hasRetailValuation ? "Paid" : "Active"}</span>
             </div>
-            <div className="text-4xl font-bold mb-4">${formatPrice(currentPlan?.price || 0)}</div>
+            <div className="text-4xl font-bold mb-4">${formatPrice(currentPlan?.price || (hasRetailValuation ? 49500 : 0))}</div>
             <ul className="space-y-2 mb-6">
-              {(user?.retailValuationEnabled ? ["One complete business valuation", "Corrections to that valuation are included", "Purchase again for each additional valuation"] : currentPlan?.features || ["Basic charts visualization", "Preview company visualization"]).map((feature: string, i: number) => (
+              {(hasRetailValuation ? ["One complete business valuation", "Corrections to that valuation are included", "Purchase again for each additional valuation"] : currentPlan?.features || ["Basic charts visualization", "Preview company visualization"]).map((feature: string, i: number) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
                   <Check className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                   <span>{feature}</span>
                 </li>
               ))}
             </ul>
-            <Button variant="outline" className="w-full text-red-600 border-red-200 hover:bg-red-50" onClick={handleCancelSubscription}>
+            {hasActiveSubscription && !hasRetailValuation && <Button variant="outline" className="w-full text-red-600 border-red-200 hover:bg-red-50" onClick={handleCancelSubscription}>
               Cancel Subscription
-            </Button>
+            </Button>}
           </div>
         </>
       )}
@@ -489,7 +491,7 @@ function SubscriptionsTab({ user }: { user: UserData | null }) {
                       Processing...
                     </>
                   ) : (
-                    "Subscribe"
+                    "Purchase valuation"
                   )}
                 </Button>
               </div>

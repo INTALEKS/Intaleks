@@ -165,7 +165,7 @@ function SubscribeButton() {
 
 export default function CalculatorPage() {
   const router = useRouter();
-  const { isAuthenticated, hasActiveSubscription, hasCouponAccess, couponUsed, hasCalculatorAccess, subscriptionStatus, user } = useAuthState();
+  const { isAuthenticated, hasActiveSubscription, hasCouponAccess, couponUsed, hasCalculatorAccess, hasRetailValuationAccess, subscriptionStatus, user } = useAuthState();
   const queryClient = useQueryClient();
   const { getMultiple } = useValuationMultiples();
 
@@ -225,14 +225,10 @@ export default function CalculatorPage() {
   }, []);
 
   useEffect(() => {
-    if (
-      user?.retailValuationEnabled &&
-      activeRetailCorrectionDocumentId &&
-      activeRetailCorrectionDocumentId === user.retailValuationDocumentId
-    ) {
+    if (user?.retailValuationEnabled && activeRetailCorrectionDocumentId) {
       setRetailCompanyIdentifiersLocked(true);
     }
-  }, [activeRetailCorrectionDocumentId, user?.retailValuationDocumentId, user?.retailValuationEnabled]);
+  }, [activeRetailCorrectionDocumentId, user?.retailValuationEnabled]);
 
   // Terms and Conditions acceptance state
   const [showTermsDialog, setShowTermsDialog] = useState(false);
@@ -572,7 +568,7 @@ export default function CalculatorPage() {
     }
 
     if (!hasCalculatorAccess) {
-      toast.error("An active subscription or coupon code is required to view valuation reports");
+      toast.error("A paid valuation, active subscription, or unused coupon is required to view valuation reports");
       router.push("/#pricing");
       return;
     }
@@ -735,9 +731,9 @@ export default function CalculatorPage() {
       return;
     }
 
-    // Check if user has active subscription or coupon access
+    // The server also accepts a paid retail valuation credit or its correction entitlement.
     if (!hasCalculatorAccess) {
-      toast.error("An active subscription or coupon code is required to download valuation reports");
+      toast.error("A paid valuation, active subscription, or unused coupon is required to download valuation reports");
       router.push("/#pricing");
       return;
     }
@@ -886,6 +882,7 @@ export default function CalculatorPage() {
       // Download PDF - server will also save to database and R2
       const generatedDocumentId = await downloadValuationPDF(reportData);
       if (user?.retailValuationEnabled && generatedDocumentId) {
+        localStorage.setItem("intaleks_retail_valuation_document_id", generatedDocumentId);
         setActiveRetailCorrectionDocumentId(generatedDocumentId);
         setRetailCompanyIdentifiersLocked(true);
       }
@@ -953,7 +950,7 @@ export default function CalculatorPage() {
   const isStep4Complete = useMemo(() => {
     if (!isStep3Complete) return false;
 
-    // Require active subscription or coupon access for step 4
+    // Require a paid valuation, active subscription, or unused coupon for report generation.
     if (!isAuthenticated || !hasCalculatorAccess) return false;
 
     // Check if sales data exists for all years
@@ -1006,7 +1003,7 @@ export default function CalculatorPage() {
       if (!isAuthenticated) {
         missing.push("Log in to continue");
       } else if (!hasCalculatorAccess) {
-        missing.push("Active subscription or coupon");
+        missing.push("Paid valuation, active subscription, or unused coupon");
       } else {
         const missingSalesYears = financialYears.filter((year) => {
           const sales = parseFloat((financialData?.sales?.[year] as string) || "0");
@@ -1334,12 +1331,12 @@ export default function CalculatorPage() {
               <LogIn className="w-4 h-4 mr-2" />
               Log in to Download
             </>
-          ) : !hasActiveSubscription ? (
+          ) : !hasCalculatorAccess ? (
             <>
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              Subscribe to Download
+              Purchase a valuation to download
             </>
           ) : (
             <>
@@ -1624,18 +1621,18 @@ export default function CalculatorPage() {
                         {hasCouponAccess && couponUsed ? (
                           <>
                             <h4 className="font-semibold text-gray-900 mb-2">Coupon Already Used</h4>
-                            <p className="text-gray-600 mb-4">Your one-time coupon access has been used. Subscribe to download additional reports.</p>
+                            <p className="text-gray-600 mb-4">Your one-time coupon access has been used. Purchase another $495 valuation to create a report for a different business.</p>
                             <Button className="bg-blue-500 hover:bg-blue-600" onClick={() => router.push("/#pricing")}>
-                              View Pricing Plans
+                              View Valuation Options
                             </Button>
                           </>
                         ) : (
                           <>
                             <h4 className="font-semibold text-gray-900 mb-2">Premium Feature</h4>
-                            <p className="text-gray-600 mb-4">Downloading valuation reports requires an active subscription. Subscribe now to access professional PDF reports, unlimited downloads, and investor-ready documentation.</p>
+                            <p className="text-gray-600 mb-4">Purchase one $495 valuation to generate a report. Corrections to that report are included; each additional business valuation requires a separate purchase.</p>
                             <div className="flex flex-col sm:flex-row gap-3">
                               <Button className="bg-blue-500 hover:bg-blue-600" onClick={() => router.push("/#pricing")}>
-                                View Pricing Plans
+                                View Valuation Options
                               </Button>
                               {subscriptionStatus && subscriptionStatus !== "NONE" && (
                                 <Button variant="outline" onClick={() => router.push("/settings")}>
@@ -1673,8 +1670,8 @@ export default function CalculatorPage() {
           </div>
         </AccordionSection>}
 
-        {/* Subscribers can revisit saved reports without completing the calculator again. */}
-        {isAuthenticated && hasActiveSubscription && (
+        {/* Subscribers can browse their history; retail buyers can access their paid reports. */}
+        {isAuthenticated && (hasActiveSubscription || hasRetailValuationAccess) && (
           <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="previous-valuations-title">
             <div className="mb-4">
               <h2 id="previous-valuations-title" className="text-lg font-semibold text-gray-900">My previous valuations</h2>
@@ -1690,7 +1687,6 @@ export default function CalculatorPage() {
             </div>
             <ValuationDocumentList
               retailValuationEnabled={user?.retailValuationEnabled}
-              retailValuationDocumentId={user?.retailValuationDocumentId}
               onEditDocument={(doc) => {
                 if (!doc.inputData || typeof doc.inputData !== "object") return;
                 localStorage.setItem(CALCULATOR_STORAGE_KEY, JSON.stringify(doc.inputData));

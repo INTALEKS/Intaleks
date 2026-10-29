@@ -14,6 +14,7 @@ export interface ValuationDocument {
   fileSize: number | null;
   createdAt: string;
   inputData?: Record<string, unknown> | null;
+  retailPaid?: boolean;
 }
 
 /**

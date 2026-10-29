@@ -7,6 +7,7 @@ import { PartnerService } from "./partner.service";
 import { invoiceService } from "./invoice";
 import { emailService } from "./email";
 import Stripe from "stripe";
+import { hasUnexpiredSubscription } from "../utils/subscriptionAccess";
 
 // Subscription status values matching Prisma enum
 type SubscriptionStatusType = "NONE" | "ACTIVE" | "PAST_DUE" | "CANCELED" | "INCOMPLETE";
@@ -289,8 +290,10 @@ export class WebhookService {
         }
       }
 
-      // Get subscription details if available. One-time access plans have a
-      // defined access window instead of an automatically renewing period.
+      const isRetailValuationPurchase = session.metadata?.retailValuationLimit === "1";
+
+      // Retail purchases buy valuation credits, not time-based subscription
+      // access. Preserve a separate, still-active subscription if the user has one.
       let currentPeriodEnd: Date | null = null;
       if (stripeSubscriptionId) {
         const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
@@ -300,12 +303,28 @@ export class WebhookService {
           currentPeriodEnd = new Date(periodEnd * 1000);
         }
       }
-      if (!stripeSubscriptionId && planId) {
+      if (!stripeSubscriptionId && planId && !isRetailValuationPurchase) {
         const accessPlan = await prisma.subscriptionPlan.findUnique({ where: { id: planId }, select: { name: true } });
         const months = accessPlan?.name.startsWith("12 Months") ? 12 : accessPlan?.name.startsWith("6 Months") ? 6 : 2;
         currentPeriodEnd = new Date();
         currentPeriodEnd.setMonth(currentPeriodEnd.getMonth() + months);
       }
+
+      const existingUser = isRetailValuationPurchase
+        ? await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+              subscriptionStatus: true,
+              currentPeriodEnd: true,
+              cancelAtPeriodEnd: true,
+              stripeSubscriptionId: true,
+              subscriptionId: true,
+            },
+          })
+        : null;
+      const preserveExistingSubscription = Boolean(
+        existingUser && hasUnexpiredSubscription(existingUser.subscriptionStatus, existingUser.currentPeriodEnd),
+      );
 
       const amountTotal = session.amount_total || 0;
       // Record payment and grant any retail valuation credit atomically. The
@@ -320,18 +339,20 @@ export class WebhookService {
             currency: session.currency || "usd",
             status: PaymentStatusValues.SUCCEEDED,
             stripePaymentId: idempotencyPaymentId,
-            description: `Subscription payment for plan`,
+            description: isRetailValuationPurchase ? "One-time business valuation purchase" : "Subscription payment for plan",
           },
         });
         await tx.user.update({
           where: { id: userId },
           data: {
-            subscriptionStatus: SubscriptionStatusValues.ACTIVE,
-            stripeSubscriptionId,
+            subscriptionStatus: preserveExistingSubscription
+              ? existingUser!.subscriptionStatus
+              : isRetailValuationPurchase ? SubscriptionStatusValues.NONE : SubscriptionStatusValues.ACTIVE,
+            stripeSubscriptionId: preserveExistingSubscription ? existingUser!.stripeSubscriptionId : stripeSubscriptionId,
             stripeCustomerId,
-            subscriptionId: planId,
-            currentPeriodEnd,
-            cancelAtPeriodEnd: false,
+            subscriptionId: preserveExistingSubscription ? existingUser!.subscriptionId : planId,
+            currentPeriodEnd: preserveExistingSubscription ? existingUser!.currentPeriodEnd : currentPeriodEnd,
+            cancelAtPeriodEnd: preserveExistingSubscription ? existingUser!.cancelAtPeriodEnd : false,
             ...(referredById ? { referredById } : {}),
             ...(session.metadata?.retailValuationLimit === "1"
               ? { retailValuationEnabled: true, retailValuationCredits: { increment: 1 } }

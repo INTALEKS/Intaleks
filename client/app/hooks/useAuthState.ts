@@ -36,7 +36,9 @@ export const useAuthState = () => {
   const hasCouponAccess = user?.couponAccess === true;
   const couponUsed = user?.couponUsed === true;
   // Coupon users lose access once they've downloaded (couponUsed = true)
-  const hasCalculatorAccess = hasActiveSubscription || (hasCouponAccess && !couponUsed);
+  const hasRetailValuationAccess = user?.retailValuationEnabled === true &&
+    (Number(user.retailValuationCredits || 0) > 0 || Boolean(user.retailValuationDocumentId));
+  const hasCalculatorAccess = hasActiveSubscription || (hasCouponAccess && !couponUsed) || hasRetailValuationAccess;
   const currentPeriodEnd = user?.currentPeriodEnd ? new Date(user.currentPeriodEnd) : null;
   const subscription = user?.subscription || null;
 
@@ -51,6 +53,7 @@ export const useAuthState = () => {
     hasActiveSubscription,
     hasCouponAccess,
     couponUsed,
+    hasRetailValuationAccess,
     hasCalculatorAccess,
     currentPeriodEnd,
     subscription,
