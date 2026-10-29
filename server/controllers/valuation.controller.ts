@@ -68,15 +68,16 @@ export const createValuationDocument = async (req: Request, res: Response, next:
  */
 export const getUserValuationDocuments = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user?.id;
-    if (!userId) {
+    const user = req.user;
+    if (!user?.id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
+    const userId = user.id;
 
     const documents = await ValuationService.getUserDocuments(userId);
-    const isActiveSubscriber = req.user?.subscriptionStatus === "ACTIVE" &&
-      req.user.currentPeriodEnd !== null && req.user.currentPeriodEnd > new Date();
-    const visibleDocuments = isActiveSubscriber || !req.user?.retailValuationEnabled
+    const isActiveSubscriber = user.subscriptionStatus === "ACTIVE" &&
+      user.currentPeriodEnd !== null && user.currentPeriodEnd > new Date();
+    const visibleDocuments = isActiveSubscriber || !user.retailValuationEnabled
       ? documents
       : documents.filter((document) => document.retailPaid);
 
@@ -92,15 +93,16 @@ export const getUserValuationDocuments = async (req: Request, res: Response, nex
  */
 export const getValuationDocumentById = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = req.user?.id;
-    if (!userId) {
+    const user = req.user;
+    if (!user?.id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
+    const userId = user.id;
 
     const { id } = req.params;
-    const isActiveSubscriber = req.user.subscriptionStatus === "ACTIVE" &&
-      req.user.currentPeriodEnd !== null && req.user.currentPeriodEnd > new Date();
-    if (!isActiveSubscriber && req.user.retailValuationEnabled) {
+    const isActiveSubscriber = user.subscriptionStatus === "ACTIVE" &&
+      user.currentPeriodEnd !== null && user.currentPeriodEnd > new Date();
+    if (!isActiveSubscriber && user.retailValuationEnabled) {
       const retailDocument = await prisma.valuationDocument.findFirst({
         where: { id, userId, retailPaid: true },
         select: { id: true },
