@@ -15,7 +15,7 @@ const faqs: FAQItem[] = [
   },
   {
     question: "How do you work out my business's value?",
-    answer: "We use proven appraisal methods — Asset, Profit, and DCF — combined with industry benchmarks and local market data. You answer a few simple questions and enter your key figures; Intaleks does the calculations for you.",
+    answer: "The Intaleks calculator compares Asset and Profit methods using your business information and industry benchmarks. You answer a few questions and enter your key figures; Intaleks does the calculations for you.",
   },
   {
     question: "What information do I need to provide?",

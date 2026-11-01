@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Contact Us",
-  description: "Get in touch with the Intaleks team. We're available 24/7 to answer your questions about business valuation.",
+  title: { absolute: "Contact Intaleks | Business Valuation Support" },
+  description: "Contact the Intaleks team, available 24/7 to answer your questions about business valuation, reports, billing and accounts.",
+  alternates: { canonical: "https://www.intaleks.com/contact" },
   openGraph: {
-    title: "Contact Us | Intaleks",
-    description: "Get in touch with the Intaleks team. We're available 24/7 to answer your questions about business valuation.",
-    url: "/contact",
+    title: "Contact Intaleks | Business Valuation Support",
+    description: "Contact the Intaleks team, available 24/7 to answer your questions about business valuation, reports, billing and accounts.",
+    url: "https://www.intaleks.com/contact",
     images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Intaleks - Contact Us" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Contact Us | Intaleks",
-    description: "Get in touch with the Intaleks team. We're available 24/7 to answer your questions.",
+    title: "Contact Intaleks | Business Valuation Support",
+    description: "Contact the Intaleks team, available 24/7 to answer your questions about business valuation, reports, billing and accounts.",
     images: ["/og-image.png"],
   },
 };

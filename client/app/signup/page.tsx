@@ -128,7 +128,7 @@ function SignupForm() {
   };
 
   return (
-    <AuthFormLayout title="Create your account">
+    <AuthFormLayout title="Create Your Free Intaleks Account">
       <form onSubmit={handleSubmit} className="flex flex-col gap-y-4">
         {/* Return URL info */}
         {(returnUrlParam || nextParam) && <div className="bg-blue-50 border border-blue-200 text-blue-600 px-4 py-3 rounded-lg text-sm">Create an account to continue</div>}
@@ -269,7 +269,7 @@ export default function SignupPage() {
   return (
     <Suspense
       fallback={
-        <AuthFormLayout title="Create your account">
+        <AuthFormLayout title="Create Your Free Intaleks Account">
           <div className="flex justify-center items-center py-8">
             <Loader2 className="animate-spin text-blue-500" />
           </div>

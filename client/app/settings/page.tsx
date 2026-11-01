@@ -133,7 +133,7 @@ function SettingsPageContent() {
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl lg:text-3xl font-bold mb-6 lg:mb-8">Settings</h1>
+            <h1 className="text-2xl lg:text-3xl font-bold mb-6 lg:mb-8">Manage Your Intaleks Account</h1>
 
             {contentTab === "details" && <MyDetailsTab user={user} onProfileUpdate={refetch} />}
             {contentTab === "subscriptions" && <SubscriptionsTab user={user} />}

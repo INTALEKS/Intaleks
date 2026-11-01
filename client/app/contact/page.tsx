@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Navbar, Footer } from "@/components/home";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +45,7 @@ export default function ContactPage() {
 
         <div className="mt-8">
           <h2 className="text-xl font-semibold">Available 24/7</h2>
-          <p className="text-gray-600 mt-1">If you have any questions, contact us via email or the form below</p>
+          <p className="text-gray-600 mt-1">We&apos;re available 24/7 to answer your questions about business valuation. Contact us by email or use the form below.</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 mt-8">
@@ -104,6 +105,20 @@ export default function ContactPage() {
             </div>
           </div>
         </div>
+
+        <section className="mt-12 max-w-4xl" aria-labelledby="contact-faq-heading">
+          <h2 id="contact-faq-heading" className="text-2xl font-bold">Contact FAQs</h2>
+          <div className="mt-5 space-y-5">
+            <div>
+              <h3 className="font-semibold">How do I get my valuation report?</h3>
+              <p className="mt-1 text-gray-600">Complete the valuation steps, sign in and purchase access. Your PDF report is available to download when the valuation has been generated.</p>
+            </div>
+            <div>
+              <h3 className="font-semibold">How is my business information handled?</h3>
+              <p className="mt-1 text-gray-600">See the <Link href="/privacy" className="text-blue-600 underline underline-offset-2">Intaleks Privacy Policy</Link> for details about how personal and business information is collected and used.</p>
+            </div>
+          </div>
+        </section>
       </main>
 
       <Footer />

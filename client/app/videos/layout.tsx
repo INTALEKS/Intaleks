@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Video Lessons",
+  title: { absolute: "Video Lessons | Intaleks" },
   description: "Watch clear video lessons on business valuation. Learn Asset-Based, Profit-Based, and DCF valuation methods with practical, real-world examples.",
+  alternates: { canonical: "https://www.intaleks.com/videos" },
   keywords: ["business valuation videos", "valuation lessons", "DCF tutorial", "asset valuation video", "profit valuation tutorial", "business value education"],
   openGraph: {
     title: "Video Lessons | Intaleks",

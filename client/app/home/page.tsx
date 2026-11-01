@@ -246,9 +246,9 @@ function Hero() {
               </p>
               <h1
                 id="home-hero-heading"
-                className="max-w-[15ch] text-[clamp(40px,6vw,76px)] font-extrabold leading-[0.98] tracking-[-0.045em] text-white"
+                className="max-w-[18ch] text-[clamp(38px,5.5vw,72px)] font-extrabold leading-[0.98] tracking-[-0.045em] text-white"
               >
-                You know what your house is worth. What about your <span className="font-serif font-normal italic">business?</span>
+                Business Valuation Australia: Know What Your Business Is Worth
               </h1>
               <p className="mt-6 max-w-[52ch] text-base leading-relaxed text-[#D8E5F5] sm:text-lg">
                 Get clear, professional-grade guidance on what your business is worth—in minutes, not weeks.
@@ -858,6 +858,58 @@ function FinalCTA() {
   );
 }
 
+function HomepageFAQs() {
+  const faqs = [
+    {
+      question: "How much does a business valuation in Australia cost?",
+      answer: (
+        <>
+          An Intaleks retail valuation costs $495 AUD as a one-off payment. It covers one business valuation, and corrections to that report are included. Each additional business needs its own purchase. You can <Link href="/calculator" className="font-semibold text-[#2563EB] underline underline-offset-2">start your business valuation</Link> online.
+        </>
+      ),
+    },
+    {
+      question: "How long does an online business valuation take?",
+      answer: "Most people can complete the online process in about five minutes once their figures are ready. The time depends on how complete your records are.",
+    },
+    {
+      question: "What figures do I need before I start?",
+      answer: (
+        <>
+          Have recent profit and loss statements and balance sheets ready, along with details of owner wages, private expenses and cash withdrawals. These help explain the business&apos;s underlying earnings. Advisers can learn about the <Link href="/partner-program" className="font-semibold text-[#2563EB] underline underline-offset-2">partner program for accountants and advisers</Link>.
+        </>
+      ),
+    },
+    {
+      question: "Which valuation methods does Intaleks use?",
+      answer: "The calculator compares Asset and Profit methods, using the business information you provide, industry benchmarks and business-strength factors. The report explains the results and the inputs behind them.",
+    },
+    {
+      question: "Can I use an Intaleks valuation for a court or legal matter?",
+      answer: "No. The online report is an estimate for guidance only; it is not a certified valuation and must not be used for court or legal proceedings. For those matters, obtain a qualified independent valuation.",
+    },
+  ];
+
+  return (
+    <section className="border-t border-[#E3E8F0] bg-[#F7F9FC] px-6 py-16 sm:py-20" aria-label="Frequently asked questions">
+      <div className="mx-auto max-w-[900px]">
+        <Eyebrow>Business valuation questions</Eyebrow>
+        <SectionH2 className="mb-8">Frequently asked questions</SectionH2>
+        <div className="space-y-3">
+          {faqs.map(({ question, answer }) => (
+            <details key={question} className="group rounded-xl border border-[#DCE4EF] bg-white px-5 py-4">
+              <summary className="cursor-pointer list-none pr-8 font-semibold text-[#172033] marker:hidden focus-visible:outline-2 focus-visible:outline-[#3B82F6]">
+                {question}
+              </summary>
+              <p className="mt-3 max-w-[75ch] text-[15.5px] leading-relaxed text-[#53657F]">{answer}</p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ─────────────────────────────────────────────
    PAGE
 ───────────────────────────────────────────── */
@@ -878,6 +930,7 @@ export default function HomeLandingPage() {
         <MeetFounderSection />
         <PricingSection />
         <FinalCTA />
+        <HomepageFAQs />
       </main>
       <HomeFooter />
     </div>

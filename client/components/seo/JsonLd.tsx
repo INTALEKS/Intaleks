@@ -3,9 +3,9 @@ export function OrganizationJsonLd() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Intaleks",
-    url: "https://intaleks.com",
-    logo: "https://intaleks.com/intaleks.jpg",
-    description: "Professional business valuation calculator helping companies determine their worth using industry-standard methods.",
+    url: "https://www.intaleks.com/",
+    logo: "https://www.intaleks.com/intaleks-footer-logo.png",
+    description: "Online business valuation guidance for Australian business owners.",
     sameAs: ["https://twitter.com/intaleks", "https://linkedin.com/company/intaleks"],
     contactPoint: {
       "@type": "ContactPoint",
@@ -22,16 +22,16 @@ export function WebApplicationJsonLd() {
     "@context": "https://schema.org",
     "@type": "WebApplication",
     name: "Intaleks Business Valuation Calculator",
-    url: "https://intaleks.com/calculator",
+    url: "https://www.intaleks.com/calculator",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Any",
     offers: {
       "@type": "Offer",
-      price: "0",
+      price: "495",
       priceCurrency: "AUD",
     },
-    description: "Calculate your business value using professional valuation methods including Asset-Based, Profit-Based, and DCF methods.",
-    featureList: ["Asset-Based Valuation", "Profit-Based Valuation (Capitalization of Earnings)", "DCF (Discounted Cash Flow) Valuation", "Professional PDF Report Generation", "Multi-year Financial Analysis", "Industry-specific Multiples"],
+    description: "Compare Asset and Profit valuation methods for an Australian business and download a PDF estimate for guidance.",
+    featureList: ["Asset Valuation", "Profit Valuation", "PDF Valuation Report"],
   };
 
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />;
@@ -55,7 +55,7 @@ export function FAQJsonLd() {
         name: "What valuation methods does Intaleks support?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Intaleks supports three main valuation methods: Asset-Based Valuation (calculates net asset value), Profit-Based Valuation (uses capitalization of earnings), and DCF Method (Discounted Cash Flow analysis).",
+          text: "The Intaleks calculator compares Asset and Profit valuation methods. Its report is an automated estimate for guidance only, not a certified valuation or legal, financial, or tax advice.",
         },
       },
       {

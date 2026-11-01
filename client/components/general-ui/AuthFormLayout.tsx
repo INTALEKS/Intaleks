@@ -10,7 +10,7 @@ export default function AuthFormLayout({ children, title }: { children: ReactNod
       <section className="max-w-[80vw] md:max-w-[45vw] w-full p-3">
         <header className="flex flex-col gap-y-1 mb-10">
           <Image onClick={() => router.push("/")} src="/intaleks.png" alt="Intaleks Logo" width={500} height={50} className="self-center" />
-          <p className="text-center text-black font-normal text-xl">{title}</p>
+          <h1 className="text-center text-black font-semibold text-xl leading-tight">{title}</h1>
         </header>
 
         <div className="flex flex-col gap-y-4 py-10">{children}</div>

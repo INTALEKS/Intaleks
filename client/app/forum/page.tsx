@@ -650,6 +650,14 @@ function PreviewSection({ isAuthenticated }: { isAuthenticated: boolean }) {
           </div>
         </div>
       </div>
+      <section className="mt-10" aria-labelledby="forum-starters-heading">
+        <h2 id="forum-starters-heading" className="text-2xl font-bold text-gray-900">Conversation starters</h2>
+        <p className="mt-2 max-w-3xl text-gray-600">Explore practical questions about business valuation with other owners and advisers.</p>
+        <ul className="mt-5 grid gap-3 md:grid-cols-3">
+          {["Which financial records make a valuation more useful?", "How can owner dependence affect business value?", "What should owners consider before a sale or succession?"]
+            .map((topic) => <li key={topic} className="rounded-lg border border-gray-200 bg-white p-4 font-medium text-gray-800">{topic}</li>)}
+        </ul>
+      </section>
     </div>
   );
 }

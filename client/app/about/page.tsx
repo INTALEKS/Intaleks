@@ -5,9 +5,16 @@ import { Navbar } from "@/components/home/Navbar";
 import { HomeFooter } from "@/components/home/HomeFooter";
 
 export const metadata: Metadata = {
-  title: "About Intaleks | Business Valuation Australia",
+  title: { absolute: "Meet Aleks Todorovic, Founder of Intaleks" },
   description:
     "Meet Aleks Todorovic, founder of Intaleks. 26 years in Australian corporate finance, now making professional business valuation accessible to every owner.",
+  alternates: { canonical: "https://www.intaleks.com/about" },
+  openGraph: {
+    title: "Meet Aleks Todorovic, Founder of Intaleks",
+    description: "Meet Aleks Todorovic, founder of Intaleks, and learn about her experience in Australian corporate finance.",
+    url: "https://www.intaleks.com/about",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Aleks Todorovic, founder of Intaleks" }],
+  },
 };
 
 const beliefs = [
@@ -64,7 +71,23 @@ function PrimaryLink({ children, href = "/calculator" }: { children: React.React
 }
 
 export default function AboutPage() {
+  const personSchema = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "Aleks Todorovic",
+    url: "https://www.intaleks.com/about",
+    jobTitle: "Founder",
+    worksFor: {
+      "@type": "Organization",
+      name: "Intaleks",
+      url: "https://www.intaleks.com/",
+    },
+    description: "Founder of Intaleks with 26 years of experience in Australian corporate finance and business valuation.",
+  };
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personSchema) }} />
     <div className="min-h-screen bg-white font-[Inter,system-ui,sans-serif] text-[#0D1117] antialiased">
       <Navbar />
       <main>
@@ -72,8 +95,8 @@ export default function AboutPage() {
           <div className="mx-auto grid max-w-[1600px] grid-cols-1 overflow-hidden lg:grid-cols-2">
             <div className="flex min-h-[480px] flex-col justify-center px-7 py-16 text-white sm:px-12 lg:min-h-[650px] lg:px-[clamp(3rem,7vw,9rem)]">
               <Eyebrow>Meet the founder</Eyebrow>
-              <h1 className="text-[clamp(44px,6.5vw,82px)] font-extrabold leading-[0.98] tracking-[-0.045em]">
-                Aleks Todorovic
+              <h1 className="max-w-[16ch] text-[clamp(38px,5.2vw,68px)] font-extrabold leading-[0.98] tracking-[-0.045em]">
+                Meet Aleks Todorovic, Founder of Intaleks
               </h1>
               <p className="mt-4 text-[clamp(19px,2vw,26px)] text-[#C7D8F0]">CEO &amp; Founder, Intaleks</p>
               <div className="my-8 h-1 w-16 bg-[#3B82F6]" />
@@ -230,5 +253,6 @@ export default function AboutPage() {
       </main>
       <HomeFooter />
     </div>
+    </>
   );
 }

@@ -1311,8 +1311,8 @@ export default function CalculatorPage() {
         <p className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-[#4B6387]">
           Business Valuation Calculator
         </p>
-        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-          What&apos;s your <span className="italic text-blue-500">business</span> worth?
+        <h1 className="mx-auto max-w-4xl text-3xl font-bold leading-tight text-gray-900 mb-4 md:text-4xl">
+          Business Valuation Tools Australia: Calculate Your Business Value
         </h1>
         <p className="text-gray-600 max-w-2xl mx-auto mb-6">
           Five short steps. About five minutes. A professional valuation at the end.
@@ -1717,6 +1717,42 @@ export default function CalculatorPage() {
           </section>
         )}
       </main>
+
+      <section className="border-t border-gray-200 bg-white px-4 py-14 sm:py-18" aria-labelledby="calculator-content-heading">
+        <div className="mx-auto max-w-5xl space-y-10 text-gray-700">
+          <div>
+            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.16em] text-blue-600">Business valuation guidance</p>
+            <h2 id="calculator-content-heading" className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Business Valuation Methods in Australia Explained</h2>
+            <p className="mt-4 max-w-4xl leading-relaxed">
+              Common business valuation methods in Australia include asset-based valuation, capitalised earnings and discounted cash flow. Each approach suits different situations. The Intaleks calculator compares Asset and Profit methods, using your business information, industry benchmarks and business-strength factors to explain the estimate.
+            </p>
+            <p className="mt-4 max-w-4xl leading-relaxed">
+              The starting point is understanding what the business earns. That means reviewing normalised earnings, owner wages, private expenses and cash withdrawals. Read more about <Link href="/" className="font-semibold text-blue-700 underline underline-offset-2">how Intaleks values Australian businesses</Link>.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">What You Need Before You Start</h2>
+            <p className="mt-4 max-w-4xl leading-relaxed">
+              Have recent profit and loss statements and balance sheets ready, along with details of owner wages, private expenses and regular cash withdrawals. These details help show the business&apos;s underlying earnings. Complete information can make the process easier and gives the report more context.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">What You Get With Your Valuation</h2>
+            <p className="mt-4 max-w-4xl leading-relaxed">
+              Your PDF report brings together the Asset and Profit results, inputs and key factors behind the estimate. It is designed to help you understand your business value and prepare for discussions with an adviser, buyer or partner.
+            </p>
+            <p className="mt-4 max-w-4xl leading-relaxed">
+              The one-off fee is $495 AUD for one business valuation. Corrections to that valuation are included; each additional business requires another purchase. You can <Link href="/about" className="font-semibold text-blue-700 underline underline-offset-2">learn about Aleks&apos;s 26 years valuing Australian businesses</Link> or <Link href="/valuation-sample.pdf" className="font-semibold text-blue-700 underline underline-offset-2" target="_blank" rel="noopener noreferrer">view a sample valuation report</Link> before you start.
+            </p>
+          </div>
+
+          <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">
+            Intaleks reports are automated estimates for guidance only. They are not certified valuations or legal, financial or tax advice, and must not be used for court or regulatory proceedings. Obtain a qualified independent valuation for those purposes.
+          </p>
+        </div>
+      </section>
 
       {/* Footer */}
       <Footer />
