@@ -884,10 +884,6 @@ function HomepageFAQs() {
       question: "Which valuation methods does Intaleks use?",
       answer: "The calculator compares Asset and Profit methods, using the business information you provide, industry benchmarks and business-strength factors. The report explains the results and the inputs behind them.",
     },
-    {
-      question: "Can I use an Intaleks valuation for a court or legal matter?",
-      answer: "No. The online report is an estimate for guidance only; it is not a certified valuation and must not be used for court or legal proceedings. For those matters, obtain a qualified independent valuation.",
-    },
   ];
 
   return (
