@@ -94,7 +94,7 @@ function Hero() {
               fill
               priority
               sizes="(min-width: 1024px) 44vw, 100vw"
-              className="object-cover object-center"
+              className="object-cover object-top lg:object-center"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#102947]/35 via-transparent to-transparent" aria-hidden="true" />
             <div className="absolute bottom-4 left-4 max-w-[calc(100%-2rem)] rounded-[10px] bg-[#102947]/95 px-4 py-2.5 text-sm leading-snug text-white shadow-lg sm:bottom-5 sm:left-5">
