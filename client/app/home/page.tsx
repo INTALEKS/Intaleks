@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/home/Navbar";
 import { HomeFooter } from "@/components/home/HomeFooter";
 import { SampleReportSection } from "@/components/home/SampleReportSection";
@@ -82,143 +82,6 @@ function TickItem({ children }: { children: React.ReactNode }) {
    1. HERO
 ───────────────────────────────────────────── */
 
-const heroIndustryImages = [
-  {
-    src: "/industry-trades-construction.jpg",
-    alt: "Tradesperson working beside a construction vehicle",
-  },
-  {
-    src: "/industry-real-estate-agencies.webp",
-    alt: "Real estate agency storefront",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=700&q=70",
-    alt: "Restaurant interior for hospitality and retail businesses",
-  },
-  {
-    src: "/industry-professional-services.webp",
-    alt: "Professional advisers working together",
-  },
-  {
-    src: "/industry-transport-logistics.jpg",
-    alt: "Transport and logistics operation",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=700&q=70",
-    alt: "Legal documents for family law matters",
-  },
-];
-
-function IndustryCollage({
-  className = "",
-  backdrop = false,
-}: {
-  className?: string;
-  backdrop?: boolean;
-}) {
-  const [featuredImageIndex, setFeaturedImageIndex] = useState(0);
-  const collageRef = useRef<HTMLDivElement>(null);
-
-  const orderedImages = heroIndustryImages.map(
-    (_, index) => heroIndustryImages[(featuredImageIndex + index) % heroIndustryImages.length]
-  );
-
-  useEffect(() => {
-    let previousScrollY = window.scrollY;
-    let accumulatedScroll = 0;
-
-    const rotateCollage = () => {
-      const currentScrollY = window.scrollY;
-      const scrollChange = currentScrollY - previousScrollY;
-      previousScrollY = currentScrollY;
-
-      const collageBounds = collageRef.current?.getBoundingClientRect();
-      const collageIsVisible =
-        collageBounds && collageBounds.top < window.innerHeight && collageBounds.bottom > 0;
-
-      if (!collageIsVisible || Math.abs(scrollChange) < 1) return;
-
-      accumulatedScroll += scrollChange;
-      if (Math.abs(accumulatedScroll) < 80) return;
-
-      const direction = accumulatedScroll > 0 ? 1 : -1;
-      setFeaturedImageIndex((currentIndex) =>
-        (currentIndex + direction + heroIndustryImages.length) % heroIndustryImages.length
-      );
-      accumulatedScroll = 0;
-    };
-
-    window.addEventListener("scroll", rotateCollage, { passive: true });
-    return () => window.removeEventListener("scroll", rotateCollage);
-  }, []);
-
-  return (
-    <div
-      ref={collageRef}
-      className={`hero-industry-collage ${
-        backdrop
-          ? "absolute inset-0 h-full w-full overflow-hidden bg-[#102947]"
-          : "relative aspect-[4/5] max-h-[540px] w-full overflow-hidden rounded-[16px] bg-[#DCEAFE] p-2 shadow-[0_24px_60px_rgba(37,99,235,0.18)]"
-      } ${className}`}
-      aria-label="A selection of the industries Intaleks supports"
-    >
-      {orderedImages.map((image, index) => (
-        <div
-          key={`${featuredImageIndex}-${image.alt}`}
-          className={`hero-industry-tile hero-industry-tile-${index + 1} overflow-hidden rounded-[10px] bg-[#C7DDFB] bg-cover bg-center`}
-          role="img"
-          aria-label={image.alt}
-          style={{ backgroundImage: `url('${image.src}')` }}
-        />
-      ))}
-
-      <style jsx>{`
-        .hero-industry-collage {
-          display: grid;
-          grid-template-columns: repeat(12, minmax(0, 1fr));
-          grid-template-rows: repeat(12, minmax(0, 1fr));
-          gap: 8px;
-        }
-
-        .hero-industry-tile {
-          animation: hero-industry-swap-in 520ms ease-out both, hero-industry-drift 12s ease-in-out 520ms infinite alternate;
-          will-change: transform;
-        }
-
-        .hero-industry-tile-1 {
-          grid-area: 1 / 1 / 7 / 8;
-          animation: hero-industry-swap-in 520ms ease-out both, hero-industry-focus 15s ease-in-out 520ms infinite;
-        }
-
-        .hero-industry-tile-2 { grid-area: 1 / 8 / 5 / 13; animation-delay: -3s; }
-        .hero-industry-tile-3 { grid-area: 5 / 8 / 9 / 13; animation-delay: -7s; }
-        .hero-industry-tile-4 { grid-area: 7 / 1 / 10 / 6; animation-delay: -5s; }
-        .hero-industry-tile-5 { grid-area: 9 / 6 / 13 / 13; animation-delay: -10s; }
-        .hero-industry-tile-6 { grid-area: 10 / 1 / 13 / 6; animation-delay: -1s; }
-
-        @keyframes hero-industry-swap-in {
-          from { opacity: 0.72; transform: scale(0.94); }
-          to { opacity: 1; transform: scale(1.015); }
-        }
-
-        @keyframes hero-industry-drift {
-          from { transform: scale(1.015) translate3d(0, 0, 0); }
-          to { transform: scale(1.06) translate3d(0, -5px, 0); }
-        }
-
-        @keyframes hero-industry-focus {
-          0%, 100% { transform: scale(1.02); }
-          50% { transform: scale(1.075) translate3d(2px, -4px, 0); }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .hero-industry-tile { animation: none; }
-        }
-      `}</style>
-    </div>
-  );
-}
-
 function Hero() {
   return (
     <>
@@ -226,20 +89,21 @@ function Hero() {
         <div className="grid min-h-[620px] w-full grid-cols-1 lg:grid-cols-[44%_56%]">
           <div className="relative left-1/2 h-[clamp(320px,92vw,430px)] w-screen -translate-x-1/2 overflow-hidden sm:h-[430px] lg:left-auto lg:h-auto lg:min-h-[620px] lg:w-auto lg:translate-x-0">
             <Image
-              src="/intaleks-business-valuator.jpg"
-              alt="A salon owner representing Australian small business owners"
+              src="/aleks-home-hero.jpeg"
+              alt="Aleks, Intaleks CEO and Qualified Business Valuer"
               fill
               priority
               sizes="(min-width: 1024px) 44vw, 100vw"
-              className="object-cover object-left"
+              className="object-cover object-center"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#102947]/30 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:to-[#102947]/15" aria-hidden="true" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#102947]/35 via-transparent to-transparent" aria-hidden="true" />
+            <div className="absolute bottom-4 left-4 max-w-[calc(100%-2rem)] rounded-[10px] bg-[#102947]/95 px-4 py-2.5 text-sm leading-snug text-white shadow-lg sm:bottom-5 sm:left-5">
+              <p><span className="font-bold">Aleks</span>, Qualified Business Valuer</p>
+              <p>CEO of <span className="font-semibold text-[#9CC4FF]">intaleks.com</span></p>
+            </div>
           </div>
 
-          <div className="relative isolate flex min-h-[500px] items-center overflow-hidden px-6 py-14 sm:px-10 sm:py-16 lg:min-h-[620px] lg:px-[clamp(3rem,6vw,7rem)]">
-            <IndustryCollage backdrop className="-z-20 opacity-65" />
-            <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(11,31,55,0.96)_0%,rgba(16,41,71,0.88)_52%,rgba(16,41,71,0.78)_100%)]" aria-hidden="true" />
-
+          <div className="relative flex min-h-[500px] items-center overflow-hidden bg-[#102947] px-6 py-14 sm:px-10 sm:py-16 lg:min-h-[620px] lg:px-[clamp(3rem,6vw,7rem)]">
             <div className="w-full max-w-[760px] text-white">
               <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-[#9CC4FF] sm:text-sm">
                 Professional business valuation
@@ -261,7 +125,7 @@ function Hero() {
                   Start My Business Valuation
                 </Link>
                 <p className="mt-4 text-sm font-medium leading-relaxed text-[#D8E5F5] sm:text-base">
-                  $495 AUD once <span aria-hidden="true">·</span> one valuation, with corrections included
+                  only $495 AUD
                 </p>
               </div>
             </div>
