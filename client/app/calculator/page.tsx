@@ -1355,7 +1355,7 @@ export default function CalculatorPage() {
       {/* Main Content */}
       <main className="max-w-5xl mx-auto px-4 pb-16 space-y-4">
         {/* Only the active step is shown. Continue controls the progression. */}
-        {openSections[1] && <AccordionSection title="Company Questionaire" stepNumber={1} isOpen>
+        {openSections[1] && <AccordionSection title="Company Questionnaire" stepNumber={1} isOpen>
           <CompanyQuestionnaire companyName={companyName} onCompanyNameChange={setCompanyName} acn={acn} onAcnChange={setAcn} abn={abn} onAbnChange={setAbn} companyIdentifiersLocked={retailCompanyIdentifiersLocked} startedYear={startedYear} onStartedYearChange={setStartedYear} employees={employees} onEmployeesChange={setEmployees} stage={stage} onStageChange={setStage} valuationReason={valuationReason} onValuationReasonChange={setValuationReason} logo={companyLogo} onLogoChange={setCompanyLogo} />
           <div className="mt-6">
             <CountryIndustrySelector country={country} industry={industry} customMultiple={customMultiple} onCountryChange={setCountry} onIndustryChange={setIndustry} onCustomMultipleChange={setCustomMultiple} />
